@@ -54,10 +54,191 @@ export function detectPlatform(url: string): string {
   }
 }
 
+export function heuristicExtract(markdown: string, sourceUrl: string): ParsedHackathon {
+  const platform = detectPlatform(sourceUrl);
+  
+  // 1. Extract Title
+  let title = '';
+  const titleMatch = markdown.match(/^#\s+([^\n#]+)/m) || markdown.match(/Title:\s*([^\n]+)/i);
+  if (titleMatch && titleMatch[1].trim()) {
+    title = titleMatch[1].trim();
+  } else {
+    try {
+      const urlObj = new URL(sourceUrl);
+      const pathParts = urlObj.pathname.split('/').filter(Boolean);
+      if (pathParts.length > 0) {
+        const lastPart = pathParts[pathParts.length - 1].replace(/#.*$/, '');
+        title = lastPart
+          .split('-')
+          .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+          .join(' ');
+      }
+    } catch {
+      title = 'Imported Challenge';
+    }
+  }
+
+  // 2. Mode
+  let mode: 'online' | 'in-person' | 'hybrid' = 'online';
+  if (/hybrid/i.test(markdown)) {
+    mode = 'hybrid';
+  } else if (/in-person|offline|on-campus|physical venue/i.test(markdown)) {
+    mode = 'in-person';
+  }
+
+  // 3. Prize Pool
+  let prizePool = '';
+  const prizeMatch = markdown.match(/(?:₹|INR|Rs\.?|\$)\s*[\d,]+(?:\s*(?:lakhs?|crores?|k|million))?/i) 
+    || markdown.match(/Prize(?:s|\s*Pool)?\s*[:\-]?\s*([^\n]+)/i);
+  if (prizeMatch) {
+    prizePool = prizeMatch[0].trim();
+  }
+
+  // 4. Extract Resources (PDFs, drive links, problem statements)
+  const resources: Array<{ title: string; url: string; resource_type: 'problem_statement' | 'rulebook' | 'template' | 'dataset' | 'reference' | 'other' }> = [];
+  const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g;
+  let match: RegExpExecArray | null;
+  const seenUrls = new Set<string>();
+
+  while ((match = linkRegex.exec(markdown)) !== null) {
+    const linkText = match[1].trim();
+    const linkUrl = match[2].trim();
+    
+    if (seenUrls.has(linkUrl) || linkUrl === sourceUrl) continue;
+    
+    const lower = (linkText + ' ' + linkUrl).toLowerCase();
+    if (
+      lower.includes('.pdf') ||
+      lower.includes('drive.google') ||
+      lower.includes('docs.google') ||
+      lower.includes('problem') ||
+      lower.includes('rulebook') ||
+      lower.includes('guideline') ||
+      lower.includes('template') ||
+      lower.includes('dataset') ||
+      lower.includes('kaggle')
+    ) {
+      seenUrls.add(linkUrl);
+      let resType: 'problem_statement' | 'rulebook' | 'template' | 'dataset' | 'reference' | 'other' = 'other';
+      if (lower.includes('problem') || lower.includes('brief') || lower.includes('track')) {
+        resType = 'problem_statement';
+      } else if (lower.includes('rule') || lower.includes('guide')) {
+        resType = 'rulebook';
+      } else if (lower.includes('template') || lower.includes('deck')) {
+        resType = 'template';
+      } else if (lower.includes('dataset') || lower.includes('data') || lower.includes('kaggle')) {
+        resType = 'dataset';
+      }
+      resources.push({
+        title: linkText || 'Attached Document',
+        url: linkUrl,
+        resource_type: resType,
+      });
+    }
+  }
+
+  // 5. Extract Stages / Rounds
+  const stages: Array<{
+    round_number: number;
+    title: string;
+    stage_type: 'quiz' | 'ppt_submission' | 'prototype' | 'presentation' | 'other';
+    deadline: string;
+    evaluation_format: string;
+    deliverables_description: string;
+  }> = [];
+
+  // Look for Round / Stage mentions
+  const roundRegex = /(?:###?|####?|\*\*)\s*(Round\s*\d+|Stage\s*\d+|Phase\s*\d+|Prelims?|Grand\s*Finale|Final\s*Submission|Ideation\s*Round)[^\n]*/gi;
+  let roundMatch: RegExpExecArray | null;
+  const foundRounds: string[] = [];
+
+  while ((roundMatch = roundRegex.exec(markdown)) !== null) {
+    const cleanRound = roundMatch[0].replace(/^[#*\s]+|[#*\s]+$/g, '').trim();
+    if (cleanRound && !foundRounds.includes(cleanRound) && cleanRound.length < 80) {
+      foundRounds.push(cleanRound);
+    }
+  }
+
+  // Search for date patterns
+  const dateRegex = /\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}\b|\b\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{4}\b/gi;
+  const datesFound: string[] = [];
+  let dateMatch: RegExpExecArray | null;
+  while ((dateMatch = dateRegex.exec(markdown)) !== null) {
+    try {
+      const d = new Date(dateMatch[0]);
+      if (!isNaN(d.getTime()) && d.getTime() > Date.now() - 30 * 24 * 60 * 60 * 1000) {
+        datesFound.push(d.toISOString());
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (foundRounds.length > 0) {
+    foundRounds.forEach((roundTitle, idx) => {
+      const lower = roundTitle.toLowerCase();
+      let stageType: 'quiz' | 'ppt_submission' | 'prototype' | 'presentation' | 'other' = 'prototype';
+      if (lower.includes('quiz') || lower.includes('test') || lower.includes('assessment')) {
+        stageType = 'quiz';
+      } else if (lower.includes('ppt') || lower.includes('idea') || lower.includes('deck') || lower.includes('abstract')) {
+        stageType = 'ppt_submission';
+      } else if (lower.includes('finale') || lower.includes('pitch') || lower.includes('presentation')) {
+        stageType = 'presentation';
+      }
+
+      const stageDeadline = datesFound[idx] || new Date(Date.now() + (idx + 1) * 5 * 24 * 60 * 60 * 1000).toISOString();
+
+      stages.push({
+        round_number: idx + 1,
+        title: roundTitle,
+        stage_type: stageType,
+        deadline: stageDeadline,
+        evaluation_format: 'Portal Guidelines',
+        deliverables_description: stageType === 'ppt_submission' ? 'Slide deck PDF, Problem brief' : stageType === 'quiz' ? 'Online Assessment' : 'Working Prototype, Code Repository',
+      });
+    });
+  } else {
+    // Default single stage with best date
+    const finalDeadline = datesFound[0] || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    stages.push({
+      round_number: 1,
+      title: 'Round 1: Final Submission',
+      stage_type: 'prototype',
+      deadline: finalDeadline,
+      evaluation_format: 'Online Evaluation',
+      deliverables_description: 'Working prototype, slide deck, repository link',
+    });
+  }
+
+  // 6. Overview
+  const cleanLines = markdown
+    .split('\n')
+    .map(l => l.trim())
+    .filter(l => l.length > 40 && !l.startsWith('#') && !l.startsWith('!'));
+  const overview = cleanLines.slice(0, 3).join('\n\n') || `Hackathon imported from ${platform}.`;
+
+  return {
+    title: title || 'Imported Challenge',
+    organizer: platform === 'internshala' ? 'Internshala Challenge' : platform === 'unstop' ? 'Unstop Competition' : 'Challenge Host',
+    source_platform: platform,
+    mode,
+    location: '',
+    banner_url: '',
+    prize_pool: prizePool,
+    overview,
+    eligibility: 'Open for all eligible students and developers',
+    team_size_min: 1,
+    team_size_max: 4,
+    stages,
+    resources,
+  };
+}
+
 export async function parseHackathonContent(markdown: string, sourceUrl: string): Promise<ParsedHackathon> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (!apiKey) {
-    throw new Error('GEMINI_API_KEY environment variable is not configured');
+    console.warn('GEMINI_API_KEY environment variable is not configured. Falling back to heuristic parsing.');
+    return heuristicExtract(markdown, sourceUrl);
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
@@ -194,12 +375,10 @@ Return ONLY a valid, raw JSON object matching this schema (do NOT wrap in markdo
       return ParsedHackathonSchema.parse(parsed);
     } catch (error) {
       lastError = error;
-      if (retries === 0) {
-        throw new Error(`LLM Extraction failed: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
-      }
       retries--;
     }
   }
   
-  throw new Error(`Extraction failed: ${lastError instanceof Error ? lastError.message : 'Unknown error'}`);
+  console.warn(`Gemini extraction failed (${lastError instanceof Error ? lastError.message : String(lastError)}), falling back to heuristic parser.`);
+  return heuristicExtract(markdown, sourceUrl);
 }
