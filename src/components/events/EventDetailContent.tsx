@@ -17,7 +17,9 @@ interface EventDetailContentProps {
 }
 
 export function EventDetailContent({ event }: EventDetailContentProps) {
-  const activeStage = event.stages?.find((s: any) => s.status === 'in_progress' || s.status === 'pending') || event.stages?.[0]
+  const activeStage = event.stages?.find((s: any) => s.id === event.active_stage_id) || 
+                      event.stages?.find((s: any) => !s.is_completed) || 
+                      event.stages?.[0]
   const [isCompleting, setIsCompleting] = useState(false)
 
   const handleCompleteStage = async () => {
@@ -37,19 +39,19 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
         <div className="flex flex-col md:flex-row justify-between md:items-start gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <Badge variant="secondary">{event.source_platform}</Badge>
+              <Badge variant="secondary" className="capitalize">{event.source_platform}</Badge>
               {event.mode && (
                 <Badge variant="outline">
-                  {event.mode === 'offline' ? <MapPin className="w-3 h-3 mr-1" /> : <Globe className="w-3 h-3 mr-1" />}
-                  {event.mode}
+                  {event.mode === 'in-person' ? <MapPin className="w-3 h-3 mr-1" /> : <Globe className="w-3 h-3 mr-1" />}
+                  <span className="capitalize">{event.mode}</span>
                 </Badge>
               )}
             </div>
             <h1 className="text-2xl md:text-3xl font-bold text-slate-900">{event.title}</h1>
-            <p className="text-slate-500 mt-1">{event.organizer_name}</p>
+            <p className="text-slate-500 mt-1">{event.organizer || 'Independent Hackathon'}</p>
           </div>
           <div className="w-full md:w-64 shrink-0">
-            <StatusPills eventId={event.id} currentStatus={event.status} />
+            <StatusPills eventId={event.id} currentStatus={event.status || 'registered'} />
           </div>
         </div>
       </div>
@@ -60,7 +62,7 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
           {/* Timeline */}
           <Card>
             <CardContent className="p-6">
-              <h3 className="font-semibold text-lg mb-4">Journey</h3>
+              <h3 className="font-semibold text-lg mb-4">Stage Journey</h3>
               <StageTimeline stages={event.stages || []} activeStageId={activeStage?.id || null} />
             </CardContent>
           </Card>
@@ -72,14 +74,14 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-none">{activeStage.stage_type}</Badge>
+                      <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-200 border-none capitalize">{activeStage.stage_type}</Badge>
                     </div>
                     <h2 className="text-xl font-bold text-slate-900">{activeStage.title}</h2>
                   </div>
-                  {activeStage.end_time && (
+                  {activeStage.deadline && (
                     <div className="text-right">
-                      <div className="text-xs text-slate-500 mb-1">Time Remaining</div>
-                      <CountdownTimer deadline={activeStage.end_time} />
+                      <div className="text-xs text-slate-500 mb-1 font-medium">Time Remaining</div>
+                      <CountdownTimer deadline={activeStage.deadline} />
                     </div>
                   )}
                 </div>
@@ -88,16 +90,17 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
               <CardContent className="p-0">
                 <StageChecklist 
                   stageId={activeStage.id} 
-                  deliverables={activeStage.deliverables || []} 
+                  deliverables={event.current_stage_deliverables || activeStage.deliverables || []} 
                   eventId={event.id} 
                 />
                 
                 <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
                   <Button 
                     onClick={handleCompleteStage} 
-                    disabled={isCompleting || activeStage.status === 'completed'}
+                    disabled={isCompleting || activeStage.is_completed}
+                    className="bg-blue-600 hover:bg-blue-700"
                   >
-                    {activeStage.status === 'completed' ? 'Completed' : 'Mark Stage Complete'}
+                    {activeStage.is_completed ? 'Completed' : 'Mark Stage Complete'}
                   </Button>
                 </div>
               </CardContent>

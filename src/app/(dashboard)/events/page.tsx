@@ -3,7 +3,7 @@ import { DashboardContent } from '@/components/events/DashboardContent'
 
 export const dynamic = 'force-dynamic'
 
-export default async function DashboardPage() {
+export default async function EventsPage() {
   const result = await getUserEvents()
   const events = result.success && result.data ? result.data : []
 

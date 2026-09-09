@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { HackFlowLogo } from '@/components/brand/Logo'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -12,9 +13,9 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="px-4 lg:px-6 h-16 flex items-center border-b">
+      <header className="px-4 lg:px-6 h-16 flex items-center border-b bg-white">
         <div className="flex items-center justify-center">
-          <span className="font-bold text-xl tracking-tight text-primary">HackFlow</span>
+          <HackFlowLogo />
         </div>
         <nav className="ml-auto flex gap-4 sm:gap-6">
           <Link className="text-sm font-medium hover:underline underline-offset-4" href="/login">

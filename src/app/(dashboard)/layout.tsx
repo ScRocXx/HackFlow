@@ -24,6 +24,7 @@ export default async function DashboardLayout({
   const typedProfile = profile as { full_name?: string | null; avatar_url?: string | null } | null
 
   const userData = {
+    id: user.id,
     email: user.email!,
     full_name: typedProfile?.full_name || user.user_metadata?.full_name || 'User',
     avatar_url: typedProfile?.avatar_url || user.user_metadata?.avatar_url || null,

@@ -1,5 +1,5 @@
-import { Zap } from "lucide-react";
 import React from "react";
+import { HackFlowLogo } from "@/components/brand/Logo";
 
 export default function AuthLayout({
   children,
@@ -7,12 +7,9 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 dark:from-slate-900 dark:to-slate-800 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-900 via-slate-950 to-blue-950 p-4">
       <div className="flex items-center space-x-2 mb-8">
-        <div className="bg-blue-600 p-2 rounded-lg">
-          <Zap className="h-6 w-6 text-white" />
-        </div>
-        <span className="text-2xl font-bold tracking-tight">HackFlow</span>
+        <HackFlowLogo textClassName="text-white text-2xl" />
       </div>
       <div className="w-full max-w-md">
         {children}

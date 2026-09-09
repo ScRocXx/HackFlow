@@ -1,22 +1,34 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/client';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+
+  useEffect(() => {
+    const errorParam = searchParams.get('error');
+    if (errorParam) {
+      if (errorParam === 'auth') {
+        setError('Authentication failed. Please check your credentials or try again.');
+      } else {
+        setError(decodeURIComponent(errorParam));
+      }
+    }
+  }, [searchParams]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,36 +53,52 @@ export default function LoginPage() {
     setGoogleLoading(true);
     setError(null);
     
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
 
-    if (error) {
-      setError(error.message);
+      if (error) {
+        if (
+          error.message.toLowerCase().includes('provider is not enabled') ||
+          error.message.toLowerCase().includes('unsupported provider')
+        ) {
+          setError(
+            'Google Sign-In is not enabled yet in your Supabase project. Go to Supabase Dashboard -> Authentication -> Providers -> Google to enable it, or sign in with your email and password below.'
+          );
+        } else {
+          setError(error.message);
+        }
+        setGoogleLoading(false);
+      }
+    } catch (err: any) {
+      setError(err?.message || 'Could not initiate Google authentication. Please try again or use email login.');
       setGoogleLoading(false);
     }
   };
 
   return (
-    <Card className="shadow-lg border-0">
+    <Card className="shadow-lg border-0 bg-white">
       <CardHeader className="space-y-1 text-center">
         <CardTitle className="text-2xl font-semibold tracking-tight">Welcome back</CardTitle>
         <CardDescription>
-          Enter your email and password to sign in
+          Enter your email and password to access your hackathons
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm text-center">
-            {error}
+          <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md text-xs sm:text-sm flex gap-2 items-start">
+            <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+            <span className="flex-1">{error}</span>
           </div>
         )}
         
         <form onSubmit={handleEmailLogin} className="space-y-4">
           <div className="space-y-2">
+            <label className="text-xs font-medium text-slate-700">Email Address</label>
             <Input
               type="email"
               placeholder="name@example.com"
@@ -81,6 +109,7 @@ export default function LoginPage() {
             />
           </div>
           <div className="space-y-2">
+            <label className="text-xs font-medium text-slate-700">Password</label>
             <Input
               type="password"
               placeholder="••••••••"
@@ -90,7 +119,7 @@ export default function LoginPage() {
               disabled={loading || googleLoading}
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading || googleLoading}>
+          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading || googleLoading}>
             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Sign In
           </Button>
@@ -101,7 +130,7 @@ export default function LoginPage() {
             <span className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">
+            <span className="bg-white px-2 text-muted-foreground">
               or
             </span>
           </div>
@@ -110,7 +139,7 @@ export default function LoginPage() {
         <Button 
           variant="outline" 
           type="button" 
-          className="w-full" 
+          className="w-full border-slate-200 hover:bg-slate-50" 
           onClick={handleGoogleLogin}
           disabled={loading || googleLoading}
         >
@@ -142,11 +171,19 @@ export default function LoginPage() {
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
           Don't have an account?{' '}
-          <Link href="/signup" className="text-primary font-medium hover:underline">
+          <Link href="/signup" className="text-blue-600 font-medium hover:underline">
             Sign up
           </Link>
         </p>
       </CardFooter>
     </Card>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }
