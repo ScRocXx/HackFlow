@@ -19,7 +19,7 @@ interface DashboardContentProps {
   events: ExtendedEvent[]
 }
 
-export function DashboardContent({ events }: DashboardContentProps) {
+export function DashboardContent({ events = [] }: DashboardContentProps) {
   const [urlInput, setUrlInput] = useState('')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
@@ -27,16 +27,17 @@ export function DashboardContent({ events }: DashboardContentProps) {
     setIsDialogOpen(true)
   }
 
-  const activeEventsCount = events.filter(e => e.status === 'registered' || e.status === 'building').length
+  const safeEvents = Array.isArray(events) ? events : []
+  const activeEventsCount = safeEvents.filter(e => e?.status === 'registered' || e?.status === 'building').length
   
-  const totalDeliverables = events.reduce((acc, ev) => acc + (ev.deliverable_progress?.total || 0), 0)
-  const doneDeliverables = events.reduce((acc, ev) => acc + (ev.deliverable_progress?.done || 0), 0)
+  const totalDeliverables = safeEvents.reduce((acc, ev) => acc + (ev?.deliverable_progress?.total || 0), 0)
+  const doneDeliverables = safeEvents.reduce((acc, ev) => acc + (ev?.deliverable_progress?.done || 0), 0)
   const completionRate = totalDeliverables ? Math.round((doneDeliverables / totalDeliverables) * 100) : 0
 
   const now = new Date()
   const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-  const upcomingDeadlinesCount = events.filter(ev => {
-    if (!ev.active_stage?.deadline) return false
+  const upcomingDeadlinesCount = safeEvents.filter(ev => {
+    if (!ev?.active_stage?.deadline) return false
     const d = new Date(ev.active_stage.deadline)
     return !isNaN(d.getTime()) && d >= now && d <= in7Days
   }).length
@@ -141,7 +142,7 @@ export function DashboardContent({ events }: DashboardContentProps) {
           </Button>
         </div>
         
-        {events.length === 0 ? (
+        {safeEvents.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center rounded-2xl border border-dashed border-slate-300 bg-white/60 shadow-sm">
             <div className="h-16 w-16 rounded-2xl bg-blue-50 flex items-center justify-center mb-4 text-blue-600 border border-blue-100">
               <Trophy className="h-8 w-8" />
@@ -159,7 +160,7 @@ export function DashboardContent({ events }: DashboardContentProps) {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event) => (
+            {safeEvents.map((event) => (
               <EventCard key={event.id} event={event} />
             ))}
           </div>

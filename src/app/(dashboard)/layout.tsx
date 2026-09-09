@@ -22,12 +22,27 @@ export default async function DashboardLayout({
     .maybeSingle()
 
   const typedProfile = profile as { full_name?: string | null; avatar_url?: string | null } | null
+  const fullName = typedProfile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User'
+  const avatarUrl = typedProfile?.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture || null
+
+  if (!profile) {
+    try {
+      await supabase.from('profiles').upsert({
+        id: user.id,
+        email: user.email,
+        full_name: fullName,
+        avatar_url: avatarUrl,
+      })
+    } catch (err) {
+      console.warn('Could not auto-create profile:', err)
+    }
+  }
 
   const userData = {
     id: user.id,
     email: user.email!,
-    full_name: typedProfile?.full_name || user.user_metadata?.full_name || 'User',
-    avatar_url: typedProfile?.avatar_url || user.user_metadata?.avatar_url || null,
+    full_name: fullName,
+    avatar_url: avatarUrl,
   }
 
   return (

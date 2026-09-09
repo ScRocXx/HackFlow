@@ -21,9 +21,17 @@ export async function GET(request: Request) {
     const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
     
     if (!exchangeError) {
-      // Ensure the redirect stays on the same origin
+      const forwardedHost = request.headers.get('x-forwarded-host');
+      const isLocalEnv = process.env.NODE_ENV === 'development';
       const redirectPath = next.startsWith('/') ? next : '/dashboard';
-      return NextResponse.redirect(`${requestUrl.origin}${redirectPath}`);
+
+      if (isLocalEnv) {
+        return NextResponse.redirect(`${requestUrl.origin}${redirectPath}`);
+      } else if (forwardedHost) {
+        return NextResponse.redirect(`https://${forwardedHost}${redirectPath}`);
+      } else {
+        return NextResponse.redirect(`${requestUrl.origin}${redirectPath}`);
+      }
     }
 
     console.error('OAuth code exchange error:', exchangeError);

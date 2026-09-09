@@ -54,7 +54,7 @@ function LoginForm() {
     setError(null);
     
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
@@ -73,6 +73,8 @@ function LoginForm() {
           setError(error.message);
         }
         setGoogleLoading(false);
+      } else if (data?.url) {
+        window.location.href = data.url;
       }
     } catch (err: any) {
       setError(err?.message || 'Could not initiate Google authentication. Please try again or use email login.');

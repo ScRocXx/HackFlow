@@ -12,7 +12,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { markAllNotificationsRead, markNotificationRead } from '@/lib/notifications/in-app';
 import { useRouter } from 'next/navigation';
 
 export function NotificationBell({ userId }: { userId: string }) {
@@ -22,57 +21,85 @@ export function NotificationBell({ userId }: { userId: string }) {
   const router = useRouter();
 
   useEffect(() => {
+    if (!userId) return;
+
     // Initial fetch
     const fetchNotifications = async () => {
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(20);
-      
-      if (data) {
-        setNotifications(data);
-        setUnreadCount(data.filter(n => !n.read).length);
+      try {
+        const { data } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        
+        if (data) {
+          setNotifications(data);
+          setUnreadCount(data.filter(n => !n.read).length);
+        }
+      } catch (err) {
+        console.error('Error fetching notifications:', err);
       }
     };
 
     fetchNotifications();
 
     // Subscribe to realtime updates
-    const channel = supabase
-      .channel('notifications_channel')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          setNotifications((prev) => [payload.new, ...prev]);
-          setUnreadCount((prev) => prev + 1);
-        }
-      )
-      .subscribe();
+    try {
+      const channel = supabase
+        .channel(`notifications_channel_${userId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${userId}`,
+          },
+          (payload) => {
+            if (payload.new) {
+              setNotifications((prev) => [payload.new, ...prev]);
+              setUnreadCount((prev) => prev + 1);
+            }
+          }
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    } catch (err) {
+      console.error('Realtime subscription error in bell:', err);
+    }
   }, [userId, supabase]);
 
   const handleMarkAllRead = async () => {
-    await markAllNotificationsRead(userId);
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    setUnreadCount(0);
+    try {
+      await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('user_id', userId)
+        .eq('read', false);
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.error('Error marking all read:', err);
+    }
   };
 
   const handleNotificationClick = async (notification: any) => {
-    if (!notification.read) {
-      await markNotificationRead(notification.id, userId);
-      setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true } : n));
-      setUnreadCount(prev => Math.max(0, prev - 1));
+    try {
+      if (!notification.read) {
+        await supabase
+          .from('notifications')
+          .update({ read: true })
+          .eq('id', notification.id)
+          .eq('user_id', userId);
+        setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, read: true } : n));
+        setUnreadCount(prev => Math.max(0, prev - 1));
+      }
+    } catch (err) {
+      console.error('Error marking notification read:', err);
     }
     
     if (notification.link) {
