@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
-import { Loader2, Plus, Trash2, Calendar, AlertCircle, Sparkles, Check, Tag } from 'lucide-react'
+import { Loader2, Plus, Trash2, Calendar, AlertCircle, Sparkles, Check, Tag, FileText, Database, ExternalLink, Link2 } from 'lucide-react'
 import { createEvent } from '@/app/actions/events'
 import { useRouter } from 'next/navigation'
 
@@ -26,12 +26,27 @@ interface EditableStage {
   deliverables?: string[]
 }
 
+interface EditableResource {
+  title: string
+  url: string
+  resource_type: string
+}
+
 const STAGE_TYPES = [
   { value: 'quiz', label: 'Online Quiz / Assessment' },
   { value: 'ppt_submission', label: 'PPT / Idea Submission' },
   { value: 'prototype', label: 'Working Prototype / MVP' },
   { value: 'presentation', label: 'Pitch / Final Demo' },
   { value: 'other', label: 'General Milestone' },
+]
+
+const RESOURCE_TYPES = [
+  { value: 'problem_statement', label: 'Problem Statement' },
+  { value: 'rulebook', label: 'Rulebook / Guidelines' },
+  { value: 'template', label: 'Template / Deck' },
+  { value: 'dataset', label: 'Dataset / API' },
+  { value: 'reference', label: 'Reference / Docs' },
+  { value: 'other', label: 'Other Link' },
 ]
 
 export function URLParseDialog({ open, onOpenChange, initialUrl }: URLParseDialogProps) {
@@ -52,6 +67,12 @@ export function URLParseDialog({ open, onOpenChange, initialUrl }: URLParseDialo
   const [teamSizeMax, setTeamSizeMax] = useState(4)
   const [stages, setStages] = useState<EditableStage[]>([])
   const [newDeliverableInputs, setNewDeliverableInputs] = useState<Record<number, string>>({})
+  
+  // Resources State
+  const [resources, setResources] = useState<EditableResource[]>([])
+  const [newResourceTitle, setNewResourceTitle] = useState('')
+  const [newResourceUrl, setNewResourceUrl] = useState('')
+  const [newResourceType, setNewResourceType] = useState('problem_statement')
   
   const [hasParsed, setHasParsed] = useState(false)
   const { toast } = useToast()
@@ -111,6 +132,17 @@ export function URLParseDialog({ open, onOpenChange, initialUrl }: URLParseDialo
       setTeamSizeMin(data.team_size_min || 1)
       setTeamSizeMax(data.team_size_max || 4)
 
+      // Auto-populate extracted resources (problem statements, rulebooks, etc.)
+      if (Array.isArray(data.resources) && data.resources.length > 0) {
+        setResources(data.resources.map((r: any) => ({
+          title: r.title || 'Attached Resource',
+          url: r.url || '',
+          resource_type: r.resource_type || 'other',
+        })))
+      } else {
+        setResources([])
+      }
+
       // Auto-populate extracted stages as editable cards
       if (Array.isArray(data.stages) && data.stages.length > 0) {
         const mappedStages: EditableStage[] = data.stages.map((stg: any, index: number) => {
@@ -163,7 +195,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl }: URLParseDialo
       setHasParsed(true)
       toast({
         title: 'Extraction Successful',
-        description: `Extracted ${data.stages?.length || 1} round(s) from ${data.source_platform || 'portal'}.`,
+        description: `Extracted ${data.stages?.length || 1} round(s) and ${data.resources?.length || 0} resource(s).`,
       })
     } catch (err: any) {
       console.error('URL parse failure:', err)
@@ -177,6 +209,33 @@ export function URLParseDialog({ open, onOpenChange, initialUrl }: URLParseDialo
     } finally {
       setExtracting(false)
     }
+  }
+
+  const handleAddResource = () => {
+    if (!newResourceTitle.trim() || !newResourceUrl.trim()) {
+      toast({
+        title: 'Resource Details Required',
+        description: 'Please enter both a title and URL for the attached document.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setResources([
+      ...resources,
+      {
+        title: newResourceTitle.trim(),
+        url: newResourceUrl.trim(),
+        resource_type: newResourceType,
+      }
+    ])
+    setNewResourceTitle('')
+    setNewResourceUrl('')
+    setNewResourceType('problem_statement')
+  }
+
+  const handleRemoveResource = (index: number) => {
+    setResources(resources.filter((_, i) => i !== index))
   }
 
   const handleAddStage = () => {
@@ -295,6 +354,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl }: URLParseDialo
         team_size_min: Number(teamSizeMin) || 1,
         team_size_max: Number(teamSizeMax) || 4,
         stages: preparedStages,
+        resources: resources.filter(r => r.title.trim() && r.url.trim()),
       })
 
       if (!res.success || res.error) {
@@ -603,6 +663,111 @@ export function URLParseDialog({ open, onOpenChange, initialUrl }: URLParseDialo
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Attached Documents & Problem Statement Links */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-1.5">
+                    <FileText className="h-4 w-4 text-blue-600" />
+                    Attached Documents & Problem Statement Links ({resources.length})
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Official challenge briefs, guidelines, slide templates, datasets, or cloud links.
+                  </p>
+                </div>
+              </div>
+
+              {/* Extracted resources list */}
+              <div className="space-y-2">
+                {resources.map((res, rIdx) => (
+                  <div 
+                    key={rIdx} 
+                    className="p-3 bg-white rounded-lg border border-slate-200 shadow-sm flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      {res.resource_type === 'dataset' ? (
+                        <Database className="h-4 w-4 text-indigo-500 shrink-0" />
+                      ) : res.resource_type === 'rulebook' || res.resource_type === 'problem_statement' ? (
+                        <FileText className="h-4 w-4 text-blue-500 shrink-0" />
+                      ) : (
+                        <Link2 className="h-4 w-4 text-slate-500 shrink-0" />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-slate-800 truncate">{res.title}</span>
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 capitalize bg-slate-50 text-slate-600 shrink-0">
+                            {res.resource_type.replace('_', ' ')}
+                          </Badge>
+                        </div>
+                        <a 
+                          href={res.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="text-blue-600 hover:underline flex items-center gap-1 truncate mt-0.5"
+                        >
+                          <span className="truncate">{res.url}</span>
+                          <ExternalLink className="h-3 w-3 shrink-0 inline" />
+                        </a>
+                      </div>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleRemoveResource(rIdx)}
+                      className="text-slate-400 hover:text-red-600 h-7 w-7 shrink-0"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                ))}
+
+                {resources.length === 0 && (
+                  <div className="p-3 rounded-lg border border-dashed border-slate-200 text-center text-xs text-slate-400">
+                    No attached documents detected. You can add problem statement or guideline links below.
+                  </div>
+                )}
+              </div>
+
+              {/* Add custom resource link inputs */}
+              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200/80 space-y-2">
+                <span className="text-xs font-medium text-slate-700 block">Add Resource Link</span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <Input
+                    placeholder="Document Title (e.g. Problem Statement)"
+                    value={newResourceTitle}
+                    onChange={e => setNewResourceTitle(e.target.value)}
+                    className="h-8 text-xs bg-white"
+                  />
+                  <Input
+                    placeholder="URL (e.g. Google Drive, PDF)"
+                    value={newResourceUrl}
+                    onChange={e => setNewResourceUrl(e.target.value)}
+                    className="h-8 text-xs bg-white"
+                  />
+                  <div className="flex gap-1.5">
+                    <select
+                      value={newResourceType}
+                      onChange={e => setNewResourceType(e.target.value)}
+                      className="h-8 px-2 rounded-md border border-slate-200 bg-white text-xs flex-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    >
+                      {RESOURCE_TYPES.map(type => (
+                        <option key={type.value} value={type.value}>{type.label}</option>
+                      ))}
+                    </select>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleAddResource}
+                      className="h-8 text-xs px-3 bg-slate-800 hover:bg-slate-900 text-white shrink-0"
+                    >
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Add
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
 

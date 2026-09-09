@@ -10,6 +10,12 @@ export const StageSchema = z.object({
   deliverables_description: z.string().optional().default(''),
 });
 
+export const ResourceSchema = z.object({
+  title: z.string().min(1, 'Resource title is required'),
+  url: z.string().min(1, 'Resource URL is required'),
+  resource_type: z.enum(['problem_statement', 'rulebook', 'template', 'dataset', 'reference', 'other']).default('other'),
+});
+
 export const ParsedHackathonSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   organizer: z.string().optional().default(''),
@@ -23,10 +29,12 @@ export const ParsedHackathonSchema = z.object({
   team_size_min: z.number().int().optional().default(1),
   team_size_max: z.number().int().optional().default(4),
   stages: z.array(StageSchema).min(1, 'At least one stage is required'),
+  resources: z.array(ResourceSchema).default([]),
 });
 
 export type ParsedHackathon = z.infer<typeof ParsedHackathonSchema>;
 export type ParsedStage = z.infer<typeof StageSchema>;
+export type ParsedResource = z.infer<typeof ResourceSchema>;
 
 export function detectPlatform(url: string): string {
   try {
@@ -84,6 +92,26 @@ Classify each stage's 'stage_type' as one of:
 - 'presentation': Final demo, offline pitch, live presentation
 - 'other': Any other format
 
+ATTACHED DOCUMENTS & PROBLEM STATEMENT LINKS:
+Scan the markdown for any markdown links [title](url), download buttons, or external references pointing to:
+- Problem Statements, challenge tracks, problem docs, themes
+- Rulebooks, guidelines, code of conduct PDFs
+- Starter slide templates (Google Slides, Canva, PPT, Figma)
+- Datasets (Kaggle, Google Drive, AWS S3, GitHub datasets, CSV/JSON links)
+- Official references, GitHub starter repositories, API docs
+- Important cloud files (Google Drive folders, Notion docs, PDF downloads)
+
+Classify each resource's 'resource_type' as one of:
+- 'problem_statement': Challenge brief, problem description, theme tracks, PS document
+- 'rulebook': Rules, guidelines, evaluation criteria, official PDF rulebook
+- 'template': Presentation slide template, submission template, GitHub boilerplate repo
+- 'dataset': Dataset links, training data, APIs, CSVs
+- 'reference': Official documentation, API references, external reading
+- 'other': Any other official attached link or resource
+
+Only extract genuine external URLs (https://... or http://...), DO NOT extract internal page anchors like '#overview' or '#' or 'javascript:void(0)'.
+If no resources or attached documents are found, return an empty array [].
+
 If only a single final submission deadline is found, produce a single stage titled "Round 1: Final Submission". Never return an empty stages array.
 
 Return ONLY a valid, raw JSON object matching this schema (do NOT wrap in markdown code blocks \`\`\`json):
@@ -107,6 +135,13 @@ Return ONLY a valid, raw JSON object matching this schema (do NOT wrap in markdo
       "deadline": "2026-10-15T23:59:59+05:30",
       "evaluation_format": "string",
       "deliverables_description": "string"
+    }
+  ],
+  "resources": [
+    {
+      "title": "Problem Statement / Guidelines",
+      "url": "https://...",
+      "resource_type": "problem_statement" | "rulebook" | "template" | "dataset" | "reference" | "other"
     }
   ]
 }`;
@@ -145,6 +180,15 @@ Return ONLY a valid, raw JSON object matching this schema (do NOT wrap in markdo
             deliverables_description: 'Deliverables as per portal guidelines',
           }
         ];
+      }
+
+      if (!parsed.resources || !Array.isArray(parsed.resources)) {
+        parsed.resources = [];
+      } else {
+        // Filter out empty or invalid URLs
+        parsed.resources = parsed.resources.filter(
+          (r: any) => r && typeof r.url === 'string' && r.url.startsWith('http')
+        );
       }
 
       return ParsedHackathonSchema.parse(parsed);

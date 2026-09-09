@@ -1,18 +1,19 @@
 'use client'
 
 import Link from 'next/link'
-import { Users, MapPin, Globe } from 'lucide-react'
+import { Users, MapPin, Globe, FileText, Database, ExternalLink } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { StatusPills } from '@/components/events/StatusPills'
 import { CountdownTimer } from '@/components/events/CountdownTimer'
-import type { Event, EventStage } from '@/lib/supabase/types'
+import type { Event, EventStage, EventResource } from '@/lib/supabase/types'
 
 type ExtendedEvent = Event & {
   active_stage?: EventStage
   deliverable_progress?: { done: number; total: number }
   team_count?: number
+  resources?: EventResource[]
 }
 
 interface EventCardProps {
@@ -79,6 +80,35 @@ export function EventCard({ event }: EventCardProps) {
           ) : (
             <div className="mb-4 p-3 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center text-slate-400 text-sm h-[82px]">
               No active stage
+            </div>
+          )}
+
+          {event.resources && event.resources.length > 0 && (
+            <div className="mb-3 flex flex-wrap gap-1.5 z-20 relative">
+              {event.resources.slice(0, 3).map((res) => (
+                <a
+                  key={res.id}
+                  href={res.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-slate-100 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 hover:border-blue-200 transition-colors max-w-[180px]"
+                  title={res.title}
+                >
+                  {res.resource_type === 'dataset' ? (
+                    <Database className="w-3 h-3 text-indigo-500 shrink-0" />
+                  ) : (
+                    <FileText className="w-3 h-3 text-blue-500 shrink-0" />
+                  )}
+                  <span className="truncate">{res.title}</span>
+                  <ExternalLink className="w-2.5 h-2.5 opacity-60 shrink-0" />
+                </a>
+              ))}
+              {event.resources.length > 3 && (
+                <span className="text-[10px] text-slate-400 self-center">
+                  +{event.resources.length - 3} more
+                </span>
+              )}
             </div>
           )}
 

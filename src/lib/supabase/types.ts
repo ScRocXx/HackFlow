@@ -89,9 +89,24 @@ export interface Notification {
   created_at: string
 }
 
+export interface EventResource {
+  id: string
+  event_id: string
+  title: string
+  url: string
+  resource_type: 'problem_statement' | 'rulebook' | 'template' | 'dataset' | 'reference' | 'other'
+  is_official: boolean
+  created_at: string
+}
+
 export interface Database {
   public: {
     Tables: {
+      event_resources: {
+        Row: EventResource
+        Insert: Omit<EventResource, 'id' | 'created_at'> & { id?: string, created_at?: string, is_official?: boolean }
+        Update: Partial<Omit<EventResource, 'id' | 'event_id'>>
+      }
       profiles: {
         Row: Profile
         Insert: Omit<Profile, 'created_at'> & { created_at?: string }

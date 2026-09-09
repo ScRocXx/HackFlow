@@ -113,12 +113,24 @@ create table if not exists public.notifications (
   created_at timestamptz default now()
 );
 
+-- Event resources (problem statements, rulebooks, templates, datasets, links)
+create table if not exists public.event_resources (
+  id uuid primary key default gen_random_uuid(),
+  event_id uuid references public.events(id) on delete cascade not null,
+  title text not null,
+  url text not null,
+  resource_type text check (resource_type in ('problem_statement', 'rulebook', 'template', 'dataset', 'reference', 'other')) default 'other',
+  is_official boolean default true,
+  created_at timestamptz default now()
+);
+
 -- Indexes
 create index if not exists idx_events_created_by on public.events(created_by);
 create index if not exists idx_events_status on public.events(status);
 create index if not exists idx_event_stages_event_id on public.event_stages(event_id);
 create index if not exists idx_event_stages_deadline on public.event_stages(deadline);
 create index if not exists idx_stage_deliverables_stage_id on public.stage_deliverables(stage_id);
+create index if not exists idx_event_resources_event_id on public.event_resources(event_id);
 create index if not exists idx_team_members_event_id on public.team_members(event_id);
 create index if not exists idx_team_members_user_id on public.team_members(user_id);
 create index if not exists idx_notifications_user_id on public.notifications(user_id);
@@ -129,9 +141,11 @@ alter table public.profiles enable row level security;
 alter table public.events enable row level security;
 alter table public.event_stages enable row level security;
 alter table public.stage_deliverables enable row level security;
+alter table public.event_resources enable row level security;
 alter table public.team_members enable row level security;
 alter table public.notification_logs enable row level security;
 alter table public.notifications enable row level security;
+
 
 -- Drop existing policies to allow idempotent execution
 drop policy if exists "Profiles are viewable by everyone" on public.profiles;
@@ -146,6 +160,9 @@ drop policy if exists "Users can update stages for their events" on public.event
 drop policy if exists "Users can delete stages for their events" on public.event_stages;
 drop policy if exists "Users can view deliverables for their events" on public.stage_deliverables;
 drop policy if exists "Users can manage deliverables for their events" on public.stage_deliverables;
+drop policy if exists "Users can view resources for their events" on public.event_resources;
+drop policy if exists "Users can insert resources for their events" on public.event_resources;
+drop policy if exists "Users can delete resources for their events" on public.event_resources;
 drop policy if exists "Members can view their teams" on public.team_members;
 drop policy if exists "Event owners can insert team members" on public.team_members;
 drop policy if exists "Event owners can update team members" on public.team_members;
@@ -250,6 +267,37 @@ create policy "Users can manage deliverables for their events" on public.stage_d
       join public.events on events.id = event_stages.event_id
       left join public.team_members on team_members.event_id = events.id
       where event_stages.id = stage_deliverables.stage_id
+      and (events.created_by = auth.uid() or team_members.user_id = auth.uid())
+    )
+  );
+
+-- Event Resources Policies
+create policy "Users can view resources for their events" on public.event_resources
+  for select using (
+    exists (
+      select 1 from public.events
+      left join public.team_members on team_members.event_id = events.id
+      where events.id = event_resources.event_id
+      and (events.created_by = auth.uid() or team_members.user_id = auth.uid())
+    )
+  );
+
+create policy "Users can insert resources for their events" on public.event_resources
+  for insert with check (
+    exists (
+      select 1 from public.events
+      left join public.team_members on team_members.event_id = events.id
+      where events.id = event_resources.event_id
+      and (events.created_by = auth.uid() or team_members.user_id = auth.uid())
+    )
+  );
+
+create policy "Users can delete resources for their events" on public.event_resources
+  for delete using (
+    exists (
+      select 1 from public.events
+      left join public.team_members on team_members.event_id = events.id
+      where events.id = event_resources.event_id
       and (events.created_by = auth.uid() or team_members.user_id = auth.uid())
     )
   );
@@ -397,3 +445,4 @@ alter publication supabase_realtime add table public.event_stages;
 alter publication supabase_realtime add table public.stage_deliverables;
 alter publication supabase_realtime add table public.team_members;
 alter publication supabase_realtime add table public.notifications;
+alter publication supabase_realtime add table public.event_resources;

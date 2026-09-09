@@ -26,6 +26,12 @@ export type CreateEventInput = {
     deliverables_description?: string;
     deliverables?: string[];
   }[];
+  resources?: {
+    title: string;
+    url: string;
+    resource_type: string;
+    is_official?: boolean;
+  }[];
 };
 
 export async function createEvent(data: CreateEventInput) {
@@ -140,7 +146,30 @@ export async function createEvent(data: CreateEventInput) {
       await supabase.from('stage_deliverables').insert(deliverablesToInsert);
     }
 
-    // 5. Add Creator to Team Members
+    // 5. Insert Attached Resources (Problem Statement, Rules, Templates, etc.)
+    if (data.resources && data.resources.length > 0) {
+      const validResources = data.resources
+        .filter(r => r.title?.trim() && r.url?.trim())
+        .map(r => ({
+          event_id: event.id,
+          title: r.title.trim(),
+          url: r.url.trim(),
+          resource_type: (r.resource_type as any) || 'other',
+          is_official: r.is_official !== undefined ? r.is_official : true,
+        }));
+
+      if (validResources.length > 0) {
+        const { error: resourcesError } = await supabase
+          .from('event_resources')
+          .insert(validResources);
+
+        if (resourcesError) {
+          console.error('Failed to insert event resources:', resourcesError);
+        }
+      }
+    }
+
+    // 6. Add Creator to Team Members
     await supabase.from('team_members').insert({
       event_id: event.id,
       user_id: user.id,
@@ -287,13 +316,21 @@ export async function getEventWithDetails(eventId: string) {
       if (delivData) deliverables = delivData;
     }
 
+    // Fetch attached resources (problem statement, rules, templates, datasets, links)
+    const { data: resources } = await supabase
+      .from('event_resources')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: true });
+
     return { 
       success: true, 
       data: { 
         ...event, 
         stages: stages || [], 
         team_members: teamMembers || [],
-        current_stage_deliverables: deliverables 
+        current_stage_deliverables: deliverables,
+        resources: resources || []
       } 
     };
   } catch (error: any) {
@@ -359,9 +396,17 @@ export async function getUserEvents() {
       if (delivs) allDeliverables = delivs;
     }
 
-    // 6. Enrich each event
+    // 6. Fetch resources for all events
+    const { data: allResources } = await supabase
+      .from('event_resources')
+      .select('*')
+      .in('event_id', eventIds)
+      .order('created_at', { ascending: true });
+
+    // 7. Enrich each event
     const enrichedEvents = events.map(event => {
       const stagesForEvent = allStages?.filter(s => s.event_id === event.id) || [];
+      const resourcesForEvent = allResources?.filter(r => r.event_id === event.id) || [];
       
       // Determine active stage: matching active_stage_id or first non-completed stage or first stage
       let activeStage = stagesForEvent.find(s => s.id === event.active_stage_id);
@@ -387,6 +432,7 @@ export async function getUserEvents() {
         ...event,
         active_stage: activeStage,
         stages: stagesForEvent,
+        resources: resourcesForEvent,
         deliverable_progress,
         team_count: teamCount
       };
@@ -403,5 +449,70 @@ export async function getUserEvents() {
   } catch (error: any) {
     console.error('Error in getUserEvents:', error);
     return { success: false, error: error.message || 'Failed to fetch user events' };
+  }
+}
+
+export async function addEventResource(eventId: string, resource: {
+  title: string;
+  url: string;
+  resource_type: string;
+  is_official?: boolean;
+}) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    if (!resource.title?.trim() || !resource.url?.trim()) {
+      return { success: false, error: 'Title and URL are required' };
+    }
+
+    const { data, error } = await supabase
+      .from('event_resources')
+      .insert({
+        event_id: eventId,
+        title: resource.title.trim(),
+        url: resource.url.trim(),
+        resource_type: (resource.resource_type as any) || 'other',
+        is_official: resource.is_official !== undefined ? resource.is_official : false,
+      })
+      .select('*')
+      .single();
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath(`/events/${eventId}`);
+    revalidatePath('/dashboard');
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to add resource' };
+  }
+}
+
+export async function deleteEventResource(resourceId: string, eventId: string) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const { error } = await supabase
+      .from('event_resources')
+      .delete()
+      .eq('id', resourceId)
+      .eq('event_id', eventId);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath(`/events/${eventId}`);
+    revalidatePath('/dashboard');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to delete resource' };
   }
 }
