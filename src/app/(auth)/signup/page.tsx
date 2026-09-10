@@ -77,31 +77,33 @@ export default function SignupPage() {
   };
 
   return (
-    <Card className="shadow-lg border-0 bg-white">
-      <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl font-semibold tracking-tight">Create your account</CardTitle>
-        <CardDescription>
-          Enter your details to coordinate and execute hackathons
+    <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[8px_8px_0_#671912]">
+      <CardHeader className="space-y-1 text-center border-b-2 border-[#10201d] pb-5">
+        <CardTitle className="font-display text-3xl font-extrabold uppercase tracking-tight text-[#10201d]">
+          Create Account
+        </CardTitle>
+        <CardDescription className="font-mono text-xs text-[#34433f]">
+          Join HackFlow to coordinate and execute multi-stage hackathons
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-6">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md text-xs sm:text-sm flex gap-2 items-start">
-            <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+          <div className="border-2 border-[#10201d] bg-[#e53927] text-[#f7f7f2] p-3 text-xs font-mono font-bold flex gap-2 items-start shadow-[3px_3px_0_#671912]">
+            <AlertCircle className="h-4 w-4 text-white shrink-0 mt-0.5" />
             <span className="flex-1">{error}</span>
           </div>
         )}
 
         {success ? (
-          <div className="bg-green-50 border border-green-200 text-green-800 p-4 rounded-md text-sm text-center space-y-2">
-            <CheckCircle2 className="h-6 w-6 text-green-600 mx-auto" />
-            <h4 className="font-semibold text-base">Account Created!</h4>
-            <p className="text-xs text-green-700">
-              Please check your email <strong>{email}</strong> for the confirmation link to finish signing up.
+          <div className="border-2 border-[#10201d] bg-[#8bb2de] p-5 text-center space-y-3 shadow-[4px_4px_0_#2e4742]">
+            <CheckCircle2 className="h-8 w-8 text-[#10201d] mx-auto" />
+            <h4 className="font-display text-2xl font-bold text-[#10201d]">Account Created!</h4>
+            <p className="font-mono text-xs text-[#10201d] leading-relaxed">
+              Please check your inbox at <strong>{email}</strong> for the confirmation link.
             </p>
             <div className="pt-2">
               <Link href="/login">
-                <Button variant="outline" size="sm" className="bg-white">
+                <Button variant="default" size="sm">
                   Proceed to Sign In
                 </Button>
               </Link>
@@ -109,8 +111,10 @@ export default function SignupPage() {
           </div>
         ) : (
           <form onSubmit={handleEmailSignup} className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-700">Full Name</label>
+            <div className="space-y-1.5">
+              <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d]">
+                Full Name
+              </label>
               <Input
                 type="text"
                 placeholder="Alex Developer"
@@ -120,8 +124,10 @@ export default function SignupPage() {
                 disabled={loading || googleLoading}
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-700">Email Address</label>
+            <div className="space-y-1.5">
+              <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d]">
+                Email Address
+              </label>
               <Input
                 type="email"
                 placeholder="name@example.com"
@@ -131,8 +137,10 @@ export default function SignupPage() {
                 disabled={loading || googleLoading}
               />
             </div>
-            <div className="space-y-2">
-              <label className="text-xs font-medium text-slate-700">Password</label>
+            <div className="space-y-1.5">
+              <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d]">
+                Password
+              </label>
               <Input
                 type="password"
                 placeholder="••••••••"
@@ -143,7 +151,7 @@ export default function SignupPage() {
                 disabled={loading || googleLoading}
               />
             </div>
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading || googleLoading}>
+            <Button type="submit" className="w-full" disabled={loading || googleLoading}>
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Create Account
             </Button>
@@ -152,12 +160,12 @@ export default function SignupPage() {
 
         {!success && (
           <>
-            <div className="relative">
+            <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+                <span className="w-full border-t-2 border-[#10201d]" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-white px-2 text-muted-foreground">
+                <span className="bg-[#f7f7f2] px-3 font-mono font-bold text-[#10201d]">
                   or
                 </span>
               </div>
@@ -166,7 +174,7 @@ export default function SignupPage() {
             <Button 
               variant="outline" 
               type="button" 
-              className="w-full border-slate-200 hover:bg-slate-50" 
+              className="w-full" 
               onClick={handleGoogleLogin}
               disabled={loading || googleLoading}
             >
@@ -197,10 +205,10 @@ export default function SignupPage() {
           </>
         )}
       </CardContent>
-      <CardFooter className="flex justify-center">
-        <p className="text-sm text-muted-foreground">
+      <CardFooter className="flex justify-center border-t-2 border-[#10201d] pt-4">
+        <p className="font-mono text-xs text-[#34433f]">
           Already have an account?{' '}
-          <Link href="/login" className="text-blue-600 font-medium hover:underline">
+          <Link href="/login" className="text-[#10201d] font-bold underline decoration-2 underline-offset-3 hover:text-[#e53927]">
             Sign in
           </Link>
         </p>
@@ -208,3 +216,4 @@ export default function SignupPage() {
     </Card>
   );
 }
+

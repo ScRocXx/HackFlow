@@ -110,35 +110,40 @@ export function NotificationBell({ userId }: { userId: string }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#e97b77] text-[#10201d] shadow-[2px_2px_0_#10201d]">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 flex h-2 w-2 items-center justify-center rounded-full bg-red-600 p-[1px] text-[10px] text-white" />
+            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center border border-[#10201d] bg-[#e53927] text-[10px] font-mono font-bold text-white shadow-[1px_1px_0_#10201d]">
+              {unreadCount}
+            </span>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto">
-        <div className="flex items-center justify-between px-4 py-2 border-b">
-          <span className="font-semibold text-sm">Notifications</span>
-          <Button variant="ghost" size="sm" onClick={handleMarkAllRead} className="text-xs">
+      <DropdownMenuContent align="end" className="w-80 max-h-96 overflow-y-auto border-2 border-[#10201d] bg-[#f7f7f2] shadow-[7px_7px_0_#671912] p-0">
+        <div className="flex items-center justify-between px-4 py-2.5 border-b-2 border-[#10201d] bg-[#3d5f58] text-[#f7f7f2]">
+          <span className="font-display font-bold text-base">Notifications</span>
+          <button onClick={handleMarkAllRead} className="font-mono text-[11px] font-bold text-[#8bb2de] hover:text-white underline">
             Mark all read
-          </Button>
+          </button>
         </div>
         {notifications.length === 0 ? (
-          <div className="p-4 text-center text-sm text-gray-500">No notifications</div>
+          <div className="p-6 text-center font-mono text-xs text-[#34433f]">No notifications yet</div>
         ) : (
           notifications.map((notification) => (
             <DropdownMenuItem
               key={notification.id}
-              className={cn("flex flex-col items-start p-4 cursor-pointer gap-1", !notification.read && "bg-muted/50")}
+              className={cn(
+                "flex flex-col items-start p-3 cursor-pointer gap-1 border-b border-[#10201d]/20 last:border-b-0 hover:bg-[#e4e5da] transition-colors",
+                !notification.read && "bg-[#f2f2eb]"
+              )}
               onClick={() => handleNotificationClick(notification)}
             >
               <div className="flex items-center gap-2 w-full">
-                {!notification.read && <div className="h-2 w-2 rounded-full bg-blue-600" />}
-                <span className="font-medium text-sm">{notification.title}</span>
+                {!notification.read && <div className="h-2 w-2 rounded-none bg-[#e53927] border border-[#10201d]" />}
+                <span className="font-display font-bold text-sm text-[#10201d]">{notification.title}</span>
               </div>
-              <p className="text-xs text-muted-foreground line-clamp-2">{notification.body}</p>
-              <span className="text-[10px] text-muted-foreground mt-1">
+              <p className="font-mono text-xs text-[#34433f] line-clamp-2">{notification.body}</p>
+              <span className="font-mono text-[10px] text-[#2e4742] font-semibold mt-1">
                 {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
               </span>
             </DropdownMenuItem>

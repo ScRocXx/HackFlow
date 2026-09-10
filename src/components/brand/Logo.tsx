@@ -1,59 +1,41 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 
+export function HackFlowSquares({ className = "", size = "w-3 h-3" }: { className?: string; size?: string }) {
+  return (
+    <div className={cn("inline-flex items-center gap-0.5 shrink-0", className)} aria-hidden="true">
+      <span className={cn(size, "bg-[#e53927] inline-block")} />
+      <span className={cn(size, "bg-[#8bb2de] inline-block")} />
+      <span className={cn(size, "bg-[#f5b726] inline-block")} />
+      <span className={cn(size, "bg-[#e97b77] inline-block")} />
+    </div>
+  );
+}
+
 export function HackFlowIcon({ className = "h-6 w-6" }: { className?: string }) {
   return (
-    <svg 
-      className={cn("shrink-0", className)} 
-      viewBox="0 0 32 32" 
-      fill="none" 
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <defs>
-        <linearGradient id="hf-grad-1" x1="2" y1="4" x2="30" y2="28" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#3B82F6" />
-          <stop offset="0.5" stopColor="#6366F1" />
-          <stop offset="1" stopColor="#8B5CF6" />
-        </linearGradient>
-        <linearGradient id="hf-grad-2" x1="10" y1="6" x2="26" y2="22" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#60A5FA" />
-          <stop offset="1" stopColor="#A78BFA" />
-        </linearGradient>
-      </defs>
-      
-      {/* Background Rounded Shield / Hexagonal Flow Container */}
-      <rect x="2" y="2" width="28" height="28" rx="7" fill="#0F172A" />
-      
-      {/* Code bracket slash & forward velocity chevrons */}
-      <path 
-        d="M9 11L14 16L9 21" 
-        stroke="url(#hf-grad-1)" 
-        strokeWidth="2.5" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
-      />
-      <path 
-        d="M17 11L22 16L17 21" 
-        stroke="url(#hf-grad-2)" 
-        strokeWidth="2.5" 
-        strokeLinecap="round" 
-        strokeLinejoin="round" 
-      />
-      {/* Dynamic timeline flow pulse dot */}
-      <circle cx="23" cy="9" r="2" fill="#38BDF8" className="animate-pulse" />
-    </svg>
+    <div className={cn("flex flex-col items-center justify-center p-1 bg-[#10201d] border-2 border-[#10201d] shadow-[3px_3px_0_#671912]", className)}>
+      <div className="grid grid-cols-2 gap-0.5">
+        <span className="w-2.5 h-2.5 bg-[#e53927]" />
+        <span className="w-2.5 h-2.5 bg-[#8bb2de]" />
+        <span className="w-2.5 h-2.5 bg-[#f5b726]" />
+        <span className="w-2.5 h-2.5 bg-[#e97b77]" />
+      </div>
+    </div>
   );
 }
 
 export function HackFlowLogo({ className = "", textClassName = "" }: { className?: string; textClassName?: string }) {
   return (
-    <div className={cn("flex items-center gap-2.5", className)}>
-      <HackFlowIcon className="h-7 w-7" />
+    <div className={cn("flex items-center gap-2.5 select-none", className)}>
+      <HackFlowSquares size="w-3.5 h-3.5" />
       <div className="flex items-center">
-        <span className={cn("text-xl font-bold tracking-tight text-slate-900 dark:text-white font-mono", textClassName)}>
-          Hack<span className="text-blue-500">Flow</span>
+        <span className={cn("font-display text-2xl font-extrabold uppercase tracking-tight text-[#10201d]", textClassName)}>
+          HACK<span className="text-[#e97b77]">FLOW</span>
+          <span className="text-xs font-mono ml-1 px-1.5 py-0.5 border border-current rounded font-bold text-[#8bb2de]">2026</span>
         </span>
       </div>
     </div>
   );
 }
+

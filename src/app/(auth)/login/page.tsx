@@ -83,35 +83,41 @@ function LoginForm() {
   };
 
   return (
-    <Card className="shadow-lg border-0 bg-white">
-      <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl font-semibold tracking-tight">Welcome back</CardTitle>
-        <CardDescription>
-          Enter your email and password to access your hackathons
+    <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[8px_8px_0_#671912]">
+      <CardHeader className="space-y-1 text-center border-b-2 border-[#10201d] pb-5">
+        <CardTitle className="font-display text-3xl font-extrabold uppercase tracking-tight text-[#10201d]">
+          Welcome Back
+        </CardTitle>
+        <CardDescription className="font-mono text-xs text-[#34433f]">
+          Enter your credentials to access your hackathon consoles
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-6">
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md text-xs sm:text-sm flex gap-2 items-start">
-            <AlertCircle className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+          <div className="border-2 border-[#10201d] bg-[#e53927] text-[#f7f7f2] p-3 text-xs font-mono font-bold flex gap-2 items-start shadow-[3px_3px_0_#671912]">
+            <AlertCircle className="h-4 w-4 text-white shrink-0 mt-0.5" />
             <span className="flex-1">{error}</span>
           </div>
         )}
         
         <form onSubmit={handleEmailLogin} className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-700">Email Address</label>
+          <div className="space-y-1.5">
+            <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d]">
+              Email Address
+            </label>
             <Input
               type="email"
-              placeholder="name@example.com"
+              placeholder="hacker@hackflow.dev"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading || googleLoading}
             />
           </div>
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-slate-700">Password</label>
+          <div className="space-y-1.5">
+            <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d]">
+              Password
+            </label>
             <Input
               type="password"
               placeholder="••••••••"
@@ -121,18 +127,18 @@ function LoginForm() {
               disabled={loading || googleLoading}
             />
           </div>
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={loading || googleLoading}>
+          <Button type="submit" className="w-full" disabled={loading || googleLoading}>
             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Sign In
+            Sign In with Email
           </Button>
         </form>
 
-        <div className="relative">
+        <div className="relative my-4">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t" />
+            <span className="w-full border-t-2 border-[#10201d]" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-muted-foreground">
+            <span className="bg-[#f7f7f2] px-3 font-mono font-bold text-[#10201d]">
               or
             </span>
           </div>
@@ -141,7 +147,7 @@ function LoginForm() {
         <Button 
           variant="outline" 
           type="button" 
-          className="w-full border-slate-200 hover:bg-slate-50" 
+          className="w-full" 
           onClick={handleGoogleLogin}
           disabled={loading || googleLoading}
         >
@@ -170,17 +176,18 @@ function LoginForm() {
           Continue with Google
         </Button>
       </CardContent>
-      <CardFooter className="flex justify-center">
-        <p className="text-sm text-muted-foreground">
+      <CardFooter className="flex justify-center border-t-2 border-[#10201d] pt-4">
+        <p className="font-mono text-xs text-[#34433f]">
           Don't have an account?{' '}
-          <Link href="/signup" className="text-blue-600 font-medium hover:underline">
-            Sign up
+          <Link href="/signup" className="text-[#10201d] font-bold underline decoration-2 underline-offset-3 hover:text-[#e53927]">
+            Register here
           </Link>
         </p>
       </CardFooter>
     </Card>
   );
 }
+
 
 export default function LoginPage() {
   return (

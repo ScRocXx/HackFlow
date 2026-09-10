@@ -71,12 +71,12 @@ export function CountdownTimer({ deadline, className }: CountdownTimerProps) {
   }, [deadline])
 
   if (!mounted) {
-    return <div className="h-6 w-24 bg-slate-100 animate-pulse rounded" />
+    return <div className="h-7 w-28 bg-[#e4e5da] border-2 border-[#10201d] animate-pulse" />
   }
 
   if (timeLeft.invalid || !deadline) {
     return (
-      <span className={cn("text-xs text-slate-400 font-sans", className)}>
+      <span className={cn("text-xs text-[#34433f] font-mono", className)}>
         No active deadline
       </span>
     )
@@ -84,7 +84,7 @@ export function CountdownTimer({ deadline, className }: CountdownTimerProps) {
 
   if (timeLeft.isPast) {
     return (
-      <div className={cn("inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded bg-red-100 text-red-700", className)}>
+      <div className={cn("inline-flex items-center text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-1 border-2 border-[#10201d] bg-[#e53927] text-[#f7f7f2] shadow-[2px_2px_0_#671912]", className)}>
         Deadline Passed
       </div>
     )
@@ -93,42 +93,43 @@ export function CountdownTimer({ deadline, className }: CountdownTimerProps) {
   const { days, hours, minutes, seconds } = timeLeft
   const totalHours = days * 24 + hours
 
-  let colorClass = "text-emerald-600"
-  let bgBadge = "bg-emerald-50 border-emerald-200"
+  let bgClass = "bg-[#f7f7f2] text-[#10201d]"
+  let shadowClass = "shadow-[3px_3px_0_#2e4742]"
   if (days < 3 && days >= 1) {
-    colorClass = "text-amber-600"
-    bgBadge = "bg-amber-50 border-amber-200"
+    bgClass = "bg-[#f5b726] text-[#10201d]"
+    shadowClass = "shadow-[3px_3px_0_#8a5d13]"
   } else if (days < 1 && totalHours >= 6) {
-    colorClass = "text-rose-600"
-    bgBadge = "bg-rose-50 border-rose-200"
+    bgClass = "bg-[#e97b77] text-[#10201d]"
+    shadowClass = "shadow-[3px_3px_0_#671912]"
   } else if (totalHours < 6) {
-    colorClass = "text-red-600 animate-pulse font-bold"
-    bgBadge = "bg-red-50 border-red-300"
+    bgClass = "bg-[#e53927] text-[#f7f7f2] animate-pulse"
+    shadowClass = "shadow-[3px_3px_0_#671912]"
   }
 
   const pad = (num: number) => num.toString().padStart(2, '0')
 
   return (
-    <div className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border font-mono font-medium text-xs", bgBadge, colorClass, className)}>
+    <div className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-[#10201d] font-mono font-bold text-xs select-none", bgClass, shadowClass, className)}>
       <div className="flex flex-col items-center">
-        <span className="leading-tight">{pad(days)}</span>
-        <span className="text-[8px] opacity-70 font-sans uppercase">d</span>
+        <span className="leading-tight text-sm font-extrabold">{pad(days)}</span>
+        <span className="text-[9px] uppercase tracking-wider opacity-80">d</span>
       </div>
-      <span className="opacity-40 -mt-1">:</span>
+      <span className="opacity-50 font-bold -mt-1">:</span>
       <div className="flex flex-col items-center">
-        <span className="leading-tight">{pad(hours)}</span>
-        <span className="text-[8px] opacity-70 font-sans uppercase">h</span>
+        <span className="leading-tight text-sm font-extrabold">{pad(hours)}</span>
+        <span className="text-[9px] uppercase tracking-wider opacity-80">h</span>
       </div>
-      <span className="opacity-40 -mt-1">:</span>
+      <span className="opacity-50 font-bold -mt-1">:</span>
       <div className="flex flex-col items-center">
-        <span className="leading-tight">{pad(minutes)}</span>
-        <span className="text-[8px] opacity-70 font-sans uppercase">m</span>
+        <span className="leading-tight text-sm font-extrabold">{pad(minutes)}</span>
+        <span className="text-[9px] uppercase tracking-wider opacity-80">m</span>
       </div>
-      <span className="opacity-40 -mt-1">:</span>
+      <span className="opacity-50 font-bold -mt-1">:</span>
       <div className="flex flex-col items-center">
-        <span className="leading-tight">{pad(seconds)}</span>
-        <span className="text-[8px] opacity-70 font-sans uppercase">s</span>
+        <span className="leading-tight text-sm font-extrabold">{pad(seconds)}</span>
+        <span className="text-[9px] uppercase tracking-wider opacity-80">s</span>
       </div>
     </div>
   )
 }
+

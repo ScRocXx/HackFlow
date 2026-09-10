@@ -24,55 +24,69 @@
 }
 
 :root {
-  --background: 0 0% 100%;
-  --foreground: 222.2 84% 4.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-  --primary: 221.2 83.2% 53.3%;
-  --primary-foreground: 210 40% 98%;
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  --ring: 221.2 83.2% 53.3%;
-  --radius: 0.5rem;
+  --background: 50 20% 93%;
+  --foreground: 168 33% 10%;
+  --card: 50 20% 96%;
+  --card-foreground: 168 33% 10%;
+  --popover: 50 20% 96%;
+  --popover-foreground: 168 33% 10%;
+  --primary: 2 74% 69%;
+  --primary-foreground: 168 33% 10%;
+  --secondary: 50 20% 96%;
+  --secondary-foreground: 168 33% 10%;
+  --muted: 65 14% 88%;
+  --muted-foreground: 165 13% 23%;
+  --accent: 213 54% 71%;
+  --accent-foreground: 168 33% 10%;
+  --destructive: 6 79% 52%;
+  --destructive-foreground: 50 20% 96%;
+  --border: 168 33% 10%;
+  --input: 168 33% 10%;
+  --ring: 168 33% 10%;
+  --radius: 0.25rem;
 }
 
-.dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 217.2 91.2% 59.8%;
-  --primary-foreground: 222.2 47.4% 11.2%;
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 224.3 76.3% 48%;
-}
-
-* {
-  border-color: hsl(var(--border));
+html {
+  scroll-behavior: smooth;
+  background: #2e4742;
 }
 
 body {
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+  position: relative;
+  margin: 0;
+  color: #10201d;
+  background-color: #f2f2eb;
+  line-height: 1.55;
+  isolation: isolate;
 }
+
+/* Authentic Hacktoberfest 2026 dot matrix grain texture overlay */
+body::after {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(24, 37, 34, 0.6) 0 0.45px, transparent 0.65px),
+    radial-gradient(circle, rgba(247, 247, 242, 0.6) 0 0.35px, transparent 0.55px);
+  background-position: 0 0, 4px 5px;
+  background-size: 7px 7px, 11px 11px;
+  content: '';
+  opacity: 0.075;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+::selection {
+  color: #10201d;
+  background: #e97b77;
+}
+
+:focus-visible {
+  outline: 3px solid #f7f7f2;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px #10201d;
+}
+
+* {
+  box-sizing: border-box;
+}
+

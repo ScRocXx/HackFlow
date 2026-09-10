@@ -141,7 +141,7 @@ export const DropdownMenuContent = React.forwardRef<HTMLDivElement, React.HTMLAt
           contentRef.current = node
         }}
         className={cn(
-          "absolute z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95",
+          "absolute z-50 min-w-[8rem] overflow-hidden border-2 border-[#10201d] bg-[#f7f7f2] p-1 text-[#10201d] shadow-[5px_5px_0_#671912] animate-in fade-in-0 zoom-in-95",
           className
         )}
         style={{ top: position.top, left: position.left }}
@@ -163,7 +163,7 @@ export const DropdownMenuItem = React.forwardRef<HTMLDivElement, React.HTMLAttri
       <div
         ref={ref}
         className={cn(
-          "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+          "relative flex cursor-pointer select-none items-center px-2 py-1.5 font-mono text-xs text-[#10201d] outline-none transition-colors hover:bg-[#e4e5da] hover:text-[#10201d] data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
           className
         )}
         onClick={(e) => {
