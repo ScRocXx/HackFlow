@@ -6,7 +6,7 @@ export async function fetchUrlContent(url: string): Promise<{ title: string; con
     'Accept': 'application/json',
     'X-Wait-For-Selector': 'main, #content, .hackathon-content, .challenge-detail, .timeline',
     'X-Timeout': '30',
-    'X-Remove-Selector': 'header, footer, nav, .cookie-banner, .advertisement, .sidebar',
+    'X-Remove-Selector': 'header, footer, nav, .cookie-banner, .advertisement, .sidebar, .mega-dropdown, .dropdown-menu, .is_header, .footer, .login-modal, .registration-modal',
   };
 
   if (apiKey) {
@@ -35,9 +35,12 @@ export async function fetchUrlContent(url: string): Promise<{ title: string; con
 
     const { data } = json;
 
+    const rawContent = data.content || '';
+    const cleaned = cleanMarkdownContent(rawContent);
+
     return {
       title: data.title || '',
-      content: data.content || '',
+      content: cleaned || rawContent,
       url: data.url || url,
     };
   } catch (error) {
@@ -52,3 +55,19 @@ export async function fetchUrlContent(url: string): Promise<{ title: string; con
     clearTimeout(timeoutId);
   }
 }
+
+export function cleanMarkdownContent(raw: string): string {
+  if (!raw) return '';
+  return raw
+    // Remove navigation link blocks
+    .replace(/\[(?:Jobs|Internships|Fresher Jobs|Placement Courses)[^\]]*\]\([^)]+\)/gi, '')
+    .replace(/\* \[Jobs in [^\]]+\]\([^)]+\)/gi, '')
+    .replace(/Internship by (?:Places|Stream)[\s\S]*?View all internship[^\n]*/gi, '')
+    .replace(/Jobs by (?:Places|Type)[\s\S]*?View all jobs[^\n]*/gi, '')
+    .replace(/Fresher Jobs by (?:Places|Type)[\s\S]*?View all fresher jobs[^\n]*/gi, '')
+    .replace(/\[Forgot Password\?\][\s\S]*?Register now[^\n]*/gi, '')
+    // Collapse whitespace
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+

@@ -46,6 +46,14 @@ export async function upsertVaultProfile(profileData: {
       return { success: false, error: 'Name and email are required' };
     }
 
+    // Defensive: Ensure profile row exists in public.profiles to satisfy FK constraint
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      email: user.email || profileData.email.trim(),
+      full_name: profileData.full_name.trim() || user.user_metadata?.full_name || 'HackFlow Member',
+      avatar_url: user.user_metadata?.avatar_url || null,
+    }, { onConflict: 'id' });
+
     const { data, error } = await supabase
       .from('team_vault_profiles')
       .upsert({
@@ -123,6 +131,14 @@ export async function createVaultAsset(assetData: {
     if (!assetData.title?.trim() || !assetData.url?.trim()) {
       return { success: false, error: 'Title and URL are required' };
     }
+
+    // Defensive: Ensure profile row exists in public.profiles to satisfy FK constraint
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      email: user.email || '',
+      full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'HackFlow Member',
+      avatar_url: user.user_metadata?.avatar_url || null,
+    }, { onConflict: 'id' });
 
     const { data, error } = await supabase
       .from('team_vault_assets')
