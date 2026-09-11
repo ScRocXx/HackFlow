@@ -1,4 +1,4 @@
-﻿-- 006_vault_and_lifecycle.sql
+-- 006_vault_and_lifecycle.sql
 
 -- 1. Expand Lifecycle Statuses on events
 DO $$ 
