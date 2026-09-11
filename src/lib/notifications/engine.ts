@@ -71,13 +71,13 @@ export async function evaluateAndDispatchNotifications() {
   // 1. Query pending event stages
   const { data: stages, error: stagesError } = await supabaseAdmin
     .from('event_stages')
-    .select('id, title, deadline, event_id, events(id, title, created_by)')
+    .select('id, title, deadline, event_id, events!event_stages_event_id_fkey(id, title, created_by)')
     .eq('is_completed', false)
     .gt('deadline', new Date().toISOString());
 
   if (stagesError || !stages) {
     console.error('[NotificationEngine] Error fetching stages:', stagesError);
-    return { evaluated, dispatched };
+    return { evaluated, dispatched, error: stagesError?.message };
   }
 
   for (const stage of stages) {
@@ -95,46 +95,34 @@ export async function evaluateAndDispatchNotifications() {
     // Get confirmed participants for this event from event_participants
     const { data: participants, error: membersError } = await supabaseAdmin
       .from('event_participants')
-      .select('user_id, profiles(id, email, full_name)')
+      .select('user_id')
       .eq('event_id', eventId);
 
     if (membersError) {
       console.warn(`[NotificationEngine] Error fetching participants for event ${eventId}:`, membersError);
     }
 
-    const recipientsMap = new Map<string, { user_id: string; email: string; full_name?: string }>();
-
-    if (participants && participants.length > 0) {
-      for (const p of participants) {
-        const profile = Array.isArray(p.profiles) ? p.profiles[0] : (p.profiles as any);
-        if (profile?.email) {
-          recipientsMap.set(profile.email.toLowerCase(), {
-            user_id: p.user_id || profile.id,
-            email: profile.email,
-            full_name: profile.full_name || ''
-          });
-        }
-      }
+    const userIds = new Set<string>();
+    if (participants) {
+      participants.forEach(p => {
+        if (p.user_id) userIds.add(p.user_id);
+      });
+    }
+    if (eventCreatorId) {
+      userIds.add(eventCreatorId);
     }
 
-    // Fallback: if event_participants has no rows, check event creator
-    if (recipientsMap.size === 0 && eventCreatorId) {
-      const { data: creatorProfile } = await supabaseAdmin
-        .from('profiles')
-        .select('id, email, full_name')
-        .eq('id', eventCreatorId)
-        .maybeSingle();
+    if (userIds.size === 0) continue;
 
-      if (creatorProfile?.email) {
-        recipientsMap.set(creatorProfile.email.toLowerCase(), {
-          user_id: creatorProfile.id,
-          email: creatorProfile.email,
-          full_name: creatorProfile.full_name || ''
-        });
-      }
-    }
+    // Fetch user profiles for all collected user IDs
+    const { data: profiles, error: profError } = await supabaseAdmin
+      .from('profiles')
+      .select('id, email, full_name')
+      .in('id', Array.from(userIds));
 
-    const recipients = Array.from(recipientsMap.values());
+    if (profError || !profiles || profiles.length === 0) continue;
+
+    const recipients = profiles.filter(p => !!p.email);
     if (recipients.length === 0) continue;
 
     for (const intervalKey of triggeredIntervals) {
@@ -195,7 +183,7 @@ export async function evaluateAndDispatchNotifications() {
         if (!existingInAppLog) {
           try {
             await createInAppNotification({
-              userId: recipient.user_id,
+              userId: recipient.id,
               title: message.subject,
               body: message.body,
               link: eventUrl
@@ -212,7 +200,7 @@ export async function evaluateAndDispatchNotifications() {
 
             dispatched++;
           } catch (inAppErr) {
-            console.error(`[NotificationEngine] Failed to create in-app notification for ${recipient.user_id}:`, inAppErr);
+            console.error(`[NotificationEngine] Failed to create in-app notification for ${recipient.id}:`, inAppErr);
           }
         }
       }
