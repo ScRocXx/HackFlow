@@ -47,14 +47,33 @@ export async function createEvent(data: CreateEventInput) {
       return { success: false, error: 'Event title is required' };
     }
 
-    // 1. Insert Event
+    // 0. Ensure user profile exists to prevent foreign key violation on events.created_by
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert({
+        id: user.id,
+        email: user.email || '',
+        full_name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'HackFlow Member',
+        avatar_url: user.user_metadata?.avatar_url || null,
+      }, { onConflict: 'id' });
+
+    if (profileError) {
+      console.warn('Profile sync warning:', profileError);
+    }
+
+    // Sanitize source platform
+    const allowedPlatforms = ['unstop', 'devfolio', 'devpost', 'mlh', 'hackerearth', 'internshala', 'custom'];
+    const rawPlatform = (data.source_platform || 'custom').toLowerCase().trim();
+    const sourcePlatform = allowedPlatforms.includes(rawPlatform) ? rawPlatform : 'custom';
+
+    // 1. Insert Event with active_stage_id explicitly NULL (avoids circular FK violation)
     const { data: event, error: eventError } = await supabase
       .from('events')
       .insert({
         title: data.title.trim(),
         organizer: data.organizer || '',
-        source_url: data.source_url || null,
-        source_platform: data.source_platform || 'custom',
+        source_url: data.source_url?.trim() || null,
+        source_platform: sourcePlatform,
         mode: data.mode || 'online',
         location: data.location || '',
         banner_url: data.banner_url || '',
@@ -64,13 +83,19 @@ export async function createEvent(data: CreateEventInput) {
         team_size_min: data.team_size_min || 1,
         team_size_max: data.team_size_max || 4,
         created_by: user.id,
-        status: 'registered'
+        status: 'registered',
+        active_stage_id: null, // explicitly NULL initially
       })
       .select('*')
       .single();
 
     if (eventError || !event) {
-      return { success: false, error: `Failed to create event: ${eventError?.message || 'Database error'}` };
+      const detail = eventError?.details ? ` (${eventError.details})` : '';
+      const hint = eventError?.hint ? ` [Hint: ${eventError.hint}]` : '';
+      return { 
+        success: false, 
+        error: `Database error creating event: ${eventError?.message || 'Unknown PostgreSQL error'}${detail}${hint}` 
+      };
     }
 
     // 2. Prepare and Insert Stages
@@ -103,50 +128,77 @@ export async function createEvent(data: CreateEventInput) {
       .order('round_number', { ascending: true });
 
     if (stagesError || !stages || stages.length === 0) {
-      // Rollback the created event to prevent orphan
+      // Rollback the created event to prevent orphaned records
       await supabase.from('events').delete().eq('id', event.id);
-      return { success: false, error: `Failed to create event stages: ${stagesError?.message || 'Database error'}` };
+      const detail = stagesError?.details ? ` (${stagesError.details})` : '';
+      return { 
+        success: false, 
+        error: `Database error inserting event stages: ${stagesError?.message || 'Unknown error'}${detail}` 
+      };
     }
 
     const firstStage = stages[0];
 
-    // 3. Set Active Stage ID
-    const { error: updateError } = await supabase
+    // 3. Update the event's active_stage_id to the ID of the first stage
+    const { error: updateStageError } = await supabase
       .from('events')
       .update({ active_stage_id: firstStage.id })
       .eq('id', event.id);
 
-    if (updateError) {
-      console.error('Failed to set active stage:', updateError);
+    if (updateStageError) {
+      console.error('Failed to link active stage ID:', updateStageError);
+      return {
+        success: false,
+        error: `Database error linking active stage: ${updateStageError.message}`
+      };
     }
 
-    // 4. Generate deliverables for the first stage
-    let deliverablesTitles: string[] = [];
-    if (stagesData[0]?.deliverables && stagesData[0].deliverables.length > 0) {
-      deliverablesTitles = stagesData[0].deliverables;
-    } else if (stagesData[0]?.deliverables_description) {
-      deliverablesTitles = stagesData[0].deliverables_description
-        .split(/[,;\n]+/)
-        .map(s => s.trim())
-        .filter(Boolean);
-    }
-    
-    if (deliverablesTitles.length === 0) {
-      deliverablesTitles = getDefaultDeliverables(firstStage.stage_type);
+    // 4. Insert stage_deliverables for EACH stage
+    const allDeliverables: Array<{
+      stage_id: string;
+      title: string;
+      sort_order: number;
+      is_done: boolean;
+    }> = [];
+
+    stages.forEach((insertedStage, stageIdx) => {
+      const stageInput = stagesData[stageIdx];
+      let deliverablesTitles: string[] = [];
+
+      if (stageInput?.deliverables && stageInput.deliverables.length > 0) {
+        deliverablesTitles = stageInput.deliverables;
+      } else if (stageInput?.deliverables_description) {
+        deliverablesTitles = stageInput.deliverables_description
+          .split(/[,;\n]+/)
+          .map(s => s.trim())
+          .filter(Boolean);
+      }
+
+      if (deliverablesTitles.length === 0) {
+        deliverablesTitles = getDefaultDeliverables(insertedStage.stage_type);
+      }
+
+      deliverablesTitles.forEach((title, dIdx) => {
+        allDeliverables.push({
+          stage_id: insertedStage.id,
+          title: title.trim(),
+          sort_order: dIdx,
+          is_done: false,
+        });
+      });
+    });
+
+    if (allDeliverables.length > 0) {
+      const { error: deliverablesError } = await supabase
+        .from('stage_deliverables')
+        .insert(allDeliverables);
+
+      if (deliverablesError) {
+        console.warn('Deliverables insertion warning:', deliverablesError);
+      }
     }
 
-    if (deliverablesTitles.length > 0) {
-      const deliverablesToInsert = deliverablesTitles.map((title, index) => ({
-        stage_id: firstStage.id,
-        title,
-        sort_order: index,
-        is_done: false,
-      }));
-
-      await supabase.from('stage_deliverables').insert(deliverablesToInsert);
-    }
-
-    // 5. Insert Attached Resources (Problem Statement, Rules, Templates, etc.)
+    // 5. Insert event_resources if any links were extracted
     if (data.resources && data.resources.length > 0) {
       const validResources = data.resources
         .filter(r => r.title?.trim() && r.url?.trim())
@@ -164,13 +216,13 @@ export async function createEvent(data: CreateEventInput) {
           .insert(validResources);
 
         if (resourcesError) {
-          console.error('Failed to insert event resources:', resourcesError);
+          console.warn('Event resources insertion warning:', resourcesError);
         }
       }
     }
 
     // 6. Add Creator to Team Members
-    await supabase.from('team_members').insert({
+    const { error: teamMemberError } = await supabase.from('team_members').insert({
       event_id: event.id,
       user_id: user.id,
       email: user.email || '',
@@ -178,8 +230,14 @@ export async function createEvent(data: CreateEventInput) {
       joined_at: new Date().toISOString()
     });
 
+    if (teamMemberError) {
+      console.warn('Team member insertion warning:', teamMemberError);
+    }
+
     revalidatePath('/dashboard');
-    return { success: true, data: event };
+    revalidatePath('/events');
+    revalidatePath(`/events/${event.id}`);
+    return { success: true, data: { ...event, active_stage_id: firstStage.id } };
   } catch (error: any) {
     console.error('Error creating event:', error);
     return { success: false, error: error.message || 'An unexpected error occurred while saving the event' };
@@ -323,6 +381,19 @@ export async function getEventWithDetails(eventId: string) {
       .eq('event_id', eventId)
       .order('created_at', { ascending: true });
 
+    // Fetch problem statements for Idea Sandbox
+    let problemStatements: any[] = [];
+    try {
+      const { data: psData } = await supabase
+        .from('event_problem_statements')
+        .select('*')
+        .eq('event_id', eventId)
+        .order('created_at', { ascending: true });
+      if (psData) problemStatements = psData;
+    } catch (err) {
+      console.warn('Problem statements fetch warning:', err);
+    }
+
     return { 
       success: true, 
       data: { 
@@ -330,7 +401,8 @@ export async function getEventWithDetails(eventId: string) {
         stages: stages || [], 
         team_members: teamMembers || [],
         current_stage_deliverables: deliverables,
-        resources: resources || []
+        resources: resources || [],
+        problem_statements: problemStatements
       } 
     };
   } catch (error: any) {
@@ -516,3 +588,189 @@ export async function deleteEventResource(resourceId: string, eventId: string) {
     return { success: false, error: error.message || 'Failed to delete resource' };
   }
 }
+
+// -------------------------------------------------------------
+// Meet Companion & Post-Submission Actions
+// -------------------------------------------------------------
+
+export async function updateEventMeetUrl(eventId: string, meetUrl: string) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const { error } = await supabase
+      .from('events')
+      .update({ meet_url: meetUrl.trim() || null })
+      .eq('id', eventId);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath(`/events/${eventId}`);
+    revalidatePath('/dashboard');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to update meet link' };
+  }
+}
+
+export async function updatePostSubmissionDetails(eventId: string, details: {
+  submission_receipt?: string;
+  submission_notes?: string;
+  result_date?: string;
+  prize_details?: string;
+  retro_notes?: string;
+  demo_url?: string;
+  github_repo_url?: string;
+  pitch_deck_url?: string;
+  status?: string;
+}) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const updatePayload: Record<string, any> = {};
+    if (details.submission_receipt !== undefined) updatePayload.submission_receipt = details.submission_receipt;
+    if (details.submission_notes !== undefined) updatePayload.submission_notes = details.submission_notes;
+    if (details.result_date !== undefined) updatePayload.result_date = details.result_date || null;
+    if (details.prize_details !== undefined) updatePayload.prize_details = details.prize_details;
+    if (details.retro_notes !== undefined) updatePayload.retro_notes = details.retro_notes;
+    if (details.demo_url !== undefined) updatePayload.demo_url = details.demo_url;
+    if (details.github_repo_url !== undefined) updatePayload.github_repo_url = details.github_repo_url;
+    if (details.pitch_deck_url !== undefined) updatePayload.pitch_deck_url = details.pitch_deck_url;
+    if (details.status) updatePayload.status = details.status;
+
+    const { error } = await supabase
+      .from('events')
+      .update(updatePayload)
+      .eq('id', eventId);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath(`/events/${eventId}`);
+    revalidatePath('/dashboard');
+    revalidatePath('/archive');
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to update post-submission details' };
+  }
+}
+
+// -------------------------------------------------------------
+// Idea Sandbox (Problem Statements) Actions
+// -------------------------------------------------------------
+
+export async function addProblemStatement(eventId: string, statement: {
+  title: string;
+  description?: string;
+  category?: string;
+  solution_bullets?: string[];
+}) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    if (!statement.title?.trim()) {
+      return { success: false, error: 'Title is required for problem statement' };
+    }
+
+    const { data, error } = await supabase
+      .from('event_problem_statements')
+      .insert({
+        event_id: eventId,
+        title: statement.title.trim(),
+        description: statement.description?.trim() || null,
+        category: statement.category?.trim() || null,
+        solution_bullets: statement.solution_bullets || [],
+        is_chosen: false,
+      })
+      .select('*')
+      .single();
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath(`/events/${eventId}`);
+    return { success: true, data };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to add problem statement' };
+  }
+}
+
+export async function chooseProblemStatement(eventId: string, statementId: string) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    // Reset others to false
+    await supabase
+      .from('event_problem_statements')
+      .update({ is_chosen: false })
+      .eq('event_id', eventId);
+
+    // Set target to true
+    const { error } = await supabase
+      .from('event_problem_statements')
+      .update({ is_chosen: true })
+      .eq('id', statementId)
+      .eq('event_id', eventId);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath(`/events/${eventId}`);
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to select problem statement' };
+  }
+}
+
+export async function updateProblemStatement(statementId: string, eventId: string, updates: {
+  title?: string;
+  description?: string;
+  category?: string;
+  solution_bullets?: string[];
+  is_chosen?: boolean;
+}) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const { error } = await supabase
+      .from('event_problem_statements')
+      .update(updates)
+      .eq('id', statementId)
+      .eq('event_id', eventId);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath(`/events/${eventId}`);
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to update problem statement' };
+  }
+}
+
+export async function deleteProblemStatement(statementId: string, eventId: string) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const { error } = await supabase
+      .from('event_problem_statements')
+      .delete()
+      .eq('id', statementId)
+      .eq('event_id', eventId);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath(`/events/${eventId}`);
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to delete problem statement' };
+  }
+}
+

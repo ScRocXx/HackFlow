@@ -20,7 +20,7 @@ export interface Event {
   title: string
   organizer: string | null
   source_url: string | null
-  source_platform: 'unstop' | 'devfolio' | 'devpost' | 'mlh' | 'hackerearth' | 'custom'
+  source_platform: string
   mode: 'online' | 'in-person' | 'hybrid'
   location: string | null
   banner_url: string | null
@@ -29,8 +29,17 @@ export interface Event {
   eligibility: string | null
   team_size_min: number | null
   team_size_max: number | null
-  status: 'bookmarked' | 'registered' | 'building' | 'submitted'
+  status: 'bookmarked' | 'registered' | 'building' | 'submitted' | 'under_review' | 'finalist' | 'winner' | 'runner_up' | 'participated' | 'archived'
   active_stage_id: string | null
+  meet_url?: string | null
+  submission_receipt?: string | null
+  submission_notes?: string | null
+  result_date?: string | null
+  prize_details?: string | null
+  retro_notes?: string | null
+  demo_url?: string | null
+  github_repo_url?: string | null
+  pitch_deck_url?: string | null
   created_at: string
   updated_at: string
 }
@@ -99,9 +108,61 @@ export interface EventResource {
   created_at: string
 }
 
+export interface EventProblemStatement {
+  id: string
+  event_id: string
+  title: string
+  description: string | null
+  category: string | null
+  is_chosen: boolean
+  solution_bullets: string[]
+  created_at: string
+}
+
+export interface TeamVaultProfile {
+  id: string
+  user_id: string
+  full_name: string
+  email: string
+  phone: string | null
+  college: string | null
+  roll_number: string | null
+  github_url: string | null
+  linkedin_url: string | null
+  portfolio_url: string | null
+  resume_url: string | null
+  created_at: string
+}
+
+export interface TeamVaultAsset {
+  id: string
+  title: string
+  asset_type: 'pitch_deck' | 'figma_kit' | 'boilerplate' | 'diagram' | 'other'
+  url: string
+  description: string | null
+  tags: string[]
+  created_by: string | null
+  created_at: string
+}
+
 export interface Database {
   public: {
     Tables: {
+      event_problem_statements: {
+        Row: EventProblemStatement
+        Insert: Omit<EventProblemStatement, 'id' | 'created_at'> & { id?: string, created_at?: string }
+        Update: Partial<Omit<EventProblemStatement, 'id' | 'event_id'>>
+      }
+      team_vault_profiles: {
+        Row: TeamVaultProfile
+        Insert: Omit<TeamVaultProfile, 'id' | 'created_at'> & { id?: string, created_at?: string }
+        Update: Partial<Omit<TeamVaultProfile, 'id' | 'user_id'>>
+      }
+      team_vault_assets: {
+        Row: TeamVaultAsset
+        Insert: Omit<TeamVaultAsset, 'id' | 'created_at'> & { id?: string, created_at?: string }
+        Update: Partial<Omit<TeamVaultAsset, 'id'>>
+      }
       event_resources: {
         Row: EventResource
         Insert: Omit<EventResource, 'id' | 'created_at'> & { id?: string, created_at?: string, is_official?: boolean }

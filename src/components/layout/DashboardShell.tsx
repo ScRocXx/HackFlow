@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Calendar, Menu, X, LogOut, ChevronDown, User } from 'lucide-react'
+import { LayoutDashboard, Calendar, Menu, X, LogOut, ChevronDown, User, FolderKanban, Trophy } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -49,7 +49,8 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
 
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'My Events', href: '/events', icon: Calendar },
+    { name: 'Squad Vault', href: '/vault', icon: FolderKanban },
+    { name: 'Trophy Case', href: '/archive', icon: Trophy },
   ]
 
   const userInitials = (user?.full_name || user?.email || 'U')

@@ -13,6 +13,9 @@ import { StageChecklist } from '@/components/events/StageChecklist'
 import { CountdownTimer } from '@/components/events/CountdownTimer'
 import { completeStage } from '@/app/actions/stages'
 import { addEventResource, deleteEventResource } from '@/app/actions/events'
+import { MeetCompanionBar } from '@/components/events/MeetCompanionBar'
+import { IdeaSandbox } from '@/components/events/IdeaSandbox'
+import { PostSubmissionConsole } from '@/components/events/PostSubmissionConsole'
 import type { EventResource } from '@/lib/supabase/types'
 import { format } from 'date-fns'
 
@@ -155,8 +158,13 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
             <h1 className="font-display text-3xl md:text-4xl font-extrabold text-[#10201d] tracking-tight">{event.title}</h1>
             <p className="font-mono text-xs text-[#34433f] mt-1 font-bold">{event.organizer || 'Independent Hackathon'}</p>
           </div>
-          <div className="w-full md:w-64 shrink-0">
-            <StatusPills eventId={event.id} currentStatus={event.status || 'registered'} />
+          <div className="flex flex-col sm:flex-row md:flex-col items-start md:items-end gap-3 w-full md:w-auto shrink-0">
+            <div className="w-full sm:w-64">
+              <StatusPills eventId={event.id} currentStatus={event.status || 'registered'} />
+            </div>
+            <div className="w-full sm:w-auto flex md:justify-end">
+              <MeetCompanionBar eventId={event.id} meetUrl={event.meet_url} />
+            </div>
           </div>
         </div>
       </div>
@@ -213,6 +221,12 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
               </CardContent>
             </Card>
           )}
+
+          {/* Idea Sandbox & Solution Canvas */}
+          <IdeaSandbox
+            eventId={event.id}
+            problemStatements={event.problem_statements || []}
+          />
 
           {/* Resources & Attached Documents */}
           <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[7px_7px_0_#671912] overflow-hidden">
@@ -365,6 +379,9 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
               </div>
             </CardContent>
           </Card>
+
+          {/* Complete Post-Submission Lifecycle Console */}
+          <PostSubmissionConsole event={event} />
         </div>
 
         {/* Right Column (Sidebar) */}
