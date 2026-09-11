@@ -4,16 +4,33 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import type { TeamVaultProfile, TeamVaultAsset } from '@/lib/supabase/types';
 
-export async function getVaultProfiles() {
+export async function getVaultProfiles(squadId?: string | null) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized', data: [] };
 
-    const { data, error } = await supabase
-      .from('team_vault_profiles')
-      .select('*')
-      .order('created_at', { ascending: false });
+    let query = supabase.from('team_vault_profiles').select('*');
+
+    if (squadId) {
+      // Fetch only profiles of members in this squad
+      const { data: squadMembers, error: smErr } = await supabase
+        .from('squad_members')
+        .select('user_id')
+        .eq('squad_id', squadId);
+
+      if (smErr || !squadMembers || squadMembers.length === 0) {
+        return { success: true, data: [] };
+      }
+
+      const memberIds = squadMembers.map((m) => m.user_id);
+      query = query.in('user_id', memberIds);
+    } else {
+      // Personal Vault: show only current user's profile card
+      query = query.eq('user_id', user.id);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       console.warn('team_vault_profiles fetch warning:', error);
@@ -88,22 +105,26 @@ export async function upsertVaultProfile(profileData: {
   }
 }
 
-export async function getVaultAssets(assetType?: string) {
+export async function getVaultAssets(assetType?: string, squadId?: string | null) {
   try {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized', data: [] };
 
-    let query = supabase
-      .from('team_vault_assets')
-      .select('*')
-      .order('created_at', { ascending: false });
+    let query = supabase.from('team_vault_assets').select('*');
+
+    if (squadId) {
+      query = query.eq('squad_id', squadId);
+    } else {
+      // Personal vault: only assets with squad_id IS NULL created by current user
+      query = query.is('squad_id', null).eq('created_by', user.id);
+    }
 
     if (assetType && assetType !== 'all') {
       query = query.eq('asset_type', assetType);
     }
 
-    const { data, error } = await query;
+    const { data, error } = await query.order('created_at', { ascending: false });
 
     if (error) {
       console.warn('team_vault_assets fetch warning:', error);
@@ -122,6 +143,7 @@ export async function createVaultAsset(assetData: {
   url: string;
   description?: string;
   tags?: string[];
+  squad_id?: string | null;
 }) {
   try {
     const supabase = await createClient();
@@ -149,6 +171,7 @@ export async function createVaultAsset(assetData: {
         description: assetData.description?.trim() || null,
         tags: assetData.tags || [],
         created_by: user.id,
+        squad_id: assetData.squad_id || null,
       })
       .select('*')
       .single();

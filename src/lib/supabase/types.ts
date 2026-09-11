@@ -40,6 +40,7 @@ export interface Event {
   demo_url?: string | null
   github_repo_url?: string | null
   pitch_deck_url?: string | null
+  squad_id?: string | null
   created_at: string
   updated_at: string
 }
@@ -142,12 +143,79 @@ export interface TeamVaultAsset {
   description: string | null
   tags: string[]
   created_by: string | null
+  squad_id?: string | null
   created_at: string
+}
+
+export interface Friendship {
+  id: string
+  sender_id: string
+  receiver_email: string
+  receiver_id: string | null
+  status: 'pending' | 'accepted' | 'declined'
+  created_at: string
+  updated_at: string
+  friend_profile?: Profile
+  sender_profile?: Profile
+  receiver_profile?: Profile
+}
+
+export interface Squad {
+  id: string
+  name: string
+  created_by: string
+  created_at: string
+  members?: SquadMember[]
+  member_count?: number
+}
+
+export interface SquadMember {
+  id: string
+  squad_id: string
+  user_id: string
+  role: 'leader' | 'member'
+  joined_at: string
+  profile?: Profile
+}
+
+export interface EventParticipant {
+  id: string
+  event_id: string
+  user_id: string
+  role: 'lead' | 'collaborator'
+  joined_at: string
+  profile?: Profile
 }
 
 export interface Database {
   public: {
     Tables: {
+      friendships: {
+        Row: Friendship
+        Insert: Omit<Friendship, 'id' | 'created_at' | 'updated_at' | 'friend_profile' | 'sender_profile' | 'receiver_profile'> & {
+          id?: string
+          receiver_id?: string | null
+          status?: 'pending' | 'accepted' | 'declined'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Omit<Friendship, 'id'>>
+      }
+      squads: {
+        Row: Squad
+        Insert: Omit<Squad, 'id' | 'created_at' | 'members' | 'member_count'> & { id?: string, created_at?: string }
+        Update: Partial<Omit<Squad, 'id'>>
+      }
+      squad_members: {
+        Row: SquadMember
+        Insert: Omit<SquadMember, 'id' | 'joined_at' | 'profile'> & { id?: string, role?: 'leader' | 'member', joined_at?: string }
+        Update: Partial<Omit<SquadMember, 'id' | 'squad_id' | 'user_id'>>
+      }
+      event_participants: {
+        Row: EventParticipant
+        Insert: Omit<EventParticipant, 'id' | 'joined_at' | 'profile'> & { id?: string, role?: 'lead' | 'collaborator', joined_at?: string }
+        Update: Partial<Omit<EventParticipant, 'id' | 'event_id' | 'user_id'>>
+      }
       event_problem_statements: {
         Row: EventProblemStatement
         Insert: Omit<EventProblemStatement, 'id' | 'created_at'> & { id?: string, created_at?: string }
@@ -160,7 +228,7 @@ export interface Database {
       }
       team_vault_assets: {
         Row: TeamVaultAsset
-        Insert: Omit<TeamVaultAsset, 'id' | 'created_at'> & { id?: string, created_at?: string }
+        Insert: Omit<TeamVaultAsset, 'id' | 'created_at'> & { id?: string, created_at?: string, squad_id?: string | null }
         Update: Partial<Omit<TeamVaultAsset, 'id'>>
       }
       event_resources: {
@@ -175,7 +243,7 @@ export interface Database {
       }
       events: {
         Row: Event
-        Insert: Omit<Event, 'id' | 'created_at' | 'updated_at'> & { id?: string, created_at?: string, updated_at?: string }
+        Insert: Omit<Event, 'id' | 'created_at' | 'updated_at'> & { id?: string, created_at?: string, updated_at?: string, squad_id?: string | null }
         Update: Partial<Omit<Event, 'id' | 'created_by'>>
       }
       event_stages: {

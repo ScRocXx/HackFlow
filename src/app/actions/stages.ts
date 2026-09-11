@@ -79,15 +79,24 @@ export async function updateStageDeadline(stageId: string, newDeadline: string) 
 
     if (!stage) return { success: false, error: 'Stage not found' };
 
-    // Verify member
-    const { data: member, error: memberError } = await supabase
-      .from('team_members')
+    // Verify participant or creator
+    const { data: participant } = await supabase
+      .from('event_participants')
       .select('id')
       .eq('event_id', stage.event_id)
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (memberError || !member) return { success: false, error: 'Not a team member' };
+    if (!participant) {
+      const { data: ev } = await supabase
+        .from('events')
+        .select('created_by')
+        .eq('id', stage.event_id)
+        .single();
+      if (ev?.created_by !== user.id) {
+        return { success: false, error: 'Not a team participant' };
+      }
+    }
 
     const { error } = await supabase
       .from('event_stages')

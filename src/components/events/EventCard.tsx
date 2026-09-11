@@ -14,6 +14,7 @@ type ExtendedEvent = Event & {
   deliverable_progress?: { done: number; total: number }
   team_count?: number
   resources?: EventResource[]
+  squad_name?: string | null
 }
 
 interface EventCardProps {
@@ -50,10 +51,15 @@ export function EventCard({ event }: EventCardProps) {
               </span>
             </div>
           )}
-          <div className="absolute top-3 left-3 flex gap-2">
+          <div className="absolute top-3 left-3 flex gap-2 flex-wrap max-w-[80%]">
             <span className={`inline-flex items-center px-2.5 py-0.5 border-2 font-mono text-[10px] font-bold uppercase tracking-wider shadow-[2px_2px_0_#10201d] ${getPlatformColor(event.source_platform || 'other')}`}>
               {event.source_platform || 'Hackathon'}
             </span>
+            {event.squad_name && (
+              <span className="inline-flex items-center px-2 py-0.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] font-mono text-[10px] font-bold uppercase tracking-wider shadow-[2px_2px_0_#10201d]">
+                👥 {event.squad_name}
+              </span>
+            )}
             {event.mode && (
               <span className="inline-flex items-center px-2 py-0.5 border-2 border-[#10201d] bg-[#f7f7f2] text-[#10201d] font-mono text-[10px] font-bold uppercase tracking-wider shadow-[2px_2px_0_#10201d]">
                 {event.mode === 'in-person' ? <MapPin className="w-3 h-3 mr-1" /> : <Globe className="w-3 h-3 mr-1" />}

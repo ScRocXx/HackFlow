@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
-import { Loader2, Plus, Trash2, Calendar, AlertCircle, Sparkles, Check, Tag, FileText, Database, ExternalLink, Link2 } from 'lucide-react'
+import { Loader2, Plus, Trash2, Calendar, AlertCircle, Sparkles, Check, Tag, FileText, Database, ExternalLink, Link2, Users } from 'lucide-react'
 import { createEvent } from '@/app/actions/events'
+import { getMySquads } from '@/app/actions/squads'
+import type { Squad } from '@/lib/supabase/types'
 import { useRouter } from 'next/navigation'
 
 interface URLParseDialogProps {
@@ -43,17 +45,39 @@ const STAGE_TYPES = [
 const RESOURCE_TYPES = [
   { value: 'problem_statement', label: 'Problem Statement' },
   { value: 'rulebook', label: 'Rulebook / Guidelines' },
-  { value: 'template', label: 'Template / Deck' },
-  { value: 'dataset', label: 'Dataset / API' },
-  { value: 'reference', label: 'Reference / Docs' },
+  { value: 'template', label: 'PPT / Slide Template' },
+  { value: 'dataset', label: 'Dataset / API Spec' },
+  { value: 'reference', label: 'Reference / Documentation' },
   { value: 'other', label: 'Other Link' },
 ]
 
-export function URLParseDialog({ open, onOpenChange, initialUrl }: URLParseDialogProps) {
-  const [url, setUrl] = useState(initialUrl || '')
+export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParseDialogProps) {
+  const router = useRouter()
+  const { toast } = useToast()
+  
+  const [url, setUrl] = useState(initialUrl)
   const [extracting, setExtracting] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [extractError, setExtractError] = useState<string | null>(null)
+  const [hasParsed, setHasParsed] = useState(false)
+
+  // Squad Participation Mode
+  const [userSquads, setUserSquads] = useState<Squad[]>([])
+  const [participationMode, setParticipationMode] = useState<'solo' | 'squad'>('solo')
+  const [selectedSquadId, setSelectedSquadId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (open) {
+      getMySquads().then((res) => {
+        if (res.success && res.data) {
+          setUserSquads(res.data)
+          if (res.data.length > 0 && !selectedSquadId) {
+            setSelectedSquadId(res.data[0].id)
+          }
+        }
+      })
+    }
+  }, [open])
   
   // Parsed Form State
   const [title, setTitle] = useState('')
@@ -73,10 +97,6 @@ export function URLParseDialog({ open, onOpenChange, initialUrl }: URLParseDialo
   const [newResourceTitle, setNewResourceTitle] = useState('')
   const [newResourceUrl, setNewResourceUrl] = useState('')
   const [newResourceType, setNewResourceType] = useState('problem_statement')
-  
-  const [hasParsed, setHasParsed] = useState(false)
-  const { toast } = useToast()
-  const router = useRouter()
 
   useEffect(() => {
     if (open) {
@@ -353,6 +373,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl }: URLParseDialo
         overview,
         team_size_min: Number(teamSizeMin) || 1,
         team_size_max: Number(teamSizeMax) || 4,
+        squad_id: participationMode === 'squad' ? selectedSquadId : null,
         stages: preparedStages,
         resources: resources.filter(r => r.title.trim() && r.url.trim()),
       })
@@ -776,6 +797,79 @@ export function URLParseDialog({ open, onOpenChange, initialUrl }: URLParseDialo
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Participation Mode */}
+            <div className="border-2 border-[#10201d] bg-[#f7f7f2] p-3 shadow-[3px_3px_0_#10201d] space-y-2">
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4 text-[#2e4742]" />
+                <span className="font-mono text-xs font-bold text-[#10201d] uppercase">
+                  Participation Mode
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setParticipationMode('solo')
+                    setSelectedSquadId(null)
+                  }}
+                  className={`flex items-center justify-center gap-2 p-2 border-2 border-[#10201d] text-xs font-mono font-bold transition-all ${
+                    participationMode === 'solo'
+                      ? 'bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d]'
+                      : 'bg-white text-[#57726d] hover:bg-[#f2f2eb]'
+                  }`}
+                >
+                  <span>👤 Solo Sprint</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setParticipationMode('squad')
+                    if (userSquads.length > 0 && !selectedSquadId) {
+                      setSelectedSquadId(userSquads[0].id)
+                    }
+                  }}
+                  className={`flex items-center justify-center gap-2 p-2 border-2 border-[#10201d] text-xs font-mono font-bold transition-all ${
+                    participationMode === 'squad'
+                      ? 'bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#10201d]'
+                      : 'bg-white text-[#57726d] hover:bg-[#f2f2eb]'
+                  }`}
+                >
+                  <span>👥 Squad Roster</span>
+                </button>
+              </div>
+
+              {participationMode === 'squad' && (
+                <div className="mt-2 space-y-2 pt-2 border-t-2 border-[#10201d]/20">
+                  {userSquads.length === 0 ? (
+                    <div className="font-mono text-xs text-[#e53927] p-2 bg-white border border-[#10201d]">
+                      You haven't formed any squads yet. Head to "Squads & Friends" to create one, or proceed Solo!
+                    </div>
+                  ) : (
+                    <>
+                      <label className="block font-mono text-xs font-bold text-[#10201d]">
+                        Select Squad to Enroll:
+                      </label>
+                      <select
+                        value={selectedSquadId || ''}
+                        onChange={(e) => setSelectedSquadId(e.target.value)}
+                        className="w-full font-mono text-xs font-bold p-2 border-2 border-[#10201d] bg-white text-[#10201d]"
+                      >
+                        {userSquads.map((sq) => (
+                          <option key={sq.id} value={sq.id}>
+                            {sq.name} ({sq.member_count || 1} members)
+                          </option>
+                        ))}
+                      </select>
+                      <p className="font-mono text-[11px] text-[#57726d]">
+                        All members of this squad will be automatically enrolled into this competition's board and countdown alert engine.
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Actions */}

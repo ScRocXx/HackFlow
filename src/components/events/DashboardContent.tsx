@@ -14,6 +14,7 @@ type ExtendedEvent = Event & {
   active_stage?: EventStage
   deliverable_progress?: { done: number; total: number }
   team_count?: number
+  squad_name?: string | null
 }
 
 interface DashboardContentProps {
@@ -23,11 +24,14 @@ interface DashboardContentProps {
 export function DashboardContent({ events = [] }: DashboardContentProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedFilter, setSelectedFilter] = useState<string>('all')
+  const [selectedSquad, setSelectedSquad] = useState<string>('all')
 
   const safeEvents = Array.isArray(events) ? events : []
+  const availableSquads = Array.from(new Set(safeEvents.map(e => e.squad_name).filter(Boolean))) as string[]
 
   // Filter events
   const filteredEvents = safeEvents.filter(ev => {
+    if (selectedSquad !== 'all' && ev.squad_name !== selectedSquad) return false
     if (selectedFilter === 'all') return true
     if (selectedFilter === 'active') return ev.status === 'registered' || ev.status === 'building'
     if (selectedFilter === 'building') return ev.status === 'building'
@@ -143,21 +147,41 @@ export function DashboardContent({ events = [] }: DashboardContentProps) {
       {/* Filter Tabs & Section Header */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {filters.map((f) => (
-              <button
-                key={f.id}
-                onClick={() => setSelectedFilter(f.id)}
-                className={cn(
-                  "font-mono text-xs font-bold uppercase tracking-wider px-3 py-1.5 border-2 border-[#10201d] transition-all",
-                  selectedFilter === f.id
-                    ? "bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#8a5d13]"
-                    : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da]"
-                )}
-              >
-                {f.label} ({f.count})
-              </button>
-            ))}
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {filters.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setSelectedFilter(f.id)}
+                  className={cn(
+                    "font-mono text-xs font-bold uppercase tracking-wider px-3 py-1.5 border-2 border-[#10201d] transition-all",
+                    selectedFilter === f.id
+                      ? "bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#8a5d13]"
+                      : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da]"
+                  )}
+                >
+                  {f.label} ({f.count})
+                </button>
+              ))}
+            </div>
+
+            {availableSquads.length > 0 && (
+              <div className="flex items-center gap-1.5 border-2 border-[#10201d] bg-[#f7f7f2] px-2 py-1 shadow-[2px_2px_0_#10201d]">
+                <span className="font-mono text-xs font-bold text-[#10201d]">Squad:</span>
+                <select
+                  value={selectedSquad}
+                  onChange={(e) => setSelectedSquad(e.target.value)}
+                  className="font-mono text-xs font-bold bg-white border border-[#10201d] px-1 py-0.5 focus:outline-none"
+                >
+                  <option value="all">All Squads</option>
+                  {availableSquads.map((sq) => (
+                    <option key={sq} value={sq}>
+                      {sq}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           <p className="font-mono text-xs text-[#34433f]">

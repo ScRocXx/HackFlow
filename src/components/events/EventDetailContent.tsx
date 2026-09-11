@@ -1,22 +1,24 @@
 'use client'
 
 import { useState } from 'react'
-import { MapPin, Globe, ExternalLink, Calendar, Users, Trophy, FileText, Database, Link2, Plus, Trash2, Loader2, Sparkles } from 'lucide-react'
+import { MapPin, Globe, ExternalLink, Calendar, Users, Trophy, FileText, Database, Link2, Plus, Trash2, Loader2, Sparkles, UserPlus, Shield } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/use-toast'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { StatusPills } from '@/components/events/StatusPills'
 import { StageTimeline } from '@/components/events/StageTimeline'
 import { StageChecklist } from '@/components/events/StageChecklist'
 import { CountdownTimer } from '@/components/events/CountdownTimer'
 import { completeStage } from '@/app/actions/stages'
-import { addEventResource, deleteEventResource } from '@/app/actions/events'
+import { addEventResource, deleteEventResource, addEventParticipant } from '@/app/actions/events'
+import { getFriendsList } from '@/app/actions/friends'
 import { MeetCompanionBar } from '@/components/events/MeetCompanionBar'
 import { IdeaSandbox } from '@/components/events/IdeaSandbox'
 import { PostSubmissionConsole } from '@/components/events/PostSubmissionConsole'
-import type { EventResource } from '@/lib/supabase/types'
+import type { EventResource, Friendship } from '@/lib/supabase/types'
 import { format } from 'date-fns'
 
 interface EventDetailContentProps {
@@ -37,6 +39,12 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
                       event.stages?.find((s: any) => !s.is_completed) || 
                       event.stages?.[0]
   const [isCompleting, setIsCompleting] = useState(false)
+  
+  // Teammate invite state
+  const [isInviteOpen, setIsInviteOpen] = useState(false)
+  const [friends, setFriends] = useState<Friendship[]>([])
+  const [loadingFriends, setLoadingFriends] = useState(false)
+  const [invitingId, setInvitingId] = useState<string | null>(null)
   
   // Resources state
   const [resources, setResources] = useState<EventResource[]>(event.resources || [])
@@ -422,30 +430,162 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
           {/* Team Panel */}
           <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[7px_7px_0_#671912]">
             <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-4 border-b-2 border-[#10201d] pb-2">
+              <div className="flex items-center justify-between mb-3 border-b-2 border-[#10201d] pb-2">
                 <h3 className="font-display text-2xl font-bold tracking-tight text-[#10201d] flex items-center gap-2">
                   <Users className="w-5 h-5 text-[#e53927]"/> Team
                 </h3>
-                <span className="font-mono text-xs font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#2e4742]">
-                  {event.team_members?.length || 0} Members
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#2e4742]">
+                    {(event.event_participants || event.team_members)?.length || 0} Members
+                  </span>
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      setIsInviteOpen(true)
+                      setLoadingFriends(true)
+                      try {
+                        const res = await getFriendsList()
+                        if (res.success && res.data) setFriends(res.data)
+                      } finally {
+                        setLoadingFriends(false)
+                      }
+                    }}
+                    className="font-mono text-xs font-bold px-2 py-1 h-auto border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] hover:bg-[#faaf00] shadow-[2px_2px_0_#10201d]"
+                  >
+                    <UserPlus className="h-3.5 w-3.5 mr-1" /> Add
+                  </Button>
+                </div>
               </div>
+
+              {/* Squad Badge if present */}
+              {(event.squad?.name || event.squad_name) && (
+                <div className="mb-3 p-2 bg-[#f5b726]/20 border-2 border-[#10201d] flex items-center justify-between font-mono text-xs font-bold text-[#10201d] shadow-[2px_2px_0_#10201d]">
+                  <span className="flex items-center gap-1.5 truncate">
+                    <Shield className="h-3.5 w-3.5 text-[#2e4742] shrink-0" />
+                    Squad: {event.squad?.name || event.squad_name}
+                  </span>
+                  <Badge variant="outline" className="text-[10px] border-[#10201d] bg-white font-mono shrink-0">
+                    Synced Vault
+                  </Badge>
+                </div>
+              )}
               
               <div className="space-y-2.5">
-                {event.team_members?.map((member: any) => (
-                  <div key={member.id} className="p-2.5 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center gap-3">
-                    <div className="w-8 h-8 border-2 border-[#10201d] bg-[#f5b726] flex items-center justify-center font-mono text-xs font-bold text-[#10201d] shadow-[1px_1px_0_#10201d] shrink-0">
-                      {member.profile?.full_name?.charAt(0) || 'U'}
+                {(event.event_participants || event.team_members || []).map((member: any) => {
+                  const roleLabel = (member.role === 'lead' || member.role === 'owner') ? 'Lead' : 'Collaborator'
+                  const isLead = roleLabel === 'Lead'
+
+                  return (
+                    <div key={member.id} className="p-2.5 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className={`w-8 h-8 border-2 border-[#10201d] ${isLead ? 'bg-[#f5b726]' : 'bg-[#8bb2de]'} flex items-center justify-center font-mono text-xs font-bold text-[#10201d] shadow-[1px_1px_0_#10201d] shrink-0`}>
+                          {member.profile?.full_name?.charAt(0) || 'U'}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-display text-sm font-bold text-[#10201d] truncate">{member.profile?.full_name || 'Team Member'}</p>
+                          <p className="font-mono text-[10px] text-[#57726d] truncate">{member.profile?.email || ''}</p>
+                        </div>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={`font-mono text-[10px] font-bold uppercase border-2 border-[#10201d] shrink-0 ${
+                          isLead ? 'bg-[#f5b726] text-[#10201d]' : 'bg-[#f7f7f2] text-[#34433f]'
+                        }`}
+                      >
+                        {roleLabel}
+                      </Badge>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-display text-sm font-bold text-[#10201d] truncate">{member.profile?.full_name || 'Team Member'}</p>
-                      <p className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f]">{member.role}</p>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </CardContent>
           </Card>
+
+          {/* Add Teammate Dialog */}
+          <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
+            <DialogContent className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[7px_7px_0_#671912] max-w-md p-0">
+              <DialogHeader className="p-4 border-b-2 border-[#10201d] bg-[#2e4742] text-[#f2f2eb]">
+                <DialogTitle className="font-display text-base flex items-center gap-2">
+                  <UserPlus className="h-5 w-5 text-[#f5b726]" /> Invite Teammate to Event
+                </DialogTitle>
+                <DialogDescription className="font-mono text-xs text-[#f2f2eb]/70">
+                  Select an accepted friend from your network to join this hackathon board.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="p-4 space-y-3">
+                {loadingFriends ? (
+                  <div className="py-8 text-center font-mono text-xs text-[#57726d] flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Loading friends network...
+                  </div>
+                ) : friends.length === 0 ? (
+                  <div className="p-4 text-center border-2 border-dashed border-[#57726d]/40 font-mono text-xs text-[#57726d]">
+                    No connected friends found. Go to "Squads & Friends" to send friend requests first!
+                  </div>
+                ) : (
+                  <div className="max-h-60 overflow-y-auto space-y-2">
+                    {friends.map((f) => {
+                      const friendUserId = f.sender_id === event.created_by ? f.receiver_id : (f.receiver_id === event.created_by ? f.sender_id : (f.friend_profile?.id || ''))
+                      const friendName = f.friend_profile?.full_name || f.receiver_email
+                      const friendEmail = f.friend_profile?.email || f.receiver_email
+
+                      const existingIds = (event.event_participants || event.team_members || []).map((m: any) => m.user_id)
+                      const isAlreadyIn = friendUserId && existingIds.includes(friendUserId)
+
+                      return (
+                        <div
+                          key={f.id}
+                          className="p-2.5 bg-white border-2 border-[#10201d] flex items-center justify-between gap-2 shadow-[2px_2px_0_#10201d]"
+                        >
+                          <div className="truncate">
+                            <div className="font-display font-bold text-xs text-[#10201d] truncate">{friendName}</div>
+                            <div className="font-mono text-[10px] text-[#57726d] truncate">{friendEmail}</div>
+                          </div>
+
+                          {isAlreadyIn ? (
+                            <Badge variant="outline" className="font-mono text-[10px] border-[#10201d] bg-[#f7f7f2] text-[#57726d] shrink-0">
+                              Enrolled
+                            </Badge>
+                          ) : (
+                            <Button
+                              size="sm"
+                              disabled={!friendUserId || invitingId === friendUserId}
+                              onClick={async () => {
+                                if (!friendUserId) return
+                                setInvitingId(friendUserId)
+                                try {
+                                  const res = await addEventParticipant(event.id, friendUserId, 'collaborator')
+                                  if (res.success) {
+                                    toast({
+                                      title: 'Teammate Added!',
+                                      description: `${friendName} is now added to the event board.`,
+                                    })
+                                    setIsInviteOpen(false)
+                                    window.location.reload()
+                                  } else {
+                                    toast({
+                                      title: 'Could not add teammate',
+                                      description: res.error,
+                                      variant: 'destructive',
+                                    })
+                                  }
+                                } finally {
+                                  setInvitingId(null)
+                                }
+                              }}
+                              className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#2e4742] text-[#f2f2eb] hover:bg-[#3d5f58] shrink-0"
+                            >
+                              {invitingId === friendUserId ? <Loader2 className="h-3 w-3 animate-spin" /> : '+ Add'}
+                            </Button>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>

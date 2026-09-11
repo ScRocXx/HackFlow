@@ -1,18 +1,19 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { 
   Copy, Check, Plus, ExternalLink, Trash2, Loader2, 
   FileText, Code, Palette, User, Globe, Phone, Mail, GraduationCap,
-  ShieldCheck, ArrowRight
+  ShieldCheck, ArrowRight, Shield, Users
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import { upsertVaultProfile, createVaultAsset, deleteVaultAsset } from '@/app/actions/vault'
-import type { TeamVaultProfile, TeamVaultAsset } from '@/lib/supabase/types'
+import { upsertVaultProfile, createVaultAsset, deleteVaultAsset, getVaultProfiles, getVaultAssets } from '@/app/actions/vault'
+import type { TeamVaultProfile, TeamVaultAsset, Squad } from '@/lib/supabase/types'
 import { cn } from '@/lib/utils'
 
 function GithubIcon({ className = "w-3.5 h-3.5" }: { className?: string }) {
@@ -26,6 +27,8 @@ function GithubIcon({ className = "w-3.5 h-3.5" }: { className?: string }) {
 interface VaultViewProps {
   initialProfiles: TeamVaultProfile[]
   initialAssets: TeamVaultAsset[]
+  squads?: Squad[]
+  initialSquadId?: string | null
   currentUserId?: string
   currentUserEmail?: string
 }
@@ -33,13 +36,34 @@ interface VaultViewProps {
 export function VaultView({
   initialProfiles = [],
   initialAssets = [],
+  squads = [],
+  initialSquadId = null,
   currentUserId,
   currentUserEmail
 }: VaultViewProps) {
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState<'profiles' | 'decks' | 'boilerplates'>('profiles')
+  const [selectedSquadId, setSelectedSquadId] = useState<string | null>(initialSquadId)
   const [profiles, setProfiles] = useState<TeamVaultProfile[]>(initialProfiles)
   const [assets, setAssets] = useState<TeamVaultAsset[]>(initialAssets)
+  const [loadingData, setLoadingData] = useState(false)
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
+
+  const handleSquadChange = async (squadId: string | null) => {
+    setSelectedSquadId(squadId)
+    setLoadingData(true)
+    try {
+      router.replace(squadId ? `/vault?squad=${squadId}` : '/vault')
+      const [pRes, aRes] = await Promise.all([
+        getVaultProfiles(squadId),
+        getVaultAssets(undefined, squadId),
+      ])
+      if (pRes.success) setProfiles(pRes.data || [])
+      if (aRes.success) setAssets(aRes.data || [])
+    } finally {
+      setLoadingData(false)
+    }
+  }
 
   // Asset Modal State
   const [isAssetModalOpen, setIsAssetModalOpen] = useState(false)
@@ -99,6 +123,7 @@ export function VaultView({
         url: assetForm.url,
         description: assetForm.description,
         tags: tagsArray,
+        squad_id: selectedSquadId,
       })
 
       if (!res.success) throw new Error(res.error || 'Failed to add asset')
@@ -166,6 +191,25 @@ export function VaultView({
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
+          {/* Squad Selector Dropdown */}
+          <div className="flex items-center gap-2 bg-[#2e4742] p-1.5 border-2 border-[#10201d] shadow-[3px_3px_0_#10201d]">
+            <Shield className="h-4 w-4 text-[#f5b726]" />
+            <span className="font-mono text-xs font-bold text-[#f2f2eb] uppercase hidden sm:inline">Scope:</span>
+            <select
+              value={selectedSquadId || ''}
+              onChange={(e) => handleSquadChange(e.target.value ? e.target.value : null)}
+              disabled={loadingData}
+              className="bg-white text-[#10201d] font-mono text-xs font-bold py-1 px-2 border-2 border-[#10201d] focus:outline-none cursor-pointer"
+            >
+              <option value="">🛡️ Personal Vault (Only Me)</option>
+              {squads.map((sq) => (
+                <option key={sq.id} value={sq.id}>
+                  👥 Squad: {sq.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <Button
             onClick={() => setIsAssetModalOpen(true)}
             className="border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] font-mono text-xs font-bold shadow-[3px_3px_0_#671912]"

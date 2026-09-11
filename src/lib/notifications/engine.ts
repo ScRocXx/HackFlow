@@ -80,13 +80,13 @@ export async function evaluateAndDispatchNotifications() {
     const eventId = stage.event_id;
     const eventTitle = Array.isArray(stage.events) ? stage.events[0]?.title : (stage.events as any)?.title || 'Event';
     
-    // Get team members for this event
-    const { data: teamMembers, error: membersError } = await supabaseAdmin
-      .from('team_members')
-      .select('user_id, team_id, users(email)')
+    // Get confirmed participants for this event from event_participants (single source of truth)
+    const { data: participants, error: membersError } = await supabaseAdmin
+      .from('event_participants')
+      .select('user_id, profiles(email, full_name)')
       .eq('event_id', eventId);
 
-    if (membersError || !teamMembers) continue;
+    if (membersError || !participants) continue;
 
     for (const intervalKey of triggeredIntervals) {
       // Check if this interval was already logged for this stage
@@ -104,8 +104,9 @@ export async function evaluateAndDispatchNotifications() {
 
       const message = getIntervalMessage(intervalKey, stage.name, eventTitle);
 
-      for (const member of teamMembers) {
-        const email = Array.isArray(member.users) ? member.users[0]?.email : (member.users as any)?.email;
+      for (const participant of participants) {
+        const profile = Array.isArray(participant.profiles) ? participant.profiles[0] : (participant.profiles as any);
+        const email = profile?.email;
         if (!email) continue;
 
         const timeRemaining = intervalKey; // Simplified for now
@@ -125,7 +126,7 @@ export async function evaluateAndDispatchNotifications() {
 
         // Dispatch In-App
         await createInAppNotification({
-          userId: member.user_id,
+          userId: participant.user_id,
           title: message.subject,
           body: message.body,
           link: eventUrl

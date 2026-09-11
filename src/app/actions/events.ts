@@ -17,6 +17,7 @@ export type CreateEventInput = {
   eligibility?: string;
   team_size_min?: number;
   team_size_max?: number;
+  squad_id?: string | null;
   stages: {
     round_number: number;
     title: string;
@@ -98,6 +99,7 @@ export async function createEvent(data: CreateEventInput) {
         team_size_min: data.team_size_min || 1,
         team_size_max: data.team_size_max || 4,
         created_by: user.id,
+        squad_id: data.squad_id || null,
         status: 'registered',
         active_stage_id: null, // explicitly NULL initially
       })
@@ -242,17 +244,45 @@ export async function createEvent(data: CreateEventInput) {
       }
     }
 
-    // 6. Add Creator to Team Members
-    const { error: teamMemberError } = await supabase.from('team_members').insert({
-      event_id: event.id,
-      user_id: user.id,
-      email: user.email || '',
-      role: 'owner',
-      joined_at: new Date().toISOString()
-    });
+    // 6. Add Participants to event_participants (single source of truth for event roster)
+    const participantsToInsert: {
+      event_id: string;
+      user_id: string;
+      role: 'lead' | 'collaborator';
+      joined_at: string;
+    }[] = [
+      {
+        event_id: event.id,
+        user_id: user.id,
+        role: 'lead',
+        joined_at: new Date().toISOString(),
+      },
+    ];
 
-    if (teamMemberError) {
-      console.warn('Team member insertion warning:', teamMemberError);
+    if (data.squad_id) {
+      const { data: squadMembers } = await supabase
+        .from('squad_members')
+        .select('user_id')
+        .eq('squad_id', data.squad_id);
+
+      squadMembers?.forEach((sm) => {
+        if (sm.user_id !== user.id) {
+          participantsToInsert.push({
+            event_id: event.id,
+            user_id: sm.user_id,
+            role: 'collaborator',
+            joined_at: new Date().toISOString(),
+          });
+        }
+      });
+    }
+
+    const { error: partError } = await supabase
+      .from('event_participants')
+      .insert(participantsToInsert);
+
+    if (partError) {
+      console.warn('Event participants insertion warning:', partError);
     }
 
     revalidatePath('/dashboard');
@@ -323,15 +353,15 @@ export async function deleteEvent(eventId: string) {
       .single();
 
     if (event?.created_by !== user.id) {
-      const { data: member } = await supabase
-        .from('team_members')
+      const { data: participant } = await supabase
+        .from('event_participants')
         .select('role')
         .eq('event_id', eventId)
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (member?.role !== 'owner') {
-        return { success: false, error: 'Only team owners can delete events' };
+      if (participant?.role !== 'lead') {
+        return { success: false, error: 'Only event leads can delete events' };
       }
     }
 
@@ -374,14 +404,25 @@ export async function getEventWithDetails(eventId: string) {
       .eq('event_id', eventId)
       .order('round_number', { ascending: true });
 
-    // Fetch team members with profile information
-    const { data: teamMembers } = await supabase
-      .from('team_members')
+    // Fetch participants from event_participants (single source of truth) with profile information
+    const { data: participants } = await supabase
+      .from('event_participants')
       .select(`
         *,
-        profile:profiles(full_name, avatar_url)
+        profile:profiles(id, email, full_name, avatar_url)
       `)
       .eq('event_id', eventId);
+
+    // Fetch squad if assigned
+    let squad: any = null;
+    if (event.squad_id) {
+      const { data: squadData } = await supabase
+        .from('squads')
+        .select('*')
+        .eq('id', event.squad_id)
+        .maybeSingle();
+      squad = squadData;
+    }
 
     // Fetch deliverables for active stage
     let deliverables: any[] = [];
@@ -420,7 +461,18 @@ export async function getEventWithDetails(eventId: string) {
       data: { 
         ...event, 
         stages: stages || [], 
-        team_members: teamMembers || [],
+        event_participants: participants || [],
+        squad: squad,
+        team_members: (participants || []).map((p: any) => ({
+          id: p.id,
+          event_id: p.event_id,
+          user_id: p.user_id,
+          email: p.profile?.email || '',
+          role: p.role === 'lead' ? 'owner' : 'member',
+          invited_at: p.joined_at,
+          joined_at: p.joined_at,
+          profile: p.profile,
+        })),
         current_stage_deliverables: deliverables,
         resources: resources || [],
         problem_statements: problemStatements
@@ -438,21 +490,31 @@ export async function getUserEvents() {
 
     if (!user) return { success: false, error: 'Unauthorized' };
 
-    // 1. Get event IDs from team_members
-    const { data: members } = await supabase
-      .from('team_members')
+    // 1. Get event IDs from event_participants
+    const { data: participants } = await supabase
+      .from('event_participants')
       .select('event_id')
       .eq('user_id', user.id);
 
-    const memberEventIds = members?.map(m => m.event_id) || [];
+    const participantEventIds = participants?.map(p => p.event_id) || [];
 
-    // 2. Fetch events where user is creator OR in team_members
-    let query = supabase.from('events').select('*');
-    if (memberEventIds.length > 0) {
-      query = query.or(`created_by.eq.${user.id},id.in.(${memberEventIds.join(',')})`);
-    } else {
-      query = query.eq('created_by', user.id);
+    // Also get squads where user is a member
+    const { data: userSquads } = await supabase
+      .from('squad_members')
+      .select('squad_id')
+      .eq('user_id', user.id);
+    const userSquadIds = userSquads?.map(s => s.squad_id) || [];
+
+    // 2. Fetch events where user is creator OR in event_participants OR in squad
+    const orClauses = [`created_by.eq.${user.id}`];
+    if (participantEventIds.length > 0) {
+      orClauses.push(`id.in.(${participantEventIds.join(',')})`);
     }
+    if (userSquadIds.length > 0) {
+      orClauses.push(`squad_id.in.(${userSquadIds.join(',')})`);
+    }
+
+    let query = supabase.from('events').select('*').or(orClauses.join(','));
 
     const { data: events, error: eventsError } = await query.order('created_at', { ascending: false });
 
@@ -472,9 +534,9 @@ export async function getUserEvents() {
       .in('event_id', eventIds)
       .order('round_number', { ascending: true });
 
-    // 4. Fetch team members count for these events
-    const { data: allTeamMembers } = await supabase
-      .from('team_members')
+    // 4. Fetch participants count for these events
+    const { data: allParticipants } = await supabase
+      .from('event_participants')
       .select('event_id, id')
       .in('event_id', eventIds);
 
@@ -496,7 +558,14 @@ export async function getUserEvents() {
       .in('event_id', eventIds)
       .order('created_at', { ascending: true });
 
-    // 7. Enrich each event
+    // 7. Fetch squad names for events that have squad_id
+    const squadIds = Array.from(new Set(events.map(e => e.squad_id).filter(Boolean)));
+    const { data: squadsData } = squadIds.length > 0
+      ? await supabase.from('squads').select('id, name').in('id', squadIds)
+      : { data: [] };
+    const squadMap = new Map((squadsData || []).map((s: any) => [s.id, s.name]));
+
+    // 8. Enrich each event
     const enrichedEvents = events.map(event => {
       const stagesForEvent = allStages?.filter(s => s.event_id === event.id) || [];
       const resourcesForEvent = allResources?.filter(r => r.event_id === event.id) || [];
@@ -518,8 +587,9 @@ export async function getUserEvents() {
         };
       }
 
-      // Team count
-      const teamCount = allTeamMembers?.filter(m => m.event_id === event.id).length || 1;
+      // Team count from event_participants
+      const teamCount = allParticipants?.filter(p => p.event_id === event.id).length || 1;
+      const squadName = event.squad_id ? (squadMap.get(event.squad_id) || null) : null;
 
       return {
         ...event,
@@ -527,7 +597,8 @@ export async function getUserEvents() {
         stages: stagesForEvent,
         resources: resourcesForEvent,
         deliverable_progress,
-        team_count: teamCount
+        team_count: teamCount,
+        squad_name: squadName
       };
     });
 
@@ -794,4 +865,57 @@ export async function deleteProblemStatement(statementId: string, eventId: strin
     return { success: false, error: error.message || 'Failed to delete problem statement' };
   }
 }
+
+export async function addEventParticipant(eventId: string, userId: string, role: 'lead' | 'collaborator' = 'collaborator') {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const { error } = await supabase
+      .from('event_participants')
+      .insert({
+        event_id: eventId,
+        user_id: userId,
+        role: role,
+        joined_at: new Date().toISOString(),
+      });
+
+    if (error) {
+      if (error.code === '23505') {
+        return { success: false, error: 'User is already a participant in this event' };
+      }
+      return { success: false, error: error.message };
+    }
+
+    revalidatePath(`/events/${eventId}`);
+    revalidatePath('/dashboard');
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function removeEventParticipant(eventId: string, userId: string) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const { error } = await supabase
+      .from('event_participants')
+      .delete()
+      .eq('event_id', eventId)
+      .eq('user_id', userId);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath(`/events/${eventId}`);
+    revalidatePath('/dashboard');
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
 
