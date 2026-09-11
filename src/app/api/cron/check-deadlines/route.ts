@@ -10,13 +10,19 @@ export const maxDuration = 60; // Max allowed for Vercel Free tier is 10s usuall
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
-  
-  if (
-    process.env.CRON_SECRET && 
-    authHeader !== `Bearer ${process.env.CRON_SECRET}`
-  ) {
+  const { searchParams } = new URL(request.url);
+  const secretParam = searchParams.get('secret');
+
+  const isDev = process.env.NODE_ENV === 'development';
+  const isAuthorized =
+    isDev ||
+    !process.env.CRON_SECRET ||
+    authHeader === `Bearer ${process.env.CRON_SECRET}` ||
+    secretParam === process.env.CRON_SECRET;
+
+  if (!isAuthorized) {
     return NextResponse.json(
-      { error: 'Unauthorized' },
+      { error: 'Unauthorized. Provide Authorization header or ?secret= query parameter.' },
       { status: 401 }
     );
   }
