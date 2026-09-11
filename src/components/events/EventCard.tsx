@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Users, MapPin, Globe, FileText, Database, ExternalLink } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -22,6 +22,7 @@ interface EventCardProps {
 }
 
 export function EventCard({ event }: EventCardProps) {
+  const router = useRouter()
   const progressPercent = event.deliverable_progress?.total 
     ? (event.deliverable_progress.done / event.deliverable_progress.total) * 100 
     : 0
@@ -39,8 +40,11 @@ export function EventCard({ event }: EventCardProps) {
   }
 
   return (
-    <div className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[6px_6px_0_#671912] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_#671912] transition-all flex flex-col group h-full cursor-pointer overflow-hidden">
-      <Link href={`/events/${event.id}`} className="flex flex-col h-full flex-1">
+    <div className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[6px_6px_0_#671912] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_#671912] transition-all flex flex-col group h-full overflow-hidden">
+      <div 
+        onClick={() => router.push(`/events/${event.id}`)} 
+        className="flex flex-col h-full flex-1 cursor-pointer"
+      >
         <div className="h-32 w-full relative bg-[#2e4742] border-b-2 border-[#10201d]">
           {event.banner_url ? (
             <img src={event.banner_url} alt={event.title} className="w-full h-full object-cover" />
@@ -135,7 +139,7 @@ export function EventCard({ event }: EventCardProps) {
             </div>
           </div>
         </div>
-      </Link>
+      </div>
       
       <div className="px-4 py-3 bg-[#f7f7f2] border-t-2 border-[#10201d] relative z-10">
         <StatusPills 

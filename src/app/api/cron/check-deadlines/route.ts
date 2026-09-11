@@ -32,6 +32,8 @@ export async function GET(request: Request) {
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
+      serviceRoleKeyConfigured: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      keyPrefix: process.env.SUPABASE_SERVICE_ROLE_KEY ? process.env.SUPABASE_SERVICE_ROLE_KEY.substring(0, 8) : 'NONE',
       ...result,
     });
   } catch (error) {

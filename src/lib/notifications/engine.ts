@@ -80,6 +80,15 @@ export async function evaluateAndDispatchNotifications() {
     return { evaluated, dispatched, error: stagesError?.message };
   }
 
+  // 2. Pre-load all notification logs into an in-memory set for instantaneous O(1) deduplication
+  const { data: allLogs } = await supabaseAdmin
+    .from('notification_logs')
+    .select('stage_id, interval_key, channel, recipient_email');
+
+  const logSet = new Set(
+    (allLogs || []).map(l => [l.stage_id, l.interval_key, l.channel, (l.recipient_email || '').toLowerCase()].join('_'))
+  );
+
   for (const stage of stages) {
     evaluated++;
     const deadline = new Date(stage.deadline);
@@ -132,20 +141,14 @@ export async function evaluateAndDispatchNotifications() {
 
       for (const recipient of recipients) {
         const email = recipient.email;
+        const emailKey = [stage.id, intervalKey, 'email', email.toLowerCase()].join('_');
+        const inAppKey = [stage.id, intervalKey, 'in_app', email.toLowerCase()].join('_');
 
         // --- Channel A: Email ---
-        const { data: existingEmailLog } = await supabaseAdmin
-          .from('notification_logs')
-          .select('id')
-          .eq('stage_id', stage.id)
-          .eq('interval_key', intervalKey)
-          .eq('channel', 'email')
-          .eq('recipient_email', email)
-          .maybeSingle();
-
-        if (!existingEmailLog) {
+        if (!logSet.has(emailKey)) {
           try {
-            await sendDeadlineEmail({
+            logSet.add(emailKey);
+            const emailResult = await sendDeadlineEmail({
               to: email,
               eventTitle,
               stageName: stage.title,
@@ -164,24 +167,18 @@ export async function evaluateAndDispatchNotifications() {
                 recipient_email: email
               });
 
-            dispatched++;
+            if (emailResult?.success) {
+              dispatched++;
+            }
           } catch (emailErr) {
             console.error(`[NotificationEngine] Failed to dispatch email to ${email}:`, emailErr);
           }
         }
 
         // --- Channel B: In-App ---
-        const { data: existingInAppLog } = await supabaseAdmin
-          .from('notification_logs')
-          .select('id')
-          .eq('stage_id', stage.id)
-          .eq('interval_key', intervalKey)
-          .eq('channel', 'in_app')
-          .eq('recipient_email', email)
-          .maybeSingle();
-
-        if (!existingInAppLog) {
+        if (!logSet.has(inAppKey)) {
           try {
+            logSet.add(inAppKey);
             await createInAppNotification({
               userId: recipient.id,
               title: message.subject,
@@ -207,6 +204,6 @@ export async function evaluateAndDispatchNotifications() {
     }
   }
 
-  return { evaluated, dispatched };
+  return { evaluated, dispatched, totalLogged: logSet.size };
 }
 
