@@ -118,7 +118,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl }: URLParseDialo
       const data = await res.json()
 
       if (!res.ok) {
-        throw new Error(data.error || `HTTP ${res.status}: Failed to extract page details`)
+        throw new Error(data.error || 'I suppose this is not a hackathon...')
       }
 
       // Populate parsed metadata
@@ -199,10 +199,10 @@ export function URLParseDialog({ open, onOpenChange, initialUrl }: URLParseDialo
       })
     } catch (err: any) {
       console.error('URL parse failure:', err)
-      const message = err instanceof Error ? err.message : 'Failed to parse hackathon URL'
+      const message = err?.message || 'I suppose this is not a hackathon...'
       setExtractError(message)
       toast({
-        title: 'Parsing Failed',
+        title: 'Extraction Notice',
         description: message,
         variant: 'destructive',
       })
@@ -402,7 +402,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl }: URLParseDialo
                 Import Hackathon from URL
               </DialogTitle>
               <DialogDescription className="font-mono text-xs text-[#34433f] mt-1">
-                AI parses rounds, gatekeeper deadlines, deliverable checklists, and prize pools.
+                Extract timeline rounds, deadlines, deliverable checklists, and resources.
               </DialogDescription>
             </div>
           </div>

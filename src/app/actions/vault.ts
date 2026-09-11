@@ -1,4 +1,4 @@
-﻿'use server';
+'use server';
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
@@ -63,7 +63,15 @@ export async function upsertVaultProfile(profileData: {
       .select('*')
       .single();
 
-    if (error) return { success: false, error: error.message };
+    if (error) {
+      if (error.message?.includes('Could not find the table')) {
+        return { 
+          success: false, 
+          error: 'Database table missing: Please run supabase/fix_schema_and_rls.sql in your Supabase SQL editor.' 
+        };
+      }
+      return { success: false, error: error.message };
+    }
 
     revalidatePath('/vault');
     return { success: true, data };
@@ -129,7 +137,15 @@ export async function createVaultAsset(assetData: {
       .select('*')
       .single();
 
-    if (error) return { success: false, error: error.message };
+    if (error) {
+      if (error.message?.includes('Could not find the table')) {
+        return { 
+          success: false, 
+          error: 'Database table missing: Please run supabase/fix_schema_and_rls.sql in your Supabase SQL editor.' 
+        };
+      }
+      return { success: false, error: error.message };
+    }
 
     revalidatePath('/vault');
     return { success: true, data };

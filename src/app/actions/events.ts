@@ -66,6 +66,21 @@ export async function createEvent(data: CreateEventInput) {
     const rawPlatform = (data.source_platform || 'custom').toLowerCase().trim();
     const sourcePlatform = allowedPlatforms.includes(rawPlatform) ? rawPlatform : 'custom';
 
+    // Check if an event with this source_url already exists
+    if (data.source_url?.trim()) {
+      const { data: existingEvent } = await supabase
+        .from('events')
+        .select('id, title')
+        .eq('source_url', data.source_url.trim())
+        .maybeSingle();
+
+      if (existingEvent?.id) {
+        revalidatePath('/dashboard');
+        revalidatePath(`/events/${existingEvent.id}`);
+        return { success: true, data: { id: existingEvent.id, title: existingEvent.title } };
+      }
+    }
+
     // 1. Insert Event with active_stage_id explicitly NULL (avoids circular FK violation)
     const { data: event, error: eventError } = await supabase
       .from('events')
@@ -90,6 +105,12 @@ export async function createEvent(data: CreateEventInput) {
       .single();
 
     if (eventError || !event) {
+      if (eventError?.message?.includes('infinite recursion')) {
+        return {
+          success: false,
+          error: 'Database policy recursion: Please run supabase/fix_schema_and_rls.sql in your Supabase SQL editor.'
+        };
+      }
       const detail = eventError?.details ? ` (${eventError.details})` : '';
       const hint = eventError?.hint ? ` [Hint: ${eventError.hint}]` : '';
       return { 

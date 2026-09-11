@@ -41,23 +41,6 @@ export function VaultView({
   const [assets, setAssets] = useState<TeamVaultAsset[]>(initialAssets)
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
-  // Profile Modal State
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
-  const [savingProfile, setSavingProfile] = useState(false)
-
-  const myProfile = profiles.find(p => p.user_id === currentUserId)
-  const [profileForm, setProfileForm] = useState({
-    full_name: myProfile?.full_name || '',
-    email: myProfile?.email || currentUserEmail || '',
-    phone: myProfile?.phone || '',
-    college: myProfile?.college || '',
-    roll_number: myProfile?.roll_number || '',
-    github_url: myProfile?.github_url || '',
-    linkedin_url: myProfile?.linkedin_url || '',
-    portfolio_url: myProfile?.portfolio_url || '',
-    resume_url: myProfile?.resume_url || '',
-  })
-
   // Asset Modal State
   const [isAssetModalOpen, setIsAssetModalOpen] = useState(false)
   const [savingAsset, setSavingAsset] = useState(false)
@@ -90,49 +73,6 @@ export function VaultView({
     setTimeout(() => {
       setCopiedKey((prev) => (prev === fieldKey ? null : prev))
     }, 1500)
-  }
-
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!profileForm.full_name.trim() || !profileForm.email.trim()) {
-      toast({
-        title: 'Required Fields Missing',
-        description: 'Please provide at least your full name and email.',
-        variant: 'destructive',
-      })
-      return
-    }
-
-    setSavingProfile(true)
-    try {
-      const res = await upsertVaultProfile(profileForm)
-      if (!res.success) throw new Error(res.error || 'Failed to save profile')
-
-      toast({
-        title: 'Vault Profile Updated',
-        description: 'Your details are now saved for 1-click squad registration.',
-      })
-
-      setProfiles(prev => {
-        const idx = prev.findIndex(p => p.user_id === currentUserId)
-        if (idx >= 0) {
-          const updated = [...prev]
-          updated[idx] = { ...updated[idx], ...profileForm }
-          return updated
-        }
-        return [res.data as TeamVaultProfile, ...prev]
-      })
-
-      setIsProfileModalOpen(false)
-    } catch (err: any) {
-      toast({
-        title: 'Save Failed',
-        description: err.message,
-        variant: 'destructive',
-      })
-    } finally {
-      setSavingProfile(false)
-    }
   }
 
   const handleSaveAsset = async (e: React.FormEvent) => {
@@ -227,13 +167,6 @@ export function VaultView({
 
         <div className="flex items-center gap-2.5 flex-wrap">
           <Button
-            onClick={() => setIsProfileModalOpen(true)}
-            className="border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] font-mono text-xs font-bold shadow-[3px_3px_0_#8a5d13]"
-          >
-            <User className="h-4 w-4 mr-1.5" />
-            {myProfile ? 'Edit My Profile' : '+ Add My Profile'}
-          </Button>
-          <Button
             onClick={() => setIsAssetModalOpen(true)}
             className="border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] font-mono text-xs font-bold shadow-[3px_3px_0_#671912]"
           >
@@ -299,15 +232,9 @@ export function VaultView({
             <div className="p-12 border-2 border-dashed border-[#10201d] text-center bg-[#f7f7f2]">
               <User className="h-10 w-10 text-[#34433f] mx-auto opacity-40 mb-3" />
               <h3 className="font-display text-2xl font-bold text-[#10201d]">No Squad Profiles in Vault</h3>
-              <p className="font-mono text-xs text-[#34433f] mt-1 max-w-md mx-auto">
-                Add your details once (name, roll no, github, resume link) so teammates can register your squad in 30 seconds.
+              <p className="font-mono text-xs text-[#34433f] mt-2 max-w-md mx-auto">
+                No squad member profiles registered yet. You can add your registration details anytime from your profile menu in the bottom-left sidebar.
               </p>
-              <Button
-                onClick={() => setIsProfileModalOpen(true)}
-                className="mt-5 font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[3px_3px_0_#8a5d13]"
-              >
-                + Add Your Details
-              </Button>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -566,135 +493,6 @@ export function VaultView({
           )}
         </div>
       )}
-
-      {/* Edit Profile Modal */}
-      <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
-        <DialogContent className="sm:max-w-[620px] max-h-[90vh] overflow-y-auto border-2 border-[#10201d] bg-[#f7f7f2] shadow-[8px_8px_0_#671912] p-6">
-          <DialogHeader>
-            <DialogTitle className="font-display text-2xl font-bold text-[#10201d]">
-              Squad Quick-Fill Profile
-            </DialogTitle>
-            <DialogDescription className="font-mono text-xs text-[#34433f]">
-              Saved once. Teammates can 1-click copy your phone, roll number, and resume link during registration sprints.
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleSaveProfile} className="space-y-4 py-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">Full Name *</label>
-                <Input
-                  value={profileForm.full_name}
-                  onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })}
-                  placeholder="e.g. Alex Rivera"
-                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">Email *</label>
-                <Input
-                  type="email"
-                  value={profileForm.email}
-                  onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
-                  placeholder="alex@college.edu"
-                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">Phone Number</label>
-                <Input
-                  value={profileForm.phone}
-                  onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                  placeholder="+91 98765 43210"
-                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">College / Institute</label>
-                <Input
-                  value={profileForm.college}
-                  onChange={(e) => setProfileForm({ ...profileForm, college: e.target.value })}
-                  placeholder="e.g. IIT Bombay / Stanford"
-                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
-                />
-              </div>
-
-              <div className="space-y-1 sm:col-span-2">
-                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">College Roll / Student ID</label>
-                <Input
-                  value={profileForm.roll_number}
-                  onChange={(e) => setProfileForm({ ...profileForm, roll_number: e.target.value })}
-                  placeholder="e.g. 21BCE10482"
-                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">GitHub Profile</label>
-                <Input
-                  value={profileForm.github_url}
-                  onChange={(e) => setProfileForm({ ...profileForm, github_url: e.target.value })}
-                  placeholder="https://github.com/username"
-                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">LinkedIn Profile</label>
-                <Input
-                  value={profileForm.linkedin_url}
-                  onChange={(e) => setProfileForm({ ...profileForm, linkedin_url: e.target.value })}
-                  placeholder="https://linkedin.com/in/username"
-                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">Portfolio / Website</label>
-                <Input
-                  value={profileForm.portfolio_url}
-                  onChange={(e) => setProfileForm({ ...profileForm, portfolio_url: e.target.value })}
-                  placeholder="https://alex.dev"
-                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">Resume PDF Link</label>
-                <Input
-                  value={profileForm.resume_url}
-                  onChange={(e) => setProfileForm({ ...profileForm, resume_url: e.target.value })}
-                  placeholder="https://drive.google.com/..."
-                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
-                />
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsProfileModalOpen(false)}
-                className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f2f2eb]"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={savingProfile}
-                className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[3px_3px_0_#671912]"
-              >
-                {savingProfile ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Profile'}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       {/* Add Asset Modal */}
       <Dialog open={isAssetModalOpen} onOpenChange={setIsAssetModalOpen}>

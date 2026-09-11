@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     const { content, url: finalUrl } = await fetchUrlContent(url);
     if (!content || content.trim().length === 0) {
       return NextResponse.json(
-        { error: 'Could not extract content from the provided URL. The page may be behind a login or blocked.' },
+        { error: 'I suppose this is not a hackathon...' },
         { status: 400 }
       );
     }
@@ -48,9 +48,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(parsedData, { status: 200 });
   } catch (error) {
     console.error('Extraction error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to extract hackathon details from URL';
     return NextResponse.json(
-      { error: errorMessage },
+      { error: 'I suppose this is not a hackathon...' },
       { status: 400 }
     );
   }

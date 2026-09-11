@@ -72,26 +72,28 @@ export function DashboardContent({ events = [] }: DashboardContentProps) {
             <span className="w-2.5 h-2.5 bg-[#f5b726] inline-block" />
             <span className="w-2.5 h-2.5 bg-[#e97b77] inline-block" />
             <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#f6c4c1] ml-2">
-              Squad Mission Control
+              Hackathons & Sprints
             </span>
           </div>
           <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-[#f7f7f2]">
             Competitions & Deadlines
           </h1>
           <p className="font-mono text-xs text-[#8bb2de] mt-1">
-            Real-time gatekeeper elimination stages, deliverable checklists, and submission proofs.
+            Track multi-round timelines, manage deliverables, and stay on schedule with your team.
           </p>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
-          <Button 
-            onClick={() => setIsDialogOpen(true)}
-            size="lg"
-            className="border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] font-mono text-xs font-bold uppercase tracking-wide shadow-[4px_4px_0_#671912] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#671912] px-6 h-12"
-          >
-            + Import Hackathon
-          </Button>
-        </div>
+        {safeEvents.length > 0 && (
+          <div className="flex items-center gap-3 shrink-0">
+            <Button 
+              onClick={() => setIsDialogOpen(true)}
+              size="lg"
+              className="border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] font-mono text-xs font-bold uppercase tracking-wide shadow-[4px_4px_0_#671912] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#671912] px-6 h-12"
+            >
+              + Import Hackathon
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Stats Metric Cards */}
@@ -174,7 +176,7 @@ export function DashboardContent({ events = [] }: DashboardContentProps) {
             </h3>
             <p className="mt-2 font-mono text-xs text-[#34433f] max-w-sm">
               {safeEvents.length === 0 
-                ? 'Import any challenge link from Unstop, Devfolio, Devpost, or Internshala to dissect deadlines and launch your mission console.'
+                ? 'Import a hackathon from Unstop, Devfolio, Devpost, or Internshala to automatically track deadlines and stages.'
                 : 'Try selecting a different filter above or import another competition.'}
             </p>
             <Button 
