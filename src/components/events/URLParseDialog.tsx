@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -42,6 +43,7 @@ const STAGE_TYPES = [
   { value: 'quiz', label: 'Online Quiz / Assessment' },
   { value: 'ppt_submission', label: 'PPT / Idea Submission' },
   { value: 'prototype', label: 'Working Prototype / MVP' },
+  { value: 'hackathon_sprint', label: 'Hackathon Sprint / Build' },
   { value: 'presentation', label: 'Pitch / Final Demo' },
   { value: 'other', label: 'General Milestone' },
 ]
@@ -55,11 +57,23 @@ const RESOURCE_TYPES = [
   { value: 'other', label: 'Other Link' },
 ]
 
+function toLocalDatetimeInputString(date: Date): string {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const year = date.getFullYear();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParseDialogProps) {
   const router = useRouter()
   const { toast } = useToast()
   
+  const [activeTab, setActiveTab] = useState<'url' | 'text'>('url')
   const [url, setUrl] = useState(initialUrl)
+  const [pastedText, setPastedText] = useState('')
   const [extracting, setExtracting] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [extractError, setExtractError] = useState<string | null>(null)
@@ -89,9 +103,10 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
   const [sourcePlatform, setSourcePlatform] = useState('custom')
   const [mode, setMode] = useState('online')
   const [location, setLocation] = useState('')
+  const [bannerUrl, setBannerUrl] = useState('')
   const [prizePool, setPrizePool] = useState('')
-  const [prizeCashPool, setPrizeCashPool] = useState<number | null>(null)
-  const [prizeFirstPlace, setPrizeFirstPlace] = useState<number | null>(null)
+  const [prizeCashPool, setPrizeCashPool] = useState<number | string | null>(null)
+  const [prizeFirstPlace, setPrizeFirstPlace] = useState<number | string | null>(null)
   const [hasPerksOrCredits, setHasPerksOrCredits] = useState<boolean>(false)
   const [rawPrizeText, setRawPrizeText] = useState<string | null>(null)
   const [prizeDisplaySummary, setPrizeDisplaySummary] = useState<string | null>(null)
@@ -111,32 +126,18 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
     if (open) {
       if (initialUrl && initialUrl !== url) {
         setUrl(initialUrl)
+        setActiveTab('url')
         handleParse(initialUrl)
-      } else if (!hasParsed && url.trim()) {
-        handleParse(url)
       }
     } else {
-      // Reset state when closed if not parsed
+      // Reset error state when closed if not parsed
       if (!hasParsed) {
         setExtractError(null)
       }
     }
   }, [open, initialUrl])
 
-  const handleParse = async (targetUrl?: string) => {
-    let parseUrl = (targetUrl || url).trim()
-    // Sanitize URL: strip trailing dots, punctuation, quotes
-    parseUrl = parseUrl.replace(/[.,;'"\s]+$/, '').trim()
-
-    if (!parseUrl) {
-      toast({
-        title: 'URL Required',
-        description: 'Please enter a hackathon or challenge link to parse.',
-        variant: 'destructive',
-      })
-      return
-    }
-
+  const performExtract = async (payload: { url?: string; text?: string }) => {
     setExtracting(true)
     setExtractError(null)
 
@@ -144,7 +145,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
       const res = await fetch('/api/extract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: parseUrl }),
+        body: JSON.stringify(payload),
       })
 
       const data = await res.json()
@@ -159,6 +160,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
       setSourcePlatform(data.source_platform || 'custom')
       setMode(data.mode || 'online')
       setLocation(data.location || '')
+      setBannerUrl(data.banner_url || '')
       
       if (data.prizes) {
         setPrizeCashPool(data.prizes.cash_pool ?? null)
@@ -189,14 +191,12 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
       // Auto-populate extracted stages as editable cards
       if (Array.isArray(data.stages) && data.stages.length > 0) {
         const mappedStages: EditableStage[] = data.stages.map((stg: any, index: number) => {
-          // Format deadline to local datetime-local string if possible
-          // Guard: Strictly prevent 1970-01-01 epoch from new Date(null)
           let formattedDeadline = ''
           if (stg.deadline && typeof stg.deadline === 'string' && stg.deadline.trim() && stg.deadline !== 'null') {
             try {
               const d = new Date(stg.deadline)
               if (!isNaN(d.getTime()) && d.getFullYear() >= 2000) {
-                formattedDeadline = d.toISOString().slice(0, 16) // YYYY-MM-DDTHH:mm
+                formattedDeadline = toLocalDatetimeInputString(d)
               }
             } catch {
               // Keep empty
@@ -252,7 +252,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
         description: `Extracted ${data.stages?.length || 1} round(s) and ${data.resources?.length || 0} resource(s).`,
       })
     } catch (err: any) {
-      console.error('URL parse failure:', err)
+      console.error('Extraction failure:', err)
       const message = err?.message || 'I suppose this is not a hackathon...'
       setExtractError(message)
       toast({
@@ -263,6 +263,50 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
     } finally {
       setExtracting(false)
     }
+  }
+
+  const handleParse = async (targetUrl?: string) => {
+    let parseUrl = (targetUrl || url).trim()
+    // Sanitize URL: strip trailing dots, punctuation, quotes
+    parseUrl = parseUrl.replace(/[.,;'"\s]+$/, '').trim()
+
+    if (!parseUrl) {
+      toast({
+        title: 'URL Required',
+        description: 'Please enter a hackathon or challenge link to parse.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    await performExtract({ url: parseUrl })
+  }
+
+  const handleParseText = async () => {
+    const textToParse = pastedText.trim()
+    if (!textToParse) {
+      toast({
+        title: 'Guidelines Text Required',
+        description: 'Please paste the hackathon guidelines, rules, or website text to parse.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (textToParse.length < 20) {
+      toast({
+        title: 'Text Too Short',
+        description: 'Please paste at least 20 characters of guidelines or contest text.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    const optionalUrl = url.trim().replace(/[.,;'"\s]+$/, '').trim()
+    await performExtract({
+      text: textToParse,
+      url: optionalUrl || undefined,
+    })
   }
 
   const handleAddResource = () => {
@@ -294,7 +338,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
 
   const handleAddStage = () => {
     const nextRound = stages.length + 1
-    const nextDate = new Date(Date.now() + (nextRound * 3) * 24 * 60 * 60 * 1000).toISOString().slice(0, 16)
+    const nextDate = toLocalDatetimeInputString(new Date(Date.now() + (nextRound * 3) * 24 * 60 * 60 * 1000))
     setStages([
       ...stages,
       {
@@ -395,13 +439,20 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
         }
       })
 
+      // Ensure source URL has https:// if entered without protocol
+      let cleanSourceUrl = url.trim().replace(/[.,;'"\s]+$/, '')
+      if (cleanSourceUrl && !/^https?:\/\//i.test(cleanSourceUrl) && cleanSourceUrl.includes('.')) {
+        cleanSourceUrl = `https://${cleanSourceUrl}`
+      }
+
       const res = await createEvent({
         title,
         organizer,
-        source_url: url,
+        source_url: cleanSourceUrl || undefined,
         source_platform: sourcePlatform,
         mode,
         location,
+        banner_url: bannerUrl || undefined,
         prize_pool: prizePool,
         prize_cash_pool: prizeCashPool,
         prize_first_place: prizeFirstPlace,
@@ -429,6 +480,8 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
       // Reset
       setHasParsed(false)
       setUrl('')
+      setPastedText('')
+      setBannerUrl('')
       
       if (res.data?.id) {
         router.push(`/events/${res.data.id}`)
@@ -461,41 +514,140 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                 Add a Hackathon
               </DialogTitle>
               <DialogDescription className="font-mono text-xs text-[#34433f] mt-1">
-                Paste a hackathon link and we'll extract the rounds, deadlines, and requirements.
+                Paste a hackathon link or copy-paste guidelines directly to extract rounds and deadlines.
               </DialogDescription>
             </div>
           </div>
         </DialogHeader>
 
-        {/* Step 1: Input URL if not parsed yet */}
+        {/* Step 1: Choose Import Method (URL or Paste Text) */}
         {!hasParsed ? (
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">
-                Hackathon or Competition Link
-              </label>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Input 
-                  placeholder="e.g. https://unstop.com/hackathons/... or https://devfolio.co/..." 
-                  value={url} 
-                  onChange={(e) => setUrl(e.target.value)} 
-                  onKeyDown={(e) => e.key === 'Enter' && handleParse()}
-                  disabled={extracting}
-                  className="flex-1 h-11 font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
-                />
-                <Button 
-                  onClick={() => handleParse()} 
-                  disabled={extracting || !url.trim()} 
-                  className="h-11 px-5 font-mono text-xs font-bold border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[3px_3px_0_#671912] shrink-0"
+          <div className="space-y-4 py-3">
+            <Tabs 
+              value={activeTab} 
+              onValueChange={(val) => setActiveTab(val as 'url' | 'text')}
+              className="w-full"
+            >
+              <TabsList className="grid grid-cols-2 w-full bg-[#f2f2eb] border-2 border-[#10201d] p-1 h-auto shadow-[3px_3px_0_#10201d]">
+                <TabsTrigger
+                  value="url"
+                  className="font-mono text-xs font-bold py-2.5 px-3 flex items-center justify-center gap-2 data-[state=active]:bg-[#2e4742] data-[state=active]:text-[#f2f2eb] border-2 border-transparent data-[state=active]:border-[#10201d] transition-all"
                 >
-                  {extracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  {extracting ? 'Reading page...' : 'Get Rounds & Deadlines'}
-                </Button>
-              </div>
-              <p className="font-mono text-[11px] text-[#34433f]">
-                Works with Unstop, Devfolio, Devpost, Internshala, HackerEarth, MLH, and custom hackathon pages.
-              </p>
-            </div>
+                  <Link2 className="h-3.5 w-3.5 shrink-0" />
+                  <span>Enter URL</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="text"
+                  className="font-mono text-xs font-bold py-2.5 px-3 flex items-center justify-center gap-2 data-[state=active]:bg-[#2e4742] data-[state=active]:text-[#f2f2eb] border-2 border-transparent data-[state=active]:border-[#10201d] transition-all"
+                >
+                  <FileText className="h-3.5 w-3.5 shrink-0" />
+                  <span>Paste Text / Flyer</span>
+                  <span className="font-mono text-[9px] px-1.5 py-0.5 bg-[#f5b726] text-[#10201d] font-bold border border-[#10201d] rounded-sm hidden sm:inline-block shadow-[1px_1px_0_#10201d]">
+                    Universal
+                  </span>
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Tab 1: URL Import */}
+              <TabsContent value="url" className="space-y-3 pt-3">
+                <div className="space-y-2">
+                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">
+                    Hackathon or Competition Link
+                  </label>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Input 
+                      placeholder="e.g. https://hackmit.org or https://devpost.com/..." 
+                      value={url} 
+                      onChange={(e) => setUrl(e.target.value)} 
+                      onKeyDown={(e) => e.key === 'Enter' && handleParse()}
+                      disabled={extracting}
+                      className="flex-1 h-11 font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
+                    />
+                    <Button 
+                      onClick={() => handleParse()} 
+                      disabled={extracting || !url.trim()} 
+                      className="h-11 px-5 font-mono text-xs font-bold border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[3px_3px_0_#671912] shrink-0"
+                    >
+                      {extracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      {extracting ? 'Reading page...' : 'Get Rounds & Deadlines'}
+                    </Button>
+                  </div>
+                  <p className="font-mono text-[11px] text-[#34433f]">
+                    Works with any competition website, Devpost, Devfolio, Unstop, MLH, or university portals.
+                  </p>
+                </div>
+              </TabsContent>
+
+              {/* Tab 2: Paste Text / Flyer */}
+              <TabsContent value="text" className="space-y-3 pt-3">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">
+                      Paste Raw Announcement Text, Flyer Details, or Guidelines
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[10px] text-[#34433f]">
+                        {pastedText.length > 0 ? `${pastedText.length.toLocaleString()} characters` : 'Direct AI Parsing (Fastest)'}
+                      </span>
+                      {pastedText.length > 0 && !extracting && (
+                        <button
+                          type="button"
+                          onClick={() => setPastedText('')}
+                          className="font-mono text-[10px] font-bold text-[#e53927] hover:underline"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <textarea 
+                    value={pastedText}
+                    onChange={(e) => setPastedText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                        e.preventDefault()
+                        handleParseText()
+                      }
+                    }}
+                    disabled={extracting}
+                    placeholder="Paste raw announcement text, flyer details, Discord/WhatsApp updates, rulebook PDFs, or select all (Ctrl+A) on any competition page and paste here.&#10;&#10;Gemini AI will analyze universal competition lifecycles to extract all stages, deadlines, and prizes in seconds! (Tip: Press Ctrl+Enter to parse)"
+                    rows={8}
+                    className="w-full p-3 font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d] focus:outline-none placeholder:text-[#34433f]/60 resize-y min-h-[140px]"
+                  />
+
+                  <div className="space-y-1">
+                    <label className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#10201d] block">
+                      Source Link (Optional)
+                    </label>
+                    <Input 
+                      placeholder="e.g. https://example.com/hackathon (optional reference link)" 
+                      value={url} 
+                      onChange={(e) => setUrl(e.target.value)} 
+                      onKeyDown={(e) => e.key === 'Enter' && handleParseText()}
+                      disabled={extracting}
+                      className="h-9 font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
+                    />
+                  </div>
+
+                  <Button 
+                    onClick={handleParseText} 
+                    disabled={extracting || !pastedText.trim()} 
+                    className="w-full h-11 font-mono text-xs font-bold border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[3px_3px_0_#671912]"
+                  >
+                    {extracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                    {extracting ? 'Analyzing announcement / flyer...' : 'Extract Rounds & Deadlines from Text'}
+                  </Button>
+
+                  <div className="p-2.5 bg-[#e4e5da] border border-[#10201d] text-[11px] font-mono text-[#34433f] flex items-start gap-2">
+                    <span className="text-base leading-none shrink-0">💡</span>
+                    <div>
+                      <strong className="text-[#10201d]">Flyer & Announcement Ingestion:</strong> Paste flyer text, email broadcasts, or copy from portals behind logins/captchas. Our universal parser scans for all 4 competition phases and extracts chronological milestones.
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
 
             {extractError && (
               <div className="p-3.5 border-2 border-[#10201d] bg-[#f6c4c1] text-[#671912] shadow-[3px_3px_0_#671912] text-sm flex gap-2.5 items-start">
@@ -518,7 +670,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                       round_number: 1,
                       title: 'Round 1: Submission',
                       stage_type: 'prototype',
-                      deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+                      deadline: toLocalDatetimeInputString(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
                       deliverables: ['GitHub Repository', 'Live Demo URL'],
                     }
                   ])
@@ -542,6 +694,22 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                 </span>
               </div>
 
+              {bannerUrl && (
+                <div className="relative w-full h-32 overflow-hidden border-2 border-[#10201d] shadow-[3px_3px_0_#10201d] bg-black/5 rounded-sm">
+                  <img 
+                    src={bannerUrl} 
+                    alt="Event Banner Preview" 
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                    }} 
+                  />
+                  <div className="absolute top-2 right-2 px-2 py-0.5 bg-[#10201d]/80 text-[#f7f7f2] font-mono text-[10px] font-bold border border-white/20">
+                    Banner Preview
+                  </div>
+                </div>
+              )}
+
               <div className="space-y-1.5">
                 <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">Competition Title *</label>
                 <Input 
@@ -552,7 +720,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div className="space-y-1">
                   <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">Organizer</label>
                   <Input 
@@ -575,6 +743,15 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                   </select>
                 </div>
                 <div className="space-y-1">
+                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">Location / Venue</label>
+                  <Input 
+                    value={location} 
+                    onChange={e => setLocation(e.target.value)} 
+                    placeholder="e.g. San Francisco, CA or Virtual"
+                    className="bg-white font-mono text-xs border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
+                  />
+                </div>
+                <div className="space-y-1">
                   <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">Prize Pool</label>
                   <Input 
                     value={prizePool} 
@@ -586,7 +763,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                     <div className="flex flex-wrap gap-1 mt-1">
                       {prizeCashPool !== null && (
                         <span className="font-mono text-[9px] px-1.5 py-0.5 bg-[#8bb2de] text-[#10201d] font-bold border border-[#10201d]">
-                          💵 Cash: ₹{prizeCashPool.toLocaleString()}
+                          💵 Cash: {String(prizeCashPool).startsWith('₹') || String(prizeCashPool).startsWith('$') || String(prizeCashPool).startsWith('€') || String(prizeCashPool).startsWith('£') ? String(prizeCashPool) : `₹${Number(prizeCashPool) ? Number(prizeCashPool).toLocaleString() : prizeCashPool}`}
                         </span>
                       )}
                       {hasPerksOrCredits && (
@@ -596,6 +773,24 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                       )}
                     </div>
                   )}
+                </div>
+                <div className="space-y-1">
+                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">Banner Image URL</label>
+                  <Input 
+                    value={bannerUrl} 
+                    onChange={e => setBannerUrl(e.target.value)} 
+                    placeholder="e.g. https://.../banner.png"
+                    className="bg-white font-mono text-xs border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">Source Link (Optional)</label>
+                  <Input 
+                    value={url} 
+                    onChange={e => setUrl(e.target.value)} 
+                    placeholder="e.g. https://..."
+                    className="bg-white font-mono text-xs border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
+                  />
                 </div>
               </div>
             </div>
@@ -944,7 +1139,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                 disabled={submitting} 
                 className="flex-1 font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f2f2eb] hover:bg-white text-[#10201d] shadow-[3px_3px_0_#10201d]"
               >
-                Back to Link
+                {activeTab === 'text' ? 'Back to Text / Flyer Input' : 'Back to Link Input'}
               </Button>
               <Button 
                 onClick={handleSubmit} 
