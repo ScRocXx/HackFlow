@@ -162,6 +162,11 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
                   <span className="capitalize">{event.mode}</span>
                 </span>
               )}
+              {(event.prize_display_summary || event.prize_pool) && (
+                <span className="font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center gap-1">
+                  🏆 {event.prize_display_summary || event.prize_pool}
+                </span>
+              )}
             </div>
             <h1 className="font-display text-3xl md:text-4xl font-extrabold text-[#10201d] tracking-tight">{event.title}</h1>
             <p className="font-mono text-xs text-[#34433f] mt-1 font-bold">{event.organizer || 'Independent Hackathon'}</p>
@@ -194,17 +199,26 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
               <div className="bg-[#3d5f58] p-6 border-b-2 border-[#10201d] text-[#f7f7f2]">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
                   <div>
-                    <div className="flex items-center gap-2 mb-1.5">
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                       <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d]">
                         {activeStage.stage_type}
                       </span>
+                      {activeStage.raw_date_snippet && (
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border border-[#10201d] bg-[#f7f7f2] text-[#10201d]">
+                          🗓️ {activeStage.raw_date_snippet}
+                        </span>
+                      )}
                     </div>
                     <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#f7f7f2] tracking-tight">{activeStage.title}</h2>
                   </div>
-                  {activeStage.deadline && (
+                  {(activeStage.actionable_deadline || activeStage.deadline || activeStage.window_start) && (
                     <div className="text-left sm:text-right">
-                      <div className="font-mono text-[10px] uppercase tracking-wider text-[#f6c4c1] mb-1 font-bold">Time Remaining</div>
-                      <CountdownTimer deadline={activeStage.deadline} />
+                      <CountdownTimer 
+                        deadline={activeStage.actionable_deadline || activeStage.deadline} 
+                        windowStart={activeStage.window_start}
+                        windowEnd={activeStage.window_end}
+                        showMilestoneLabel={true}
+                      />
                     </div>
                   )}
                 </div>

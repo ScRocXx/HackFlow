@@ -41,6 +41,11 @@ export interface Event {
   github_repo_url?: string | null
   pitch_deck_url?: string | null
   squad_id?: string | null
+  prize_cash_pool?: string | null
+  prize_first_place?: string | null
+  has_perks_or_credits?: boolean | null
+  raw_prize_text?: string | null
+  prize_display_summary?: string | null
   created_at: string
   updated_at: string
 }
@@ -50,8 +55,12 @@ export interface EventStage {
   event_id: string
   round_number: number
   title: string
-  stage_type: 'quiz' | 'ppt_submission' | 'prototype' | 'presentation' | 'other'
+  stage_type: 'quiz' | 'ppt_submission' | 'prototype' | 'hackathon_sprint' | 'presentation' | 'other'
   deadline: string | null
+  window_start?: string | null
+  window_end?: string | null
+  actionable_deadline?: string | null
+  raw_date_snippet?: string | null
   evaluation_format: string | null
   deliverables_description: string | null
   is_completed: boolean

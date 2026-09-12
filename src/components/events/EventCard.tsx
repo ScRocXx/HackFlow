@@ -1,10 +1,7 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { Users, MapPin, Globe, FileText, Database, ExternalLink } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
+import Link from 'next/link'
+import { Users, MapPin, Globe, FileText, Database, ExternalLink, Calendar } from 'lucide-react'
 import { StatusPills } from '@/components/events/StatusPills'
 import { CountdownTimer } from '@/components/events/CountdownTimer'
 import type { Event, EventStage, EventResource } from '@/lib/supabase/types'
@@ -22,7 +19,6 @@ interface EventCardProps {
 }
 
 export function EventCard({ event }: EventCardProps) {
-  const router = useRouter()
   const progressPercent = event.deliverable_progress?.total 
     ? (event.deliverable_progress.done / event.deliverable_progress.total) * 100 
     : 0
@@ -39,11 +35,14 @@ export function EventCard({ event }: EventCardProps) {
     }
   }
 
+  const prizeDisplay = event.prize_display_summary || event.prize_pool
+
   return (
     <div className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[6px_6px_0_#671912] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_#671912] transition-all flex flex-col group h-full overflow-hidden">
-      <div 
-        onClick={() => router.push(`/events/${event.id}`)} 
-        className="flex flex-col h-full flex-1 cursor-pointer"
+      <Link 
+        href={`/events/${event.id}`}
+        prefetch={true}
+        className="flex flex-col h-full flex-1"
       >
         <div className="h-32 w-full relative bg-[#2e4742] border-b-2 border-[#10201d]">
           {event.banner_url ? (
@@ -55,7 +54,7 @@ export function EventCard({ event }: EventCardProps) {
               </span>
             </div>
           )}
-          <div className="absolute top-3 left-3 flex gap-2 flex-wrap max-w-[80%]">
+          <div className="absolute top-3 left-3 flex gap-2 flex-wrap max-w-[85%]">
             <span className={`inline-flex items-center px-2.5 py-0.5 border-2 font-mono text-[10px] font-bold uppercase tracking-wider shadow-[2px_2px_0_#10201d] ${getPlatformColor(event.source_platform || 'other')}`}>
               {event.source_platform || 'Hackathon'}
             </span>
@@ -68,6 +67,11 @@ export function EventCard({ event }: EventCardProps) {
               <span className="inline-flex items-center px-2 py-0.5 border-2 border-[#10201d] bg-[#f7f7f2] text-[#10201d] font-mono text-[10px] font-bold uppercase tracking-wider shadow-[2px_2px_0_#10201d]">
                 {event.mode === 'in-person' ? <MapPin className="w-3 h-3 mr-1" /> : <Globe className="w-3 h-3 mr-1" />}
                 <span className="capitalize">{event.mode}</span>
+              </span>
+            )}
+            {prizeDisplay && (
+              <span className="inline-flex items-center px-2 py-0.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] font-mono text-[10px] font-bold uppercase tracking-wider shadow-[2px_2px_0_#10201d] truncate max-w-[180px]">
+                🏆 {prizeDisplay}
               </span>
             )}
           </div>
@@ -83,46 +87,31 @@ export function EventCard({ event }: EventCardProps) {
 
           {event.active_stage ? (
             <div className="mb-4 p-3 border-2 border-[#10201d] bg-[#f2f2eb] shadow-[3px_3px_0_#2e4742]">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-2 h-2 bg-[#e53927] inline-block" />
-                <span className="font-mono text-xs font-bold text-[#10201d] truncate uppercase">
-                  {event.active_stage.title}
-                </span>
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2 truncate">
+                  <span className="w-2 h-2 bg-[#e53927] inline-block shrink-0" />
+                  <span className="font-mono text-xs font-bold text-[#10201d] truncate uppercase">
+                    {event.active_stage.title}
+                  </span>
+                </div>
+                {event.active_stage.raw_date_snippet && (
+                  <span className="font-mono text-[10px] text-[#34433f] font-semibold flex items-center gap-1 shrink-0">
+                    <Calendar className="w-3 h-3" />
+                    {event.active_stage.raw_date_snippet}
+                  </span>
+                )}
               </div>
-              <CountdownTimer deadline={event.active_stage.deadline || ''} className="text-xs" />
+              <CountdownTimer 
+                deadline={event.active_stage.actionable_deadline || event.active_stage.deadline || ''} 
+                windowStart={event.active_stage.window_start}
+                windowEnd={event.active_stage.window_end}
+                showMilestoneLabel={true}
+                className="text-xs" 
+              />
             </div>
           ) : (
             <div className="mb-4 p-3 border-2 border-[#10201d] bg-[#e4e5da] flex items-center justify-center font-mono text-[#34433f] text-xs font-bold h-[76px]">
               No active stage
-            </div>
-          )}
-
-          {event.resources && event.resources.length > 0 && (
-            <div className="mb-3 flex flex-wrap gap-1.5 z-20 relative">
-              {event.resources.slice(0, 3).map((res) => (
-                <a
-                  key={res.id}
-                  href={res.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 border border-[#10201d] bg-[#f7f7f2] hover:bg-[#8bb2de] text-[#10201d] transition-colors max-w-[180px]"
-                  title={res.title}
-                >
-                  {res.resource_type === 'dataset' ? (
-                    <Database className="w-3 h-3 text-[#10201d] shrink-0" />
-                  ) : (
-                    <FileText className="w-3 h-3 text-[#10201d] shrink-0" />
-                  )}
-                  <span className="truncate">{res.title}</span>
-                  <ExternalLink className="w-2.5 h-2.5 opacity-60 shrink-0" />
-                </a>
-              ))}
-              {event.resources.length > 3 && (
-                <span className="font-mono text-[10px] text-[#34433f] font-bold self-center">
-                  +{event.resources.length - 3}
-                </span>
-              )}
             </div>
           )}
 
@@ -139,7 +128,36 @@ export function EventCard({ event }: EventCardProps) {
             </div>
           </div>
         </div>
-      </div>
+      </Link>
+
+      {/* Resource Badges outside <Link> to prevent invalid nested anchor tags */}
+      {event.resources && event.resources.length > 0 && (
+        <div className="px-5 pb-3 flex flex-wrap gap-1.5 z-20 relative border-t border-[#10201d]/20 pt-2.5">
+          {event.resources.slice(0, 3).map((res) => (
+            <a
+              key={res.id}
+              href={res.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 border border-[#10201d] bg-[#f7f7f2] hover:bg-[#8bb2de] text-[#10201d] transition-colors max-w-[180px]"
+              title={res.title}
+            >
+              {res.resource_type === 'dataset' ? (
+                <Database className="w-3 h-3 text-[#10201d] shrink-0" />
+              ) : (
+                <FileText className="w-3 h-3 text-[#10201d] shrink-0" />
+              )}
+              <span className="truncate">{res.title}</span>
+              <ExternalLink className="w-2.5 h-2.5 opacity-60 shrink-0" />
+            </a>
+          ))}
+          {event.resources.length > 3 && (
+            <span className="font-mono text-[10px] text-[#34433f] font-bold self-center">
+              +{event.resources.length - 3}
+            </span>
+          )}
+        </div>
+      )}
       
       <div className="px-4 py-3 bg-[#f7f7f2] border-t-2 border-[#10201d] relative z-10">
         <StatusPills 

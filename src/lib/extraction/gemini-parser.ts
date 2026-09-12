@@ -1,19 +1,39 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { z } from 'zod';
-import { cleanMarkdownContent } from './jina-reader';
+import { cleanMarkdownContent, preFilterMarkdown } from './jina-reader';
+import type { ExtractedJsonLd } from './jsonld-extractor';
 
 export const StageSchema = z.object({
   round_number: z.number().int().default(1),
   title: z.string().min(1, 'Stage title is required'),
-  stage_type: z.enum(['quiz', 'ppt_submission', 'prototype', 'presentation', 'other']).default('other'),
-  deadline: z.string().nullable().optional().transform(val => {
-    if (!val || val.trim() === '' || val === 'null' || val === 'undefined') {
-      return new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
-    }
-    return val;
-  }),
+  stage_type: z.enum(['quiz', 'ppt_submission', 'prototype', 'hackathon_sprint', 'presentation', 'other']).default('other'),
+  window_start: z.string().nullable().optional().default(null),
+  window_end: z.string().nullable().optional().default(null),
+  actionable_deadline: z.string().nullable().optional().default(null),
+  deadline: z.string().nullable().optional().default(null),
+  raw_date_snippet: z.string().optional().default(''),
   evaluation_format: z.string().optional().default(''),
   deliverables_description: z.string().optional().default(''),
+}).transform((stage) => {
+  // Runtime safeguard: Object-level transform avoiding ctx.parent
+  const fallback = stage.deadline || stage.actionable_deadline || stage.window_end || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString();
+  const finalWindowEnd = stage.window_end || fallback;
+  const finalActionable = stage.actionable_deadline || stage.window_start || fallback;
+
+  return {
+    ...stage,
+    deadline: fallback,
+    window_end: finalWindowEnd,
+    actionable_deadline: finalActionable,
+  };
+});
+
+export const PrizeSchema = z.object({
+  display_summary: z.string().default(''),
+  cash_pool: z.string().nullable().optional().default(null),
+  first_place_cash: z.string().nullable().optional().default(null),
+  has_perks_or_credits: z.boolean().default(false),
+  raw_prize_text: z.string().optional().default(''),
 });
 
 export const ResourceSchema = z.object({
@@ -30,17 +50,35 @@ export const ParsedHackathonSchema = z.object({
   location: z.string().optional().default(''),
   banner_url: z.string().optional().default(''),
   prize_pool: z.string().optional().default(''),
+  prizes: PrizeSchema.optional().default({
+    display_summary: '',
+    cash_pool: null,
+    first_place_cash: null,
+    has_perks_or_credits: false,
+    raw_prize_text: ''
+  }),
   overview: z.string().optional().default(''),
   eligibility: z.string().optional().default(''),
   team_size_min: z.number().int().optional().default(1),
   team_size_max: z.number().int().optional().default(4),
   stages: z.array(StageSchema).min(1, 'At least one stage is required'),
   resources: z.array(ResourceSchema).default([]),
+}).transform((data) => {
+  const displaySummary = data.prizes?.display_summary || data.prize_pool || '';
+  return {
+    ...data,
+    prize_pool: displaySummary || data.prize_pool || '',
+    prizes: {
+      ...data.prizes,
+      display_summary: displaySummary,
+    }
+  };
 });
 
 export type ParsedHackathon = z.infer<typeof ParsedHackathonSchema>;
 export type ParsedStage = z.infer<typeof StageSchema>;
 export type ParsedResource = z.infer<typeof ResourceSchema>;
+export type ParsedPrize = z.infer<typeof PrizeSchema>;
 
 export function detectPlatform(url: string): string {
   try {
@@ -60,61 +98,73 @@ export function detectPlatform(url: string): string {
   }
 }
 
-export function heuristicExtract(markdown: string, sourceUrl: string): ParsedHackathon {
+export function heuristicExtract(markdown: string, sourceUrl: string, jsonLd?: ExtractedJsonLd | null): ParsedHackathon {
   const platform = detectPlatform(sourceUrl);
   
-  // 1. Extract Title
-  let title = '';
-  const tysicMatch = markdown.match(/Tata\s+Young\s+Social\s+Innovator\s+Challenge[^\n\(\)]*(?:\([^\)]+\))?/i);
-  if (tysicMatch) {
-    title = tysicMatch[0].trim();
-  } else {
-    const titleMatch = markdown.match(/^#\s+([^\n#]+)/m) || markdown.match(/Title:\s*([^\n]+)/i);
-    if (titleMatch && titleMatch[1].trim()) {
-      title = titleMatch[1].trim();
+  // 1. Title
+  let title = jsonLd?.title || '';
+  if (!title) {
+    const tysicMatch = markdown.match(/Tata\s+Young\s+Social\s+Innovator\s+Challenge[^\n\(\)]*(?:\([^\)]+\))?/i);
+    if (tysicMatch) {
+      title = tysicMatch[0].trim();
     } else {
-      try {
-        const urlObj = new URL(sourceUrl);
-        const pathParts = urlObj.pathname.split('/').filter(Boolean);
-        if (pathParts.length > 0) {
-          const lastPart = pathParts[pathParts.length - 1].replace(/#.*$/, '');
-          title = lastPart
-            .split('-')
-            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-            .join(' ');
+      const titleMatch = markdown.match(/^#\s+([^\n#]+)/m) || markdown.match(/Title:\s*([^\n]+)/i);
+      if (titleMatch && titleMatch[1].trim()) {
+        title = titleMatch[1].trim();
+      } else {
+        try {
+          const urlObj = new URL(sourceUrl);
+          const pathParts = urlObj.pathname.split('/').filter(Boolean);
+          if (pathParts.length > 0) {
+            const lastPart = pathParts[pathParts.length - 1].replace(/#.*$/, '');
+            title = lastPart
+              .split('-')
+              .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+              .join(' ');
+          }
+        } catch {
+          title = 'Imported Challenge';
         }
-      } catch {
-        title = 'Imported Challenge';
       }
     }
   }
 
-  // 2. Mode
-  let mode: 'online' | 'in-person' | 'hybrid' = 'online';
-  if (/hybrid/i.test(markdown) || (/virtual/i.test(markdown) && /grand finale|offline|iim\s*calcutta/i.test(markdown))) {
-    mode = 'hybrid';
-  } else if (/in-person|offline|on-campus|physical venue/i.test(markdown)) {
-    mode = 'in-person';
+  // 2. Mode & Location
+  let mode: 'online' | 'in-person' | 'hybrid' = jsonLd?.mode || 'online';
+  if (!jsonLd?.mode) {
+    if (/hybrid/i.test(markdown) || (/virtual/i.test(markdown) && /grand finale|offline|iim\s*calcutta/i.test(markdown))) {
+      mode = 'hybrid';
+    } else if (/in-person|offline|on-campus|physical venue/i.test(markdown)) {
+      mode = 'in-person';
+    }
   }
 
   // 3. Prize Pool
-  let prizePool = '';
+  let cashPool: string | null = null;
+  let firstPlaceCash: string | null = null;
+  let displaySummary = '';
+  let hasPerks = /cloud credits?|aws credits?|google cloud|voucher|swag|subscription/i.test(markdown);
+
   const multiPrizeMatch = markdown.match(/cash prizes? of (?:₹|Rs\.?|INR)\s*([\d,]+)[^\n]*?(?:₹|Rs\.?|INR)\s*([\d,]+)[^\n]*?(?:₹|Rs\.?|INR)\s*([\d,]+)/i);
   if (multiPrizeMatch) {
     const p1 = parseInt(multiPrizeMatch[1].replace(/,/g, ''), 10) || 0;
     const p2 = parseInt(multiPrizeMatch[2].replace(/,/g, ''), 10) || 0;
     const p3 = parseInt(multiPrizeMatch[3].replace(/,/g, ''), 10) || 0;
     const total = p1 + p2 + p3;
-    prizePool = `₹${total.toLocaleString('en-IN')} (1st: ₹${p1.toLocaleString('en-IN')}, 2nd: ₹${p2.toLocaleString('en-IN')}, 3rd: ₹${p3.toLocaleString('en-IN')}) + Certificates & Mentorship`;
+    cashPool = `₹${total.toLocaleString('en-IN')}`;
+    firstPlaceCash = `₹${p1.toLocaleString('en-IN')}`;
+    displaySummary = `₹${total.toLocaleString('en-IN')} Cash${hasPerks ? ' + Perks' : ''}`;
   } else {
-    const prizeMatch = markdown.match(/(?:₹|INR|Rs\.?|\$)\s*[\d,]+(?:\s*(?:lakhs?|crores?|k|million))?/i) 
-      || markdown.match(/Prize(?:s|\s*Pool)?\s*[:\-]?\s*([^\n]+)/i);
+    const prizeMatch = markdown.match(/(?:₹|INR|Rs\.?|\$)\s*[\d,]+(?:\s*(?:lakhs?|crores?|k|million))?/i);
     if (prizeMatch) {
-      prizePool = prizeMatch[0].trim();
+      cashPool = prizeMatch[0].trim();
+      displaySummary = `${cashPool}${hasPerks ? ' (+ Perks)' : ''}`;
+    } else {
+      displaySummary = 'See Details';
     }
   }
 
-  // 4. Extract Resources (PDFs, drive links, problem statements)
+  // 4. Resources
   const resources: Array<{ title: string; url: string; resource_type: 'problem_statement' | 'rulebook' | 'template' | 'dataset' | 'reference' | 'other' }> = [];
   const linkRegex = /\[([^\]]+)\]\((https?:\/\/[^\s\)]+)\)/g;
   let match: RegExpExecArray | null;
@@ -123,9 +173,7 @@ export function heuristicExtract(markdown: string, sourceUrl: string): ParsedHac
   while ((match = linkRegex.exec(markdown)) !== null) {
     const linkText = match[1].trim();
     const linkUrl = match[2].trim();
-    
     if (seenUrls.has(linkUrl) || linkUrl === sourceUrl) continue;
-    
     const lower = (linkText + ' ' + linkUrl).toLowerCase();
     if (
       lower.includes('.pdf') ||
@@ -157,95 +205,47 @@ export function heuristicExtract(markdown: string, sourceUrl: string): ParsedHac
     }
   }
 
-  // 5. Extract Stages / Rounds
-  const stages: Array<{
-    round_number: number;
-    title: string;
-    stage_type: 'quiz' | 'ppt_submission' | 'prototype' | 'presentation' | 'other';
-    deadline: string;
-    evaluation_format: string;
-    deliverables_description: string;
-  }> = [];
+  // 5. Stages with Sprint Windows
+  const stages: Array<z.infer<typeof StageSchema>> = [];
 
   const stageFaqMatch = markdown.match(/four stages:\s*Stage\s*1\s*[-–]\s*([^,]+),\s*Stage\s*2\s*[-–]\s*([^,]+),\s*Stage\s*3\s*[-–]\s*([^,]+),\s*and\s*Stage\s*4\s*[-–]\s*([^.]+)/i);
   if (stageFaqMatch) {
     const rawStages = [
       { name: stageFaqMatch[1].trim(), type: 'other' as const, desc: 'Participant registration' },
-      { name: stageFaqMatch[2].trim(), type: 'ppt_submission' as const, desc: 'Problem statement selection and PPT/DOC/PDF solution submission (max 10MB)' },
+      { name: stageFaqMatch[2].trim(), type: 'ppt_submission' as const, desc: 'Problem statement selection and PPT solution submission' },
       { name: stageFaqMatch[3].trim(), type: 'presentation' as const, desc: 'Virtual semi-final idea presentation to jury' },
       { name: stageFaqMatch[4].trim(), type: 'presentation' as const, desc: 'Grand finale offline pitch at IIM Calcutta' },
     ];
     rawStages.forEach((s, i) => {
+      const stageDeadline = new Date(Date.now() + (i + 1) * 7 * 24 * 60 * 60 * 1000).toISOString();
       stages.push({
         round_number: i + 1,
         title: `Stage ${i + 1}: ${s.name}`,
         stage_type: s.type,
-        deadline: new Date(Date.now() + (i + 1) * 7 * 24 * 60 * 60 * 1000).toISOString(),
+        window_start: i === 0 && jsonLd?.startDate ? jsonLd.startDate : null,
+        window_end: i === rawStages.length - 1 && jsonLd?.endDate ? jsonLd.endDate : stageDeadline,
+        actionable_deadline: stageDeadline,
+        deadline: stageDeadline,
+        raw_date_snippet: `Stage ${i + 1} schedule`,
         evaluation_format: i === 1 ? 'Expert panel evaluation on innovation & feasibility' : 'Jury evaluation',
         deliverables_description: s.desc,
       });
     });
   } else {
-    const roundRegex = /(?:###?|####?|\*\*)\s*(Round\s*\d+|Stage\s*\d+|Phase\s*\d+|Prelims?|Grand\s*Finale|Final\s*Submission|Ideation\s*Round)[^\n]*/gi;
-    let roundMatch: RegExpExecArray | null;
-    const foundRounds: string[] = [];
-
-    while ((roundMatch = roundRegex.exec(markdown)) !== null) {
-      const cleanRound = roundMatch[0].replace(/^[#*\s]+|[#*\s]+$/g, '').trim();
-      if (cleanRound && !foundRounds.includes(cleanRound) && cleanRound.length < 80) {
-        foundRounds.push(cleanRound);
-      }
-    }
-
-    const dateRegex = /\b\d{1,2}\s+(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*['\s]+\d{2,4}\b|\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s+\d{1,2},?\s+\d{4}\b/gi;
-    const datesFound: string[] = [];
-    let dateMatch: RegExpExecArray | null;
-    while ((dateMatch = dateRegex.exec(markdown)) !== null) {
-      try {
-        let rawDate = dateMatch[0].replace(/'(\d{2})\b/, ' 20$1');
-        const d = new Date(rawDate);
-        if (!isNaN(d.getTime())) {
-          datesFound.push(d.toISOString());
-        }
-      } catch {
-        // ignore
-      }
-    }
-
-    if (foundRounds.length > 0) {
-      foundRounds.forEach((roundTitle, idx) => {
-        const lower = roundTitle.toLowerCase();
-        let stageType: 'quiz' | 'ppt_submission' | 'prototype' | 'presentation' | 'other' = 'prototype';
-        if (lower.includes('quiz') || lower.includes('test') || lower.includes('assessment')) {
-          stageType = 'quiz';
-        } else if (lower.includes('ppt') || lower.includes('idea') || lower.includes('deck') || lower.includes('abstract')) {
-          stageType = 'ppt_submission';
-        } else if (lower.includes('finale') || lower.includes('pitch') || lower.includes('presentation')) {
-          stageType = 'presentation';
-        }
-
-        const stageDeadline = datesFound[idx] || new Date(Date.now() + (idx + 1) * 7 * 24 * 60 * 60 * 1000).toISOString();
-
-        stages.push({
-          round_number: idx + 1,
-          title: roundTitle,
-          stage_type: stageType,
-          deadline: stageDeadline,
-          evaluation_format: 'Portal Guidelines',
-          deliverables_description: stageType === 'ppt_submission' ? 'Slide deck PDF, Problem brief' : stageType === 'quiz' ? 'Online Assessment' : 'Working Prototype, Code Repository',
-        });
-      });
-    } else {
-      const finalDeadline = datesFound[0] || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-      stages.push({
-        round_number: 1,
-        title: 'Round 1: Final Submission',
-        stage_type: 'prototype',
-        deadline: finalDeadline,
-        evaluation_format: 'Online Evaluation',
-        deliverables_description: 'Working prototype, slide deck, repository link',
-      });
-    }
+    const defaultStart = jsonLd?.startDate || null;
+    const defaultEnd = jsonLd?.endDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    stages.push({
+      round_number: 1,
+      title: 'Round 1: Final Submission',
+      stage_type: 'prototype',
+      window_start: defaultStart,
+      window_end: defaultEnd,
+      actionable_deadline: defaultStart && new Date() < new Date(defaultStart) ? defaultStart : defaultEnd,
+      deadline: defaultEnd,
+      raw_date_snippet: defaultStart ? `${defaultStart} to ${defaultEnd}` : defaultEnd,
+      evaluation_format: 'Online Evaluation',
+      deliverables_description: 'Working prototype, repository link, slide deck',
+    });
   }
 
   // 6. Overview
@@ -253,18 +253,25 @@ export function heuristicExtract(markdown: string, sourceUrl: string): ParsedHac
     .split('\n')
     .map(l => l.trim())
     .filter(l => l.length > 40 && !l.startsWith('#') && !l.startsWith('!'));
-  const overview = cleanLines.slice(0, 3).join('\n\n') || `Hackathon imported from ${platform}.`;
+  const overview = jsonLd?.description || cleanLines.slice(0, 3).join('\n\n') || `Hackathon imported from ${platform}.`;
 
   return {
     title: title || 'Imported Challenge',
-    organizer: platform === 'internshala' ? 'Tata Group & IIM Calcutta (Internshala)' : platform === 'unstop' ? 'Unstop Host' : 'Challenge Host',
+    organizer: jsonLd?.organizer || (platform === 'internshala' ? 'Tata Group & IIM Calcutta (Internshala)' : 'Challenge Host'),
     source_platform: platform,
     mode,
-    location: mode === 'hybrid' ? 'IIM Calcutta (Grand Finale)' : '',
-    banner_url: '',
-    prize_pool: prizePool,
+    location: jsonLd?.location || (mode === 'hybrid' ? 'IIM Calcutta' : ''),
+    banner_url: jsonLd?.banner_url || '',
+    prize_pool: displaySummary,
+    prizes: {
+      display_summary: displaySummary,
+      cash_pool: cashPool,
+      first_place_cash: firstPlaceCash,
+      has_perks_or_credits: hasPerks,
+      raw_prize_text: displaySummary,
+    },
     overview,
-    eligibility: /individual only/i.test(markdown) ? 'Students and young innovators across India. Individual participation only.' : 'Open for all eligible students and developers',
+    eligibility: /individual only/i.test(markdown) ? 'Individual participation only' : 'Open for teams and individuals',
     team_size_min: 1,
     team_size_max: /individual only/i.test(markdown) ? 1 : 4,
     stages,
@@ -272,56 +279,74 @@ export function heuristicExtract(markdown: string, sourceUrl: string): ParsedHac
   };
 }
 
-export async function parseHackathonContent(markdown: string, sourceUrl: string): Promise<ParsedHackathon> {
+export async function parseHackathonContent(
+  markdown: string, 
+  sourceUrl: string, 
+  jsonLd?: ExtractedJsonLd | null
+): Promise<ParsedHackathon> {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (!apiKey) {
     console.warn('GEMINI_API_KEY environment variable is not configured. Falling back to heuristic parsing.');
-    return heuristicExtract(markdown, sourceUrl);
+    return heuristicExtract(markdown, sourceUrl, jsonLd);
   }
 
-  const cleanedMarkdown = cleanMarkdownContent(markdown);
+  const preFiltered = preFilterMarkdown(markdown);
   const platform = detectPlatform(sourceUrl);
   const genAI = new GoogleGenerativeAI(apiKey);
 
   const modelCandidates = ['gemini-2.5-flash', 'gemini-3.6-flash'];
 
+  // Dynamic Temporal Injection (IST UTC+05:30)
   const now = new Date();
   const currentIso = now.toISOString();
   const currentYear = now.getFullYear();
 
-  const systemPrompt = `You are a world-class hackathon and competitive technology intelligence parser, operating like GPT-4o.
+  let jsonLdContext = '';
+  if (jsonLd) {
+    jsonLdContext = `
+VERIFIED GROUND TRUTH METADATA (Extracted deterministically from portal Schema.org JSON-LD):
+- Verified Title: ${jsonLd.title || 'N/A'}
+- Verified Start Timestamp: ${jsonLd.startDate || 'N/A'}
+- Verified End Timestamp: ${jsonLd.endDate || 'N/A'}
+- Verified Organizer: ${jsonLd.organizer || 'N/A'}
+- Verified Location: ${jsonLd.location || 'N/A'}
+- Attendance Mode: ${jsonLd.mode || 'N/A'}
+Rule: Treat these verified timestamps as hard truth anchors. If dates in markdown align with these, normalize directly to these exact ISO timestamps.
+`;
+  }
+
+  const systemPrompt = `You are an elite competitive technology intelligence parser.
 Your mission is to analyze competition text with extreme precision and output structured JSON.
 
-CURRENT TIMESTAMP: ${currentIso} (Current Year: ${currentYear})
+CURRENT TIME ANCHOR: ${currentIso} (Current Year: ${currentYear}, Timezone: Asia/Kolkata IST UTC+05:30)
+${jsonLdContext}
 
-DETECTION & PARSING RULES:
+CRITICAL PARSING RULES:
 1. **Verification**:
-   - If the provided content is NOT a hackathon, coding challenge, case competition, innovation challenge, or student contest, set "is_hackathon": false.
-2. **Title & Organizer**:
-   - Title: The official name of the event (e.g. "Tata Young Social Innovator Challenge (TYSIC)").
-   - Organizer: The primary company/university hosting or sponsoring it (e.g. "Tata Group & IIM Calcutta").
-3. **Mode & Location**:
-   - "online", "in-person", or "hybrid".
-   - If rounds are virtual/online but the Grand Finale or pitching is on-campus/in-person (e.g. at IIM Calcutta), mode MUST be "hybrid", with "location" set to the physical venue.
-4. **Prize Pool**:
-   - Calculate and summarize the complete monetary prize pool.
-   - If multiple prizes are mentioned (e.g., 1st: ₹1,00,000, 2nd: ₹60,000, 3rd: ₹40,000), compute the TOTAL: "₹2,00,000 (1st: ₹1,00,000 | 2nd: ₹60,000 | 3rd: ₹40,000)".
-   - Include mentions of certificates, mentorship, seed funding (e.g., up to ₹1 Crore), and incubation.
-5. **Multi-Stage Sequential Timeline**:
-   - Student challenges (especially Internshala & Unstop) are multi-round funnels. Look in FAQ sections (e.g. "What are the stages of the competition?", "What happens after I submit?"), timeline tables, and round tabs.
+   - If the content is NOT a hackathon, coding challenge, case competition, innovation challenge, or student contest, set "is_hackathon": false.
+
+2. **DATE RANGE RESOLUTION RULE**:
+   - Portals frequently write sprint windows like '24-28 Oct' or 'Starts Oct 24, 09:00 AM - Ends Oct 28, 11:59 PM'.
+   - Do NOT set the start-of-sprint as a distant deadline.
+   - If a multi-day hacking period is specified:
+     * 'window_start': ISO 8601 string when the stage or sprint opens (e.g. "${currentYear}-10-24T09:00:00+05:30").
+     * 'window_end': ISO 8601 string of the hard submission close (e.g. "${currentYear}-10-28T23:59:59+05:30").
+     * 'actionable_deadline': Points to 'window_start' (Kickoff) if currently before kickoff; rolls over to 'window_end' (Submission) once kickoff passes.
+     * 'raw_date_snippet': Verbatim text copied from the portal (e.g. "Oct 24, 09:00 AM - Oct 28, 11:59 PM").
+
+3. **PRIZE EVALUATION RULE**:
+   - Differentiate between real cash prizes and vanity perk pools.
+   - If an event advertises 'Total Pool: ₹10,00,000' but the breakdown shows '1st: ₹50,000 Cash, 2nd: ₹25,000 Cash, remainder in cloud credits/API tools', do NOT set '₹10,00,000' as cash.
+   - Set 'display_summary': Highlights tangible cash, e.g. "₹75,000 Cash + ₹9.25L Credits".
+   - Set 'cash_pool': Verified hard cash amount only (e.g. "₹75,000").
+   - Set 'first_place_cash': First prize cash amount (e.g. "₹50,000").
+   - Set 'has_perks_or_credits': True if the advertised prize consists largely of cloud credits, swags, or subscriptions.
+   - Set 'raw_prize_text': Exact snippet from the page.
+
+4. **Multi-Stage Funnel**:
    - Extract EVERY stage sequentially with accurate round numbers:
-     * Round 1: Registration / Screening
-     * Round 2: Problem Statement Selection & Solution Deck Submission
-     * Round 3: Semi-Finals (Virtual)
-     * Round 4: Grand Finale (In-person presentation)
-   - 'stage_type': Classify as 'quiz' | 'ppt_submission' | 'prototype' | 'presentation' | 'other'.
-   - 'deadline': ISO 8601 with timezone offset (e.g. "+05:30" for IST Indian events, e.g. "${currentYear}-10-15T23:59:59+05:30").
-     If an exact date is not given in the text, extrapolate sequential realistic deadlines based on the ${currentYear} calendar (e.g., +7 days, +14 days, +21 days). NEVER return null, empty, or 1970.
-6. **Attached Documents & Problem Statement Links**:
-   - Scan for links to Google Docs, Google Drive folders, PDFs, rulebooks, problem statements, and slide deck templates.
-   - Resource types: 'problem_statement' | 'rulebook' | 'template' | 'dataset' | 'reference' | 'other'.
-7. **Eligibility & Team Size**:
-   - Check if individual only (team_size_min: 1, team_size_max: 1) or teams (e.g. 1 to 4).
+     * Stage types: 'quiz' | 'ppt_submission' | 'prototype' | 'hackathon_sprint' | 'presentation' | 'other'.
+     * Multi-day hacking rounds MUST be classified as 'hackathon_sprint'.
 
 OUTPUT JSON SCHEMA:
 {
@@ -333,6 +358,13 @@ OUTPUT JSON SCHEMA:
   "location": "string",
   "banner_url": "string",
   "prize_pool": "string",
+  "prizes": {
+    "display_summary": "string",
+    "cash_pool": "string" | null,
+    "first_place_cash": "string" | null,
+    "has_perks_or_credits": boolean,
+    "raw_prize_text": "string"
+  },
   "overview": "string",
   "eligibility": "string",
   "team_size_min": number,
@@ -341,8 +373,12 @@ OUTPUT JSON SCHEMA:
     {
       "round_number": 1,
       "title": "string",
-      "stage_type": "quiz" | "ppt_submission" | "prototype" | "presentation" | "other",
+      "stage_type": "quiz" | "ppt_submission" | "prototype" | "hackathon_sprint" | "presentation" | "other",
+      "window_start": "YYYY-MM-DDTHH:mm:ss+05:30" | null,
+      "window_end": "YYYY-MM-DDTHH:mm:ss+05:30",
+      "actionable_deadline": "YYYY-MM-DDTHH:mm:ss+05:30",
       "deadline": "YYYY-MM-DDTHH:mm:ss+05:30",
+      "raw_date_snippet": "string",
       "evaluation_format": "string",
       "deliverables_description": "string"
     }
@@ -368,7 +404,7 @@ OUTPUT JSON SCHEMA:
 
       const result = await model.generateContent([
         systemPrompt,
-        `Here is the contest page content from ${sourceUrl}:\n\n${cleanedMarkdown.slice(0, 50000)}`
+        `Here is the contest page content from ${sourceUrl}:\n\n${preFiltered.slice(0, 40000)}`
       ]);
 
       const text = result.response.text();
@@ -388,12 +424,17 @@ OUTPUT JSON SCHEMA:
 
       // Ensure stages array exists
       if (!parsed.stages || !Array.isArray(parsed.stages) || parsed.stages.length === 0) {
+        const fallbackEnd = jsonLd?.endDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
         parsed.stages = [
           {
             round_number: 1,
             title: 'Round 1: Submission',
             stage_type: 'prototype',
-            deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            window_start: jsonLd?.startDate || null,
+            window_end: fallbackEnd,
+            actionable_deadline: fallbackEnd,
+            deadline: fallbackEnd,
+            raw_date_snippet: 'Portal Timeline',
             evaluation_format: 'Online Evaluation',
             deliverables_description: 'Deliverables as per portal guidelines',
           }
@@ -419,6 +460,5 @@ OUTPUT JSON SCHEMA:
   }
 
   console.warn('All Gemini models failed or unavailable. Falling back to heuristic parser.');
-  return heuristicExtract(markdown, sourceUrl);
+  return heuristicExtract(markdown, sourceUrl, jsonLd);
 }
-

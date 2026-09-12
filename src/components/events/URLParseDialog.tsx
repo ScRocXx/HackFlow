@@ -23,6 +23,10 @@ interface EditableStage {
   title: string
   stage_type: string
   deadline: string
+  window_start?: string | null
+  window_end?: string | null
+  actionable_deadline?: string | null
+  raw_date_snippet?: string | null
   evaluation_format?: string
   deliverables_description?: string
   deliverables?: string[]
@@ -86,6 +90,11 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
   const [mode, setMode] = useState('online')
   const [location, setLocation] = useState('')
   const [prizePool, setPrizePool] = useState('')
+  const [prizeCashPool, setPrizeCashPool] = useState<number | null>(null)
+  const [prizeFirstPlace, setPrizeFirstPlace] = useState<number | null>(null)
+  const [hasPerksOrCredits, setHasPerksOrCredits] = useState<boolean>(false)
+  const [rawPrizeText, setRawPrizeText] = useState<string | null>(null)
+  const [prizeDisplaySummary, setPrizeDisplaySummary] = useState<string | null>(null)
   const [overview, setOverview] = useState('')
   const [teamSizeMin, setTeamSizeMin] = useState(1)
   const [teamSizeMax, setTeamSizeMax] = useState(4)
@@ -147,7 +156,18 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
       setSourcePlatform(data.source_platform || 'custom')
       setMode(data.mode || 'online')
       setLocation(data.location || '')
-      setPrizePool(data.prize_pool || '')
+      
+      if (data.prizes) {
+        setPrizeCashPool(data.prizes.cash_pool ?? null)
+        setPrizeFirstPlace(data.prizes.first_place_cash ?? null)
+        setHasPerksOrCredits(Boolean(data.prizes.has_perks_or_credits))
+        setRawPrizeText(data.prizes.raw_prize_text || null)
+        setPrizeDisplaySummary(data.prizes.display_summary || null)
+        setPrizePool(data.prizes.display_summary || data.prize_pool || '')
+      } else {
+        setPrizePool(data.prize_pool || '')
+      }
+
       setOverview(data.overview || '')
       setTeamSizeMin(data.team_size_min || 1)
       setTeamSizeMax(data.team_size_max || 4)
@@ -193,6 +213,10 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
             title: stg.title || `Round ${index + 1}`,
             stage_type: stg.stage_type || 'other',
             deadline: formattedDeadline,
+            window_start: stg.window_start || null,
+            window_end: stg.window_end || null,
+            actionable_deadline: stg.actionable_deadline || null,
+            raw_date_snippet: stg.raw_date_snippet || null,
             evaluation_format: stg.evaluation_format || '',
             deliverables_description: stg.deliverables_description || '',
             deliverables: initialTags,
@@ -207,6 +231,10 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
             title: 'Round 1: Final Submission',
             stage_type: 'prototype',
             deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+            window_start: null,
+            window_end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            actionable_deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            raw_date_snippet: null,
             deliverables: ['Working Prototype', 'Project README', 'Demo Video'],
           }
         ])
@@ -356,6 +384,10 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
           title: stg.title,
           stage_type: stg.stage_type,
           deadline: isoDeadline,
+          window_start: stg.window_start || null,
+          window_end: stg.window_end || isoDeadline,
+          actionable_deadline: stg.actionable_deadline || isoDeadline,
+          raw_date_snippet: stg.raw_date_snippet || null,
           evaluation_format: stg.evaluation_format,
           deliverables_description: stg.deliverables?.join(', ') || stg.deliverables_description,
           deliverables: stg.deliverables,
@@ -370,6 +402,11 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
         mode,
         location,
         prize_pool: prizePool,
+        prize_cash_pool: prizeCashPool,
+        prize_first_place: prizeFirstPlace,
+        has_perks_or_credits: hasPerksOrCredits,
+        raw_prize_text: rawPrizeText,
+        prize_display_summary: prizeDisplaySummary || prizePool,
         overview,
         team_size_min: Number(teamSizeMin) || 1,
         team_size_max: Number(teamSizeMax) || 4,
@@ -544,6 +581,20 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                     placeholder="e.g. ₹5,00,000"
                     className="bg-white font-mono text-xs border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
                   />
+                  {(prizeCashPool !== null || hasPerksOrCredits) && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {prizeCashPool !== null && (
+                        <span className="font-mono text-[9px] px-1.5 py-0.5 bg-[#8bb2de] text-[#10201d] font-bold border border-[#10201d]">
+                          💵 Cash: ₹{prizeCashPool.toLocaleString()}
+                        </span>
+                      )}
+                      {hasPerksOrCredits && (
+                        <span className="font-mono text-[9px] px-1.5 py-0.5 bg-[#f5b726] text-[#10201d] font-bold border border-[#10201d]">
+                          🎁 Perks/Credits Included
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -581,6 +632,11 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                         <span className="font-mono text-xs font-bold uppercase px-2 py-0.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] shadow-[1px_1px_0_#10201d]">
                           Round {stage.round_number}
                         </span>
+                        {stage.raw_date_snippet && (
+                          <span className="font-mono text-[10px] font-bold px-2 py-0.5 border border-[#10201d] bg-[#f2f2eb] text-[#34433f] hidden sm:inline-block">
+                            🗓️ {stage.raw_date_snippet}
+                          </span>
+                        )}
                         <Input 
                           value={stage.title} 
                           onChange={e => {

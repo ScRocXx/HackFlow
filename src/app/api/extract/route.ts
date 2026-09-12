@@ -33,8 +33,8 @@ export async function POST(req: NextRequest) {
 
     const { url } = result.data;
 
-    // Fetch dynamic content via Jina Reader
-    const { content, url: finalUrl } = await fetchUrlContent(url);
+    // Fetch dynamic content via Jina Reader + direct HTML JSON-LD
+    const { content, url: finalUrl, jsonLd } = await fetchUrlContent(url);
     if (!content || content.trim().length === 0) {
       return NextResponse.json(
         { error: 'I suppose this is not a hackathon...' },
@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Parse structured metadata and multi-round timeline via Gemini
-    const parsedData = await parseHackathonContent(content, finalUrl);
+    // Parse structured metadata and multi-round timeline via Gemini with verified anchors
+    const parsedData = await parseHackathonContent(content, finalUrl, jsonLd);
 
     return NextResponse.json(parsedData, { status: 200 });
   } catch (error) {

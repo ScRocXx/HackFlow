@@ -13,6 +13,11 @@ export type CreateEventInput = {
   location?: string;
   banner_url?: string;
   prize_pool?: string;
+  prize_cash_pool?: number | null;
+  prize_first_place?: number | null;
+  has_perks_or_credits?: boolean;
+  raw_prize_text?: string | null;
+  prize_display_summary?: string | null;
   overview?: string;
   eligibility?: string;
   team_size_min?: number;
@@ -23,6 +28,10 @@ export type CreateEventInput = {
     title: string;
     stage_type: string;
     deadline: string;
+    window_start?: string | null;
+    window_end?: string | null;
+    actionable_deadline?: string | null;
+    raw_date_snippet?: string | null;
     evaluation_format?: string;
     deliverables_description?: string;
     deliverables?: string[];
@@ -94,6 +103,11 @@ export async function createEvent(data: CreateEventInput) {
         location: data.location || '',
         banner_url: data.banner_url || '',
         prize_pool: data.prize_pool || '',
+        prize_cash_pool: data.prize_cash_pool ?? null,
+        prize_first_place: data.prize_first_place ?? null,
+        has_perks_or_credits: data.has_perks_or_credits ?? false,
+        raw_prize_text: data.raw_prize_text || null,
+        prize_display_summary: data.prize_display_summary || null,
         overview: data.overview || '',
         eligibility: data.eligibility || '',
         team_size_min: data.team_size_min || 1,
@@ -129,6 +143,10 @@ export async function createEvent(data: CreateEventInput) {
           title: 'Round 1: Final Submission',
           stage_type: 'prototype',
           deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          window_start: null,
+          window_end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          actionable_deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          raw_date_snippet: null,
           evaluation_format: 'Online Evaluation',
           deliverables_description: 'Working prototype and presentation'
         }];
@@ -139,6 +157,10 @@ export async function createEvent(data: CreateEventInput) {
       title: stage.title.trim() || `Round ${idx + 1}`,
       stage_type: stage.stage_type || 'other',
       deadline: stage.deadline,
+      window_start: stage.window_start || null,
+      window_end: stage.window_end || stage.deadline,
+      actionable_deadline: stage.actionable_deadline || stage.deadline,
+      raw_date_snippet: stage.raw_date_snippet || null,
       evaluation_format: stage.evaluation_format || '',
       deliverables_description: stage.deliverables_description || '',
       is_completed: false,
@@ -386,75 +408,41 @@ export async function getEventWithDetails(eventId: string) {
 
     if (!user) return { success: false, error: 'Unauthorized' };
 
-    // Fetch event details
-    const { data: event, error: eventError } = await supabase
-      .from('events')
-      .select('*')
-      .eq('id', eventId)
-      .maybeSingle();
+    // Parallel Batch 1: Fetch event, stages, participants, resources, and problem statements concurrently
+    const [
+      { data: event, error: eventError },
+      { data: stages },
+      { data: participants },
+      { data: resources },
+      { data: problemStatements }
+    ] = await Promise.all([
+      supabase.from('events').select('*').eq('id', eventId).maybeSingle(),
+      supabase.from('event_stages').select('*').eq('event_id', eventId).order('round_number', { ascending: true }),
+      supabase.from('event_participants').select(`
+        *,
+        profile:profiles(id, email, full_name, avatar_url)
+      `).eq('event_id', eventId),
+      supabase.from('event_resources').select('*').eq('event_id', eventId).order('created_at', { ascending: true }),
+      supabase.from('event_problem_statements').select('*').eq('event_id', eventId).order('created_at', { ascending: true }),
+    ]);
 
     if (eventError || !event) {
       return { success: false, error: eventError?.message || 'Event not found' };
     }
 
-    // Fetch stages
-    const { data: stages } = await supabase
-      .from('event_stages')
-      .select('*')
-      .eq('event_id', eventId)
-      .order('round_number', { ascending: true });
-
-    // Fetch participants from event_participants (single source of truth) with profile information
-    const { data: participants } = await supabase
-      .from('event_participants')
-      .select(`
-        *,
-        profile:profiles(id, email, full_name, avatar_url)
-      `)
-      .eq('event_id', eventId);
-
-    // Fetch squad if assigned
-    let squad: any = null;
-    if (event.squad_id) {
-      const { data: squadData } = await supabase
-        .from('squads')
-        .select('*')
-        .eq('id', event.squad_id)
-        .maybeSingle();
-      squad = squadData;
-    }
-
-    // Fetch deliverables for active stage
-    let deliverables: any[] = [];
+    // Parallel Batch 2: Fetch squad (if assigned) and deliverables for active stage concurrently
     const activeStageId = event.active_stage_id || stages?.[0]?.id;
-    if (activeStageId) {
-      const { data: delivData } = await supabase
-        .from('stage_deliverables')
-        .select('*')
-        .eq('stage_id', activeStageId)
-        .order('sort_order', { ascending: true });
-      if (delivData) deliverables = delivData;
-    }
+    const [squadRes, delivRes] = await Promise.all([
+      event.squad_id
+        ? supabase.from('squads').select('*').eq('id', event.squad_id).maybeSingle()
+        : Promise.resolve({ data: null }),
+      activeStageId
+        ? supabase.from('stage_deliverables').select('*').eq('stage_id', activeStageId).order('sort_order', { ascending: true })
+        : Promise.resolve({ data: [] }),
+    ]);
 
-    // Fetch attached resources (problem statement, rules, templates, datasets, links)
-    const { data: resources } = await supabase
-      .from('event_resources')
-      .select('*')
-      .eq('event_id', eventId)
-      .order('created_at', { ascending: true });
-
-    // Fetch problem statements for Idea Sandbox
-    let problemStatements: any[] = [];
-    try {
-      const { data: psData } = await supabase
-        .from('event_problem_statements')
-        .select('*')
-        .eq('event_id', eventId)
-        .order('created_at', { ascending: true });
-      if (psData) problemStatements = psData;
-    } catch (err) {
-      console.warn('Problem statements fetch warning:', err);
-    }
+    const squad = squadRes?.data || null;
+    const deliverables = delivRes?.data || [];
 
     return { 
       success: true, 
@@ -475,7 +463,7 @@ export async function getEventWithDetails(eventId: string) {
         })),
         current_stage_deliverables: deliverables,
         resources: resources || [],
-        problem_statements: problemStatements
+        problem_statements: problemStatements || []
       } 
     };
   } catch (error: any) {
@@ -490,19 +478,16 @@ export async function getUserEvents() {
 
     if (!user) return { success: false, error: 'Unauthorized' };
 
-    // 1. Get event IDs from event_participants
-    const { data: participants } = await supabase
-      .from('event_participants')
-      .select('event_id')
-      .eq('user_id', user.id);
+    // 1. Parallel Batch 1: Get event IDs from event_participants AND squads concurrently
+    const [
+      { data: participants },
+      { data: userSquads }
+    ] = await Promise.all([
+      supabase.from('event_participants').select('event_id').eq('user_id', user.id),
+      supabase.from('squad_members').select('squad_id').eq('user_id', user.id),
+    ]);
 
     const participantEventIds = participants?.map(p => p.event_id) || [];
-
-    // Also get squads where user is a member
-    const { data: userSquads } = await supabase
-      .from('squad_members')
-      .select('squad_id')
-      .eq('user_id', user.id);
     const userSquadIds = userSquads?.map(s => s.squad_id) || [];
 
     // 2. Fetch events where user is creator OR in event_participants OR in squad
@@ -514,9 +499,11 @@ export async function getUserEvents() {
       orClauses.push(`squad_id.in.(${userSquadIds.join(',')})`);
     }
 
-    let query = supabase.from('events').select('*').or(orClauses.join(','));
-
-    const { data: events, error: eventsError } = await query.order('created_at', { ascending: false });
+    const { data: events, error: eventsError } = await supabase
+      .from('events')
+      .select('*')
+      .or(orClauses.join(','))
+      .order('created_at', { ascending: false });
 
     if (eventsError || !events) {
       console.error('Error fetching user events:', eventsError);
@@ -526,44 +513,30 @@ export async function getUserEvents() {
     if (events.length === 0) return { success: true, data: [] };
 
     const eventIds = events.map(e => e.id);
+    const activeStageIds = events.map(e => e.active_stage_id).filter(Boolean) as string[];
+    const squadIds = Array.from(new Set(events.map(e => e.squad_id).filter(Boolean))) as string[];
 
-    // 3. Fetch all stages for these events
-    const { data: allStages } = await supabase
-      .from('event_stages')
-      .select('*')
-      .in('event_id', eventIds)
-      .order('round_number', { ascending: true });
+    // 3. Parallel Batch 2: Fetch stages, participants, deliverables, resources, and squads concurrently
+    const [
+      { data: allStages },
+      { data: allParticipants },
+      delivRes,
+      { data: allResources },
+      squadsRes
+    ] = await Promise.all([
+      supabase.from('event_stages').select('*').in('event_id', eventIds).order('round_number', { ascending: true }),
+      supabase.from('event_participants').select('event_id, id').in('event_id', eventIds),
+      activeStageIds.length > 0
+        ? supabase.from('stage_deliverables').select('stage_id, is_done').in('stage_id', activeStageIds)
+        : Promise.resolve({ data: [] }),
+      supabase.from('event_resources').select('*').in('event_id', eventIds).order('created_at', { ascending: true }),
+      squadIds.length > 0
+        ? supabase.from('squads').select('id, name').in('id', squadIds)
+        : Promise.resolve({ data: [] })
+    ]);
 
-    // 4. Fetch participants count for these events
-    const { data: allParticipants } = await supabase
-      .from('event_participants')
-      .select('event_id, id')
-      .in('event_id', eventIds);
-
-    // 5. Fetch deliverables for all active stages
-    const activeStageIds = events.map(e => e.active_stage_id).filter(Boolean);
-    let allDeliverables: any[] = [];
-    if (activeStageIds.length > 0) {
-      const { data: delivs } = await supabase
-        .from('stage_deliverables')
-        .select('stage_id, is_done')
-        .in('stage_id', activeStageIds);
-      if (delivs) allDeliverables = delivs;
-    }
-
-    // 6. Fetch resources for all events
-    const { data: allResources } = await supabase
-      .from('event_resources')
-      .select('*')
-      .in('event_id', eventIds)
-      .order('created_at', { ascending: true });
-
-    // 7. Fetch squad names for events that have squad_id
-    const squadIds = Array.from(new Set(events.map(e => e.squad_id).filter(Boolean)));
-    const { data: squadsData } = squadIds.length > 0
-      ? await supabase.from('squads').select('id, name').in('id', squadIds)
-      : { data: [] };
-    const squadMap = new Map((squadsData || []).map((s: any) => [s.id, s.name]));
+    const allDeliverables = delivRes?.data || [];
+    const squadMap = new Map((squadsRes?.data || []).map((s: any) => [s.id, s.name]));
 
     // 8. Enrich each event
     const enrichedEvents = events.map(event => {

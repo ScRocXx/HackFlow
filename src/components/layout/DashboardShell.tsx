@@ -71,7 +71,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
       )}>
         {/* Brand Header */}
         <div className="flex h-16 shrink-0 items-center justify-between px-6 border-b-2 border-[#10201d] bg-[#10201d]/30">
-          <Link href="/dashboard" className="flex items-center">
+          <Link href="/dashboard" prefetch={true} className="flex items-center">
             <HackFlowLogo textClassName="text-[#f7f7f2] text-xl" />
           </Link>
           <button 
@@ -90,6 +90,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
               <Link
                 key={item.name}
                 href={item.href}
+                prefetch={true}
                 className={cn(
                   "flex items-center px-3.5 py-2.5 font-mono text-xs font-bold uppercase tracking-wider transition-all",
                   isActive 
