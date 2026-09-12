@@ -131,7 +131,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
 
           <div className="flex items-center gap-3">
             <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border border-[#10201d] bg-[#2e4742] text-[#8bb2de] hidden sm:inline-block">
-              Hacktoberfest 2026 Edition
+              Execution Engine
             </span>
           </div>
         </header>
