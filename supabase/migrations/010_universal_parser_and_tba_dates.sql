@@ -1,4 +1,4 @@
-﻿-- 010_universal_parser_and_tba_dates.sql
+-- 010_universal_parser_and_tba_dates.sql
 -- Supports competitions with unannounced/TBA dates and universal platforms
 
 -- 1. Make deadline column nullable in event_stages
