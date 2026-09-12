@@ -125,13 +125,13 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
               {pathname === '/dashboard' ? 'Dashboard' : 
                pathname === '/vault' ? 'Squad Vault' : 
                pathname === '/archive' ? 'Trophy Case' : 
-               pathname.startsWith('/events') ? 'Event Details' : 'HackFlow'}
+               pathname.startsWith('/events') ? 'Hackathon Workspace' : 'HackFlow'}
             </h1>
           </div>
 
           <div className="flex items-center gap-3">
             <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border border-[#10201d] bg-[#2e4742] text-[#8bb2de] hidden sm:inline-block">
-              Execution Engine
+              Team Workspace
             </span>
           </div>
         </header>

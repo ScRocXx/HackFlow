@@ -458,10 +458,10 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
             </div>
             <div>
               <DialogTitle className="font-display text-2xl sm:text-3xl font-extrabold text-[#10201d] tracking-tight">
-                Import Hackathon from URL
+                Add a Hackathon
               </DialogTitle>
               <DialogDescription className="font-mono text-xs text-[#34433f] mt-1">
-                Extract timeline rounds, deadlines, deliverable checklists, and resources.
+                Paste a hackathon link and we'll extract the rounds, deadlines, and requirements.
               </DialogDescription>
             </div>
           </div>
@@ -472,11 +472,11 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">
-                Hackathon or Competition URL
+                Hackathon or Competition Link
               </label>
               <div className="flex flex-col sm:flex-row gap-2">
                 <Input 
-                  placeholder="e.g. https://unstop.com/hackathons/... or https://internshala.com/..." 
+                  placeholder="e.g. https://unstop.com/hackathons/... or https://devfolio.co/..." 
                   value={url} 
                   onChange={(e) => setUrl(e.target.value)} 
                   onKeyDown={(e) => e.key === 'Enter' && handleParse()}
@@ -489,11 +489,11 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                   className="h-11 px-5 font-mono text-xs font-bold border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[3px_3px_0_#671912] shrink-0"
                 >
                   {extracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  {extracting ? 'Analyzing...' : 'Parse URL'}
+                  {extracting ? 'Reading page...' : 'Get Rounds & Deadlines'}
                 </Button>
               </div>
               <p className="font-mono text-[11px] text-[#34433f]">
-                Supports Unstop, Internshala, Devpost, Devfolio, HackerEarth, and MLH competitions.
+                Works with Unstop, Devfolio, Devpost, Internshala, HackerEarth, MLH, and custom hackathon pages.
               </p>
             </div>
 
@@ -526,7 +526,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                 }}
                 className="font-mono text-xs font-bold text-[#2e4742] hover:text-[#e53927] underline"
               >
-                Or enter event details manually &rarr;
+                Or set up rounds manually &rarr;
               </button>
             </div>
           </div>
@@ -928,7 +928,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                         ))}
                       </select>
                       <p className="font-mono text-[11px] text-[#57726d]">
-                        All members of this squad will be automatically enrolled into this competition's board and countdown alert engine.
+                        All members of this squad will have access to this hackathon board and shared tasks.
                       </p>
                     </>
                   )}
@@ -944,7 +944,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                 disabled={submitting} 
                 className="flex-1 font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f2f2eb] hover:bg-white text-[#10201d] shadow-[3px_3px_0_#10201d]"
               >
-                Re-enter URL
+                Back to Link
               </Button>
               <Button 
                 onClick={handleSubmit} 
@@ -952,7 +952,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                 className="flex-[2] font-mono text-xs font-bold border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[4px_4px_0_#671912]"
               >
                 {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {submitting ? 'Creating Event...' : 'Confirm & Create Event'}
+                {submitting ? 'Adding...' : 'Add to My Hackathons'}
               </Button>
             </div>
           </div>

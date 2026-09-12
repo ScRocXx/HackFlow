@@ -152,10 +152,10 @@ export function IdeaSandbox({ eventId, problemStatements = [] }: IdeaSandboxProp
           <Lightbulb className="h-5 w-5 text-[#f5b726]" />
           <div>
             <h3 className="font-display text-2xl font-bold tracking-tight text-[#f7f7f2]">
-              Google Meet Idea Sandbox
+              Problem Statement & Brainstorming
             </h3>
             <p className="font-mono text-xs text-[#8bb2de]">
-              Tag your chosen track during team calls and define 2–3 solution angles.
+              Pick your problem statement track and outline what you're actually building.
             </p>
           </div>
         </div>

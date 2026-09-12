@@ -120,10 +120,10 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
           </div>
           <div>
             <h3 className="font-display text-2xl font-bold tracking-tight text-[#f7f7f2]">
-              Post-Submission Lifecycle Console
+              Submission Confirmation & Follow-up
             </h3>
             <p className="font-mono text-xs text-[#8bb2de]">
-              Evaluation tracking, public permission checks, results countdown, and finalist logistics.
+              Keep submission proof, verify public repo access for judges, and track results.
             </p>
           </div>
         </div>

@@ -76,14 +76,14 @@ export function DashboardContent({ events = [] }: DashboardContentProps) {
             <span className="w-2.5 h-2.5 bg-[#f5b726] inline-block" />
             <span className="w-2.5 h-2.5 bg-[#e97b77] inline-block" />
             <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#f6c4c1] ml-2">
-              Hackathons & Sprints
+              My Hackathons
             </span>
           </div>
           <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-[#f7f7f2]">
-            Competitions & Deadlines
+            Hackathon Tracker
           </h1>
           <p className="font-mono text-xs text-[#8bb2de] mt-1">
-            Track multi-round timelines, manage deliverables, and stay on schedule with your team.
+            All your rounds, deadlines, and team checklists in one place.
           </p>
         </div>
 
@@ -94,7 +94,7 @@ export function DashboardContent({ events = [] }: DashboardContentProps) {
               size="lg"
               className="border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] font-mono text-xs font-bold uppercase tracking-wide shadow-[4px_4px_0_#671912] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#671912] px-6 h-12"
             >
-              + Import Hackathon
+              + Paste Hackathon Link
             </Button>
           </div>
         )}
@@ -104,7 +104,7 @@ export function DashboardContent({ events = [] }: DashboardContentProps) {
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
         <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912]">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="font-mono text-xs font-bold uppercase tracking-wider text-[#34433f]">Active Sprints</CardTitle>
+            <CardTitle className="font-mono text-xs font-bold uppercase tracking-wider text-[#34433f]">Active Hackathons</CardTitle>
             <div className="p-1.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#2e4742]">
               <Trophy className="h-4 w-4" />
             </div>
@@ -130,7 +130,7 @@ export function DashboardContent({ events = [] }: DashboardContentProps) {
 
         <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912]">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="font-mono text-xs font-bold uppercase tracking-wider text-[#34433f]">Deliverable Progress</CardTitle>
+            <CardTitle className="font-mono text-xs font-bold uppercase tracking-wider text-[#34433f]">Tasks Completed</CardTitle>
             <div className="p-1.5 border-2 border-[#10201d] bg-[#e97b77] text-[#10201d] shadow-[2px_2px_0_#671912]">
               <CheckCircle2 className="h-4 w-4" />
             </div>
@@ -138,7 +138,7 @@ export function DashboardContent({ events = [] }: DashboardContentProps) {
           <CardContent>
             <div className="font-display text-3xl sm:text-4xl font-extrabold text-[#10201d]">{completionRate}%</div>
             <p className="font-mono text-[11px] text-[#34433f] mt-1 font-bold">
-              {doneDeliverables} of {totalDeliverables} active tasks completed
+              {doneDeliverables} of {totalDeliverables} team tasks checked off
             </p>
           </CardContent>
         </Card>
@@ -196,18 +196,18 @@ export function DashboardContent({ events = [] }: DashboardContentProps) {
               <Trophy className="h-8 w-8" />
             </div>
             <h3 className="font-display text-2xl font-bold text-[#10201d]">
-              {safeEvents.length === 0 ? 'No hackathons tracked yet' : 'No competitions match this filter'}
+              {safeEvents.length === 0 ? 'No hackathons added yet' : 'No competitions match this filter'}
             </h3>
             <p className="mt-2 font-mono text-xs text-[#34433f] max-w-sm">
               {safeEvents.length === 0 
-                ? 'Import a hackathon from Unstop, Devfolio, Devpost, or Internshala to automatically track deadlines and stages.'
-                : 'Try selecting a different filter above or import another competition.'}
+                ? 'Paste a hackathon link from Unstop, Devfolio, Devpost, or anywhere else to get rounds, deadlines, and a shared team checklist.'
+                : 'Try selecting a different filter above or add another hackathon.'}
             </p>
             <Button 
               onClick={() => setIsDialogOpen(true)}
               className="mt-6 font-mono text-xs font-bold border-2 border-[#10201d] bg-[#e97b77] text-[#10201d] shadow-[3px_3px_0_#671912]"
             >
-              + Import Hackathon
+              + Paste Hackathon Link
             </Button>
           </div>
         ) : (

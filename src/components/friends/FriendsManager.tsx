@@ -44,7 +44,7 @@ export function FriendsManager({
       if (res.success && res.data) {
         toast({
           title: 'Request Sent',
-          description: `Friend request dispatched to ${targetEmail}`,
+          description: `Friend request sent to ${targetEmail}`,
           variant: 'success',
         })
         setOutgoing([res.data as Friendship, ...outgoing])
@@ -135,7 +135,7 @@ export function FriendsManager({
         <CardHeader className="p-4 border-b-2 border-[#10201d] bg-[#2e4742] text-[#f2f2eb]">
           <div className="flex items-center gap-2">
             <UserPlus className="h-5 w-5 text-[#f5b726]" />
-            <CardTitle className="font-display text-base tracking-wide">Invite Teammate to Network</CardTitle>
+            <CardTitle className="font-display text-base tracking-wide">Invite Teammates to Your Squad</CardTitle>
           </div>
         </CardHeader>
         <CardContent className="p-4">
@@ -156,7 +156,7 @@ export function FriendsManager({
               disabled={sending}
               className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#faaf00] text-[#10201d] shadow-[3px_3px_0_#10201d]"
             >
-              {sending ? 'Sending...' : 'Send Friend Request'}
+              {sending ? 'Sending...' : 'Send Squad Invite'}
             </Button>
           </form>
           <p className="mt-2 text-xs font-mono text-[#57726d]">
@@ -171,7 +171,7 @@ export function FriendsManager({
           <CardHeader className="p-4 border-b-2 border-[#10201d] bg-[#e53927] text-white flex flex-row items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              <CardTitle className="font-display text-base">Incoming Friend Requests</CardTitle>
+              <CardTitle className="font-display text-base">Incoming Squad Invites</CardTitle>
             </div>
             <Badge className="font-mono text-xs bg-[#10201d] text-white border-0">
               {incoming.length} Pending

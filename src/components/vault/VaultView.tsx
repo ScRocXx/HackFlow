@@ -186,7 +186,7 @@ export function VaultView({
             Squad Asset Vault
           </h1>
           <p className="font-mono text-xs text-[#8bb2de] mt-1">
-            Zero friction registration: 1-click copy member details, master slide templates, and starter repos.
+            Copy team details for registration forms in one click. Keep shared slide decks, Figma files, and starter repos in one place.
           </p>
         </div>
 
