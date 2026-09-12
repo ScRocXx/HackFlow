@@ -1,19 +1,21 @@
 'use client'
 
 import { useState } from 'react'
-import { MapPin, Globe, ExternalLink, Calendar, Users, Trophy, FileText, Database, Link2, Plus, Trash2, Loader2, Sparkles, UserPlus, Shield } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { MapPin, Globe, ExternalLink, Calendar, Users, Trophy, FileText, Database, Link2, Plus, Trash2, Loader2, Sparkles, UserPlus, Shield, Edit3, AlertTriangle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/use-toast'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { StatusPills } from '@/components/events/StatusPills'
 import { StageTimeline } from '@/components/events/StageTimeline'
 import { StageChecklist } from '@/components/events/StageChecklist'
 import { CountdownTimer } from '@/components/events/CountdownTimer'
+import { EditEventDialog } from '@/components/events/EditEventDialog'
 import { completeStage } from '@/app/actions/stages'
-import { addEventResource, deleteEventResource, addEventParticipant } from '@/app/actions/events'
+import { addEventResource, deleteEventResource, addEventParticipant, deleteEvent } from '@/app/actions/events'
 import { getFriendsList } from '@/app/actions/friends'
 import { MeetCompanionBar } from '@/components/events/MeetCompanionBar'
 import { IdeaSandbox } from '@/components/events/IdeaSandbox'
@@ -35,10 +37,16 @@ const RESOURCE_TYPES = [
 ]
 
 export function EventDetailContent({ event }: EventDetailContentProps) {
+  const router = useRouter()
   const activeStage = event.stages?.find((s: any) => s.id === event.active_stage_id) || 
                       event.stages?.find((s: any) => !s.is_completed) || 
                       event.stages?.[0]
   const [isCompleting, setIsCompleting] = useState(false)
+  
+  // Edit & Delete dialog states
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [isDeletingEvent, setIsDeletingEvent] = useState(false)
   
   // Teammate invite state
   const [isInviteOpen, setIsInviteOpen] = useState(false)
@@ -54,6 +62,29 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
   const [addingResource, setAddingResource] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const { toast } = useToast()
+
+  const handleDeleteEvent = async () => {
+    setIsDeletingEvent(true)
+    try {
+      const res = await deleteEvent(event.id)
+      if (!res.success) {
+        throw new Error(res.error || 'Failed to delete hackathon')
+      }
+      toast({
+        title: 'Hackathon Deleted',
+        description: `"${event.title}" has been permanently removed.`,
+      })
+      router.push('/dashboard')
+    } catch (err: any) {
+      toast({
+        title: 'Delete Failed',
+        description: err.message || 'Could not delete hackathon.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsDeletingEvent(false)
+    }
+  }
 
   const handleCompleteStage = async () => {
     if (!activeStage) return
@@ -174,6 +205,24 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
           <div className="flex flex-col sm:flex-row md:flex-col items-start md:items-end gap-3 w-full md:w-auto shrink-0">
             <div className="w-full sm:w-64">
               <StatusPills eventId={event.id} currentStatus={event.status || 'registered'} />
+            </div>
+            <div className="w-full sm:w-auto flex flex-wrap md:justify-end items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEditDialogOpen(true)}
+                className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#f5b726] shadow-[2px_2px_0_#10201d]"
+              >
+                <Edit3 className="w-3.5 h-3.5 mr-1.5" /> Edit Hackathon
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDeleteDialogOpen(true)}
+                className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#e53927] hover:text-[#f7f7f2] shadow-[2px_2px_0_#10201d]"
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete
+              </Button>
             </div>
             <div className="w-full sm:w-auto flex md:justify-end">
               <MeetCompanionBar eventId={event.id} meetUrl={event.meet_url} />
@@ -596,6 +645,50 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
                   </div>
                 )}
               </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Edit Event Dialog */}
+          <EditEventDialog
+            open={editDialogOpen}
+            onOpenChange={setEditDialogOpen}
+            event={event}
+          />
+
+          {/* Delete Confirmation Dialog */}
+          <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <DialogContent className="max-w-md border-2 border-[#10201d] bg-[#f7f7f2] p-6 shadow-[8px_8px_0_#671912]">
+              <DialogHeader>
+                <div className="flex items-center gap-2 text-[#e53927]">
+                  <AlertTriangle className="w-5 h-5" />
+                  <DialogTitle className="font-display text-xl font-black uppercase text-[#10201d]">
+                    Delete Hackathon?
+                  </DialogTitle>
+                </div>
+                <DialogDescription className="font-mono text-xs text-[#34433f] mt-2">
+                  Are you sure you want to permanently delete <strong className="text-[#10201d] font-bold">"{event.title}"</strong>? All associated rounds, tasks, and resources will be removed. This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+
+              <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-4 border-t-2 border-[#10201d] mt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setDeleteDialogOpen(false)}
+                  disabled={isDeletingEvent}
+                  className="w-full sm:w-auto font-mono text-xs border-2 border-[#10201d]"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleDeleteEvent}
+                  disabled={isDeletingEvent}
+                  className="w-full sm:w-auto font-mono text-xs bg-[#e53927] hover:bg-[#b02213] text-[#f7f7f2] border-2 border-[#10201d] shadow-[3px_3px_0_#10201d] font-bold"
+                >
+                  {isDeletingEvent ? 'Deleting...' : 'Delete Permanently'}
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
