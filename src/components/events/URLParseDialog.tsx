@@ -124,7 +124,10 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
   }, [open, initialUrl])
 
   const handleParse = async (targetUrl?: string) => {
-    const parseUrl = (targetUrl || url).trim()
+    let parseUrl = (targetUrl || url).trim()
+    // Sanitize URL: strip trailing dots, punctuation, quotes
+    parseUrl = parseUrl.replace(/[.,;'"\s]+$/, '').trim()
+
     if (!parseUrl) {
       toast({
         title: 'URL Required',
@@ -187,14 +190,17 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
       if (Array.isArray(data.stages) && data.stages.length > 0) {
         const mappedStages: EditableStage[] = data.stages.map((stg: any, index: number) => {
           // Format deadline to local datetime-local string if possible
-          let formattedDeadline = stg.deadline || ''
-          try {
-            const d = new Date(stg.deadline)
-            if (!isNaN(d.getTime())) {
-              formattedDeadline = d.toISOString().slice(0, 16) // YYYY-MM-DDTHH:mm
+          // Guard: Strictly prevent 1970-01-01 epoch from new Date(null)
+          let formattedDeadline = ''
+          if (stg.deadline && typeof stg.deadline === 'string' && stg.deadline.trim() && stg.deadline !== 'null') {
+            try {
+              const d = new Date(stg.deadline)
+              if (!isNaN(d.getTime()) && d.getFullYear() >= 2000) {
+                formattedDeadline = d.toISOString().slice(0, 16) // YYYY-MM-DDTHH:mm
+              }
+            } catch {
+              // Keep empty
             }
-          } catch {
-            // Keep original string
           }
 
           // Parse initial deliverable tags

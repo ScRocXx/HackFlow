@@ -31,10 +31,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: issueMessage || 'Invalid URL provided' }, { status: 400 });
     }
 
-    const { url } = result.data;
+    let { url } = result.data;
+    url = url.replace(/[.,;'"\s]+$/, '').trim();
 
     // Fetch dynamic content via Jina Reader + direct HTML JSON-LD
-    const { content, url: finalUrl, jsonLd } = await fetchUrlContent(url);
+    const { content, url: finalUrl, jsonLd, title: pageTitle } = await fetchUrlContent(url);
     if (!content || content.trim().length === 0) {
       return NextResponse.json(
         { error: 'I suppose this is not a hackathon...' },
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Parse structured metadata and multi-round timeline via Gemini with verified anchors
-    const parsedData = await parseHackathonContent(content, finalUrl, jsonLd);
+    const parsedData = await parseHackathonContent(content, finalUrl, jsonLd, pageTitle);
 
     return NextResponse.json(parsedData, { status: 200 });
   } catch (error) {

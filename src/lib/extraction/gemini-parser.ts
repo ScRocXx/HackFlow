@@ -115,11 +115,16 @@ export function detectPlatform(url: string): string {
   }
 }
 
-export function heuristicExtract(markdown: string, sourceUrl: string, jsonLd?: ExtractedJsonLd | null): ParsedHackathon {
+export function heuristicExtract(
+  markdown: string, 
+  sourceUrl: string, 
+  jsonLd?: ExtractedJsonLd | null,
+  pageTitle?: string
+): ParsedHackathon {
   const platform = detectPlatform(sourceUrl);
   
   // 1. Title
-  let title = jsonLd?.title || '';
+  let title = jsonLd?.title || pageTitle || '';
   if (!title) {
     const titleMatch = markdown.match(/^#\s+([^\n#]+)/m) || markdown.match(/Title:\s*([^\n]+)/i);
     if (titleMatch && titleMatch[1].trim()) {
@@ -129,7 +134,7 @@ export function heuristicExtract(markdown: string, sourceUrl: string, jsonLd?: E
         const urlObj = new URL(sourceUrl);
         const pathParts = urlObj.pathname.split('/').filter(Boolean);
         if (pathParts.length > 0) {
-          const lastPart = pathParts[pathParts.length - 1].replace(/#.*$/, '');
+          const lastPart = pathParts[pathParts.length - 1].replace(/#.*$/, '').replace(/-\d{5,}$/, '');
           title = lastPart
             .split(/[-_]+/)
             .map(w => w.charAt(0).toUpperCase() + w.slice(1))
@@ -269,19 +274,20 @@ export function heuristicExtract(markdown: string, sourceUrl: string, jsonLd?: E
 export async function parseHackathonContent(
   markdown: string, 
   sourceUrl: string, 
-  jsonLd?: ExtractedJsonLd | null
+  jsonLd?: ExtractedJsonLd | null,
+  pageTitle?: string
 ): Promise<ParsedHackathon> {
   const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY;
   if (!apiKey) {
     console.warn('GEMINI_API_KEY environment variable is not configured. Falling back to heuristic parsing.');
-    return heuristicExtract(markdown, sourceUrl, jsonLd);
+    return heuristicExtract(markdown, sourceUrl, jsonLd, pageTitle);
   }
 
   const preFiltered = preFilterMarkdown(markdown);
   const platform = detectPlatform(sourceUrl);
   const genAI = new GoogleGenerativeAI(apiKey);
 
-  const modelCandidates = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+  const modelCandidates = ['gemini-2.5-flash', 'gemini-3.6-flash'];
 
   // Dynamic Temporal Injection (IST UTC+05:30)
   const now = new Date();
@@ -455,5 +461,5 @@ OUTPUT JSON SCHEMA:
   }
 
   console.warn('All Gemini models failed or unavailable. Falling back to heuristic parser.');
-  return heuristicExtract(markdown, sourceUrl, jsonLd);
+  return heuristicExtract(markdown, sourceUrl, jsonLd, pageTitle);
 }
