@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { HackFlowSquares } from '@/components/brand/Logo'
+import { HackFlowSquares, HackFlowLogo } from '@/components/brand/Logo'
 import { 
   ArrowRight, 
   CheckCircle2, 
@@ -58,11 +58,8 @@ export default async function HomePage() {
       <header className="sticky top-0 z-30 border-b-2 border-[#10201d] bg-[#3d5f58] text-[#f7f7f2] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 sm:h-20 flex items-center justify-between gap-4">
           {/* Brand Wordmark */}
-          <Link href="/" className="flex items-center gap-3 select-none group">
-            <HackFlowSquares size="w-3.5 h-3.5" />
-            <span className="font-display text-2xl sm:text-3xl font-extrabold uppercase tracking-tight text-[#f7f7f2]">
-              HACK<span className="text-[#e97b77]">FLOW</span>
-            </span>
+          <Link href="/" className="flex items-center select-none">
+            <HackFlowLogo textClassName="text-[#f7f7f2]" size="lg" />
           </Link>
 
           {/* Desktop Navigation Links */}
@@ -638,11 +635,8 @@ export default async function HomePage() {
       {/* ===================== 38. FOOTER ===================== */}
       <footer className="border-t-2 border-[#10201d] bg-[#2e4742] text-[#f7f7f2] py-12 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <HackFlowSquares size="w-3.5 h-3.5" />
-            <span className="font-display text-2xl font-extrabold uppercase tracking-tight text-[#f7f7f2]">
-              HACK<span className="text-[#e97b77]">FLOW</span>
-            </span>
+          <div className="flex items-center">
+            <HackFlowLogo textClassName="text-[#f7f7f2]" size="md" />
           </div>
 
           <p className="font-mono text-xs text-[#8bb2de] text-center">
