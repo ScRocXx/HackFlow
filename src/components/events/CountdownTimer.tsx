@@ -20,6 +20,9 @@ export function CountdownTimer({
   showMilestoneLabel = false,
   onMilestoneChange
 }: CountdownTimerProps) {
+  // Safeguard 3: If deadline, windowStart, and windowEnd are all null/empty, immediately return the brutalist "📅 Dates TBA" badge without running any setInterval or date calculations
+  const hasAnyDate = Boolean(deadline?.trim() || windowStart?.trim() || windowEnd?.trim())
+
   const [timeLeft, setTimeLeft] = useState<{
     days: number
     hours: number
@@ -40,6 +43,8 @@ export function CountdownTimer({
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    if (!hasAnyDate) return
+
     setMounted(true)
 
     const updateTimer = () => {
@@ -47,11 +52,11 @@ export function CountdownTimer({
       
       // Parse potential dates
       const startDate = windowStart ? new Date(windowStart) : null
-      const hasValidStart = startDate && !isNaN(startDate.getTime())
+      const hasValidStart = Boolean(startDate && !isNaN(startDate.getTime()))
       
       const effectiveDeadlineStr = windowEnd || deadline
       const endDate = effectiveDeadlineStr ? new Date(effectiveDeadlineStr) : null
-      const hasValidEnd = endDate && !isNaN(endDate.getTime())
+      const hasValidEnd = Boolean(endDate && !isNaN(endDate.getTime()))
 
       if (!hasValidStart && !hasValidEnd) {
         setTimeLeft(prev => ({ ...prev, invalid: true }))
@@ -64,16 +69,18 @@ export function CountdownTimer({
       let targetDate: Date
       let currentMilestone: 'kickoff' | 'submission' | 'passed'
 
-      if (hasValidStart && now.getTime() < startDate.getTime()) {
+      if (startDate && hasValidStart && now.getTime() < startDate.getTime()) {
         targetDate = startDate
         currentMilestone = 'kickoff'
-      } else if (hasValidEnd) {
+      } else if (endDate && hasValidEnd) {
         targetDate = endDate
         currentMilestone = now.getTime() >= endDate.getTime() ? 'passed' : 'submission'
-      } else {
-        // Fallback
-        targetDate = startDate!
+      } else if (startDate) {
+        targetDate = startDate
         currentMilestone = 'passed'
+      } else {
+        setTimeLeft(prev => ({ ...prev, invalid: true }))
+        return
       }
 
       if (onMilestoneChange) {
@@ -118,16 +125,16 @@ export function CountdownTimer({
     return () => clearInterval(interval)
   }, [deadline, windowStart, windowEnd, onMilestoneChange])
 
-  if (!mounted) {
-    return <div className="h-7 w-28 bg-[#e4e5da] border-2 border-[#10201d] animate-pulse" />
+  if (!hasAnyDate || timeLeft.invalid) {
+    return (
+      <div className={cn("inline-flex items-center gap-1 text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-1 border-2 border-[#10201d] bg-[#e4e5da] text-[#10201d] shadow-[2px_2px_0_#10201d] select-none", className)}>
+        <span>📅 Dates TBA</span>
+      </div>
+    )
   }
 
-  if (timeLeft.invalid || (!deadline && !windowStart && !windowEnd)) {
-    return (
-      <span className={cn("text-xs text-[#34433f] font-mono", className)}>
-        No active deadline
-      </span>
-    )
+  if (!mounted) {
+    return <div className="h-7 w-28 bg-[#e4e5da] border-2 border-[#10201d] animate-pulse" />
   }
 
   if (timeLeft.isPast) {

@@ -11,7 +11,6 @@ export async function fetchUrlContent(url: string): Promise<{
 
   const headers: Record<string, string> = {
     'Accept': 'application/json',
-    'X-Wait-For-Selector': 'main, #content, .hackathon-content, .challenge-detail, .timeline',
     'X-Timeout': '30',
     'X-Remove-Selector': 'header, footer, nav, .cookie-banner, .advertisement, .sidebar, .mega-dropdown, .dropdown-menu, .is_header, .footer, .login-modal, .registration-modal',
   };
@@ -24,6 +23,7 @@ export async function fetchUrlContent(url: string): Promise<{
   const timeoutId = setTimeout(() => controller.abort(), 30000);
 
   // Run JSON-LD extraction and Jina Reader in parallel for maximum speed
+  let cachedJsonLd: ExtractedJsonLd | null = null;
   const jsonLdPromise = (async () => {
     try {
       const res = await fetch(url, {
@@ -35,7 +35,8 @@ export async function fetchUrlContent(url: string): Promise<{
       });
       if (res.ok) {
         const html = await res.text();
-        return extractJsonLd(html);
+        cachedJsonLd = extractJsonLd(html);
+        return cachedJsonLd;
       }
     } catch {
       // Ignore errors in direct fetch; Jina will serve as fallback
@@ -54,13 +55,15 @@ export async function fetchUrlContent(url: string): Promise<{
     ]);
 
     if (!jinaResponse.ok) {
-      throw new Error(`Failed to fetch from Jina API: ${jinaResponse.status} ${jinaResponse.statusText}`);
+      console.warn(`Jina Reader returned status ${jinaResponse.status}. Falling back to Direct HTML fetch.`);
+      return await fetchDirectHtmlFallback(url, jsonLd || cachedJsonLd);
     }
 
     const json = await jinaResponse.json();
 
     if (json.code !== 200) {
-      throw new Error(`Jina API error: ${json.code} - ${JSON.stringify(json.status)}`);
+      console.warn(`Jina API code ${json.code}. Falling back to Direct HTML fetch.`);
+      return await fetchDirectHtmlFallback(url, jsonLd || cachedJsonLd);
     }
 
     const { data } = json;
@@ -74,16 +77,102 @@ export async function fetchUrlContent(url: string): Promise<{
       jsonLd,
     };
   } catch (error) {
-    if (error instanceof Error) {
-      if (error.name === 'AbortError') {
-        throw new Error(`Fetch timed out after 30 seconds for URL: ${url}`);
+    console.warn(`Jina fetch failed for ${url}, trying direct HTML fallback:`, error);
+    try {
+      return await fetchDirectHtmlFallback(url, cachedJsonLd);
+    } catch (fallbackError) {
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          throw new Error(`Fetch timed out after 30 seconds for URL: ${url}`);
+        }
+        throw error;
       }
-      throw error;
+      throw new Error('An unknown error occurred while fetching URL content');
     }
-    throw new Error('An unknown error occurred while fetching URL content');
   } finally {
     clearTimeout(timeoutId);
   }
+}
+
+async function fetchDirectHtmlFallback(url: string, existingJsonLd?: ExtractedJsonLd | null): Promise<{
+  title: string;
+  content: string;
+  url: string;
+  jsonLd?: ExtractedJsonLd | null;
+}> {
+  try {
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+      signal: AbortSignal.timeout(12000),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Direct fetch HTTP ${res.status}: ${res.statusText}`);
+    }
+
+    const html = await res.text();
+    const jsonLd = existingJsonLd || extractJsonLd(html);
+    const { title, text } = htmlToCleanText(html);
+    const preFiltered = preFilterMarkdown(text);
+
+    return {
+      title: jsonLd?.title || title || 'Competition Details',
+      content: preFiltered || text,
+      url,
+      jsonLd,
+    };
+  } catch (directErr: any) {
+    throw new Error(`Failed to fetch contest URL via Jina Reader and Direct HTML: ${directErr?.message || 'Network error'}`);
+  }
+}
+
+function decodeHtmlEntities(str: string): string {
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(dec));
+}
+
+export function htmlToCleanText(html: string): { title: string; text: string } {
+  if (!html) return { title: '', text: '' };
+
+  const titleMatch = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+  const title = titleMatch ? decodeHtmlEntities(titleMatch[1].trim()) : '';
+
+  let text = html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
+    .replace(/<svg\b[^<]*(?:(?!<\/svg>)<[^<]*)*<\/svg>/gi, '')
+    .replace(/<noscript\b[^<]*(?:(?!<\/noscript>)<[^<]*)*<\/noscript>/gi, '')
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
+
+  text = text.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, '\n# $1\n');
+  text = text.replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, '\n## $1\n');
+  text = text.replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, '\n### $1\n');
+  text = text.replace(/<h[4-6][^>]*>([\s\S]*?)<\/h[4-6]>/gi, '\n#### $1\n');
+
+  text = text.replace(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, href, content) => {
+    const cleanContent = content.replace(/<[^>]+>/g, '').trim();
+    return cleanContent ? `[${cleanContent}](${href})` : '';
+  });
+
+  text = text.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, '\n* $1');
+  text = text.replace(/<br\s*\/?>/gi, '\n');
+  text = text.replace(/<\/(p|div|section|tr|table|article|aside)>/gi, '\n');
+  text = text.replace(/<[^>]+>/g, ' ');
+  text = decodeHtmlEntities(text);
+  text = text.replace(/data:image\/[^;]+;base64,[a-zA-Z0-9+/=]+/gi, '');
+  text = text.replace(/[ \t]+/g, ' ').replace(/\n\s*\n/g, '\n\n').trim();
+
+  return { title, text };
 }
 
 /**
@@ -128,6 +217,8 @@ export function cleanMarkdownContent(raw: string): string {
     .replace(/Jobs by (?:Places|Type)[\s\S]*?View all jobs[^\n]*/gi, '')
     .replace(/Fresher Jobs by (?:Places|Type)[\s\S]*?View all fresher jobs[^\n]*/gi, '')
     .replace(/\[Forgot Password\?\][\s\S]*?Register now[^\n]*/gi, '')
+    // Strip giant base64 data URIs
+    .replace(/data:image\/[^;]+;base64,[a-zA-Z0-9+/=]+/gi, '')
     // Collapse whitespace
     .replace(/\n{3,}/g, '\n\n')
     .trim();

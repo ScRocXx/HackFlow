@@ -211,16 +211,14 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
                     </div>
                     <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#f7f7f2] tracking-tight">{activeStage.title}</h2>
                   </div>
-                  {(activeStage.actionable_deadline || activeStage.deadline || activeStage.window_start) && (
-                    <div className="text-left sm:text-right">
-                      <CountdownTimer 
-                        deadline={activeStage.actionable_deadline || activeStage.deadline} 
-                        windowStart={activeStage.window_start}
-                        windowEnd={activeStage.window_end}
-                        showMilestoneLabel={true}
-                      />
-                    </div>
-                  )}
+                  <div className="text-left sm:text-right">
+                    <CountdownTimer 
+                      deadline={activeStage.actionable_deadline || activeStage.deadline} 
+                      windowStart={activeStage.window_start}
+                      windowEnd={activeStage.window_end}
+                      showMilestoneLabel={Boolean(activeStage.actionable_deadline || activeStage.deadline || activeStage.window_start)}
+                    />
+                  </div>
                 </div>
               </div>
               

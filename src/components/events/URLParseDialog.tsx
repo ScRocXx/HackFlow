@@ -224,17 +224,17 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
         })
         setStages(mappedStages)
       } else {
-        // Fallback single stage
+        // Fallback single stage (Zero-hallucination: No synthetic dates)
         setStages([
           {
             round_number: 1,
             title: 'Round 1: Final Submission',
             stage_type: 'prototype',
-            deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+            deadline: '',
             window_start: null,
-            window_end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            actionable_deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            raw_date_snippet: null,
+            window_end: null,
+            actionable_deadline: null,
+            raw_date_snippet: 'TBA',
             deliverables: ['Working Prototype', 'Project README', 'Demo Video'],
           }
         ])
@@ -356,27 +356,22 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
       return
     }
 
-    // Validate that all stages have deadlines
-    for (const stg of stages) {
-      if (!stg.deadline) {
-        toast({
-          title: 'Missing Deadline',
-          description: `Please set a deadline for "${stg.title}".`,
-          variant: 'destructive',
-        })
-        return
-      }
-    }
-
     setSubmitting(true)
     try {
-      // Normalize dates to ISO string
+      // Normalize dates to ISO string (Safeguard: preserve true null for TBA stages)
       const preparedStages = stages.map(stg => {
-        let isoDeadline = stg.deadline
-        try {
-          isoDeadline = new Date(stg.deadline).toISOString()
-        } catch {
-          // Keep as string
+        let isoDeadline: string | null = null
+        if (stg.deadline && stg.deadline.trim()) {
+          try {
+            const d = new Date(stg.deadline)
+            if (!isNaN(d.getTime())) {
+              isoDeadline = d.toISOString()
+            } else {
+              isoDeadline = stg.deadline
+            }
+          } catch {
+            isoDeadline = stg.deadline
+          }
         }
 
         return {
@@ -387,7 +382,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
           window_start: stg.window_start || null,
           window_end: stg.window_end || isoDeadline,
           actionable_deadline: stg.actionable_deadline || isoDeadline,
-          raw_date_snippet: stg.raw_date_snippet || null,
+          raw_date_snippet: stg.raw_date_snippet || (!isoDeadline ? 'TBA' : null),
           evaluation_format: stg.evaluation_format,
           deliverables_description: stg.deliverables?.join(', ') || stg.deliverables_description,
           deliverables: stg.deliverables,
@@ -680,13 +675,20 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                       </div>
 
                       <div className="space-y-1">
-                        <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
-                          Deadline (Local Time) *
-                        </label>
+                        <div className="flex items-center justify-between">
+                          <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            Deadline (Local Time)
+                          </label>
+                          {!stage.deadline && (
+                            <span className="font-mono text-[10px] font-bold text-[#10201d] bg-[#e4e5da] px-1.5 py-0.5 border border-[#10201d]">
+                              📅 Dates TBA
+                            </span>
+                          )}
+                        </div>
                         <Input 
                           type="datetime-local" 
-                          value={stage.deadline} 
+                          value={stage.deadline || ''} 
                           onChange={e => {
                             const newStages = [...stages]
                             newStages[idx].deadline = e.target.value

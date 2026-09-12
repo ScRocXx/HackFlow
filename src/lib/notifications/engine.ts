@@ -68,11 +68,12 @@ export async function evaluateAndDispatchNotifications() {
   let evaluated = 0;
   let dispatched = 0;
 
-  // 1. Query pending event stages
+  // 1. Query pending event stages (Safeguard: strictly ignore TBA stages with null deadlines)
   const { data: stages, error: stagesError } = await supabaseAdmin
     .from('event_stages')
     .select('id, title, deadline, event_id, events!event_stages_event_id_fkey(id, title, created_by)')
     .eq('is_completed', false)
+    .not('deadline', 'is', null)
     .gt('deadline', new Date().toISOString());
 
   if (stagesError || !stages) {
@@ -90,6 +91,7 @@ export async function evaluateAndDispatchNotifications() {
   );
 
   for (const stage of stages) {
+    if (!stage.deadline) continue;
     evaluated++;
     const deadline = new Date(stage.deadline);
     const triggeredIntervals = getTriggeredIntervals(deadline);

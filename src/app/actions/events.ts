@@ -27,7 +27,7 @@ export type CreateEventInput = {
     round_number: number;
     title: string;
     stage_type: string;
-    deadline: string;
+    deadline?: string | null;
     window_start?: string | null;
     window_end?: string | null;
     actionable_deadline?: string | null;
@@ -71,10 +71,8 @@ export async function createEvent(data: CreateEventInput) {
       console.warn('Profile sync warning:', profileError);
     }
 
-    // Sanitize source platform
-    const allowedPlatforms = ['unstop', 'devfolio', 'devpost', 'mlh', 'hackerearth', 'internshala', 'custom'];
-    const rawPlatform = (data.source_platform || 'custom').toLowerCase().trim();
-    const sourcePlatform = allowedPlatforms.includes(rawPlatform) ? rawPlatform : 'custom';
+    // Universal source platform support (preserves any competition host/domain)
+    const sourcePlatform = (data.source_platform || 'independent').toLowerCase().trim();
 
     // Check if an event with this source_url already exists
     if (data.source_url?.trim()) {
@@ -135,36 +133,43 @@ export async function createEvent(data: CreateEventInput) {
       };
     }
 
-    // 2. Prepare and Insert Stages
+    // 2. Prepare and Insert Stages (Safeguard: Zero synthetic date fabrication)
     const stagesData = (data.stages && data.stages.length > 0) 
       ? data.stages 
       : [{
           round_number: 1,
           title: 'Round 1: Final Submission',
           stage_type: 'prototype',
-          deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          deadline: null,
           window_start: null,
-          window_end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          actionable_deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          raw_date_snippet: null,
+          window_end: null,
+          actionable_deadline: null,
+          raw_date_snippet: 'TBA',
           evaluation_format: 'Online Evaluation',
           deliverables_description: 'Working prototype and presentation'
         }];
 
-    const stagesToInsert = stagesData.map((stage, idx) => ({
-      event_id: event.id,
-      round_number: stage.round_number || idx + 1,
-      title: stage.title.trim() || `Round ${idx + 1}`,
-      stage_type: stage.stage_type || 'other',
-      deadline: stage.deadline,
-      window_start: stage.window_start || null,
-      window_end: stage.window_end || stage.deadline,
-      actionable_deadline: stage.actionable_deadline || stage.deadline,
-      raw_date_snippet: stage.raw_date_snippet || null,
-      evaluation_format: stage.evaluation_format || '',
-      deliverables_description: stage.deliverables_description || '',
-      is_completed: false,
-    }));
+    const stagesToInsert = stagesData.map((stage, idx) => {
+      const effectiveDeadline = stage.deadline || null;
+      const effectiveEnd = stage.window_end || effectiveDeadline;
+      const effectiveActionable = stage.actionable_deadline || stage.window_start || effectiveDeadline;
+      const rawSnippet = stage.raw_date_snippet || (!effectiveDeadline ? 'TBA' : null);
+
+      return {
+        event_id: event.id,
+        round_number: stage.round_number || idx + 1,
+        title: stage.title.trim() || `Round ${idx + 1}`,
+        stage_type: stage.stage_type || 'other',
+        deadline: effectiveDeadline,
+        window_start: stage.window_start || null,
+        window_end: effectiveEnd,
+        actionable_deadline: effectiveActionable,
+        raw_date_snippet: rawSnippet,
+        evaluation_format: stage.evaluation_format || '',
+        deliverables_description: stage.deliverables_description || '',
+        is_completed: false,
+      };
+    });
 
     const { data: stages, error: stagesError } = await supabase
       .from('event_stages')
@@ -575,10 +580,12 @@ export async function getUserEvents() {
       };
     });
 
-    // Sort events by nearest active deadline
+    // Sort events by nearest active deadline (Safeguard 2: TBA events with null deadlines sort last)
     const sortedEvents = enrichedEvents.sort((a, b) => {
-      const deadlineA = a.active_stage?.deadline ? new Date(a.active_stage.deadline).getTime() : Infinity;
-      const deadlineB = b.active_stage?.deadline ? new Date(b.active_stage.deadline).getTime() : Infinity;
+      const targetA = a.active_stage?.actionable_deadline || a.active_stage?.deadline;
+      const targetB = b.active_stage?.actionable_deadline || b.active_stage?.deadline;
+      const deadlineA = targetA ? new Date(targetA).getTime() : Infinity;
+      const deadlineB = targetB ? new Date(targetB).getTime() : Infinity;
       return deadlineA - deadlineB;
     });
 
