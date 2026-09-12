@@ -13,8 +13,8 @@ export type CreateEventInput = {
   location?: string;
   banner_url?: string;
   prize_pool?: string;
-  prize_cash_pool?: number | null;
-  prize_first_place?: number | null;
+  prize_cash_pool?: number | string | null;
+  prize_first_place?: number | string | null;
   has_perks_or_credits?: boolean;
   raw_prize_text?: string | null;
   prize_display_summary?: string | null;
@@ -101,8 +101,8 @@ export async function createEvent(data: CreateEventInput) {
         location: data.location || '',
         banner_url: data.banner_url || '',
         prize_pool: data.prize_pool || '',
-        prize_cash_pool: data.prize_cash_pool ?? null,
-        prize_first_place: data.prize_first_place ?? null,
+        prize_cash_pool: data.prize_cash_pool !== null && data.prize_cash_pool !== undefined ? String(data.prize_cash_pool) : null,
+        prize_first_place: data.prize_first_place !== null && data.prize_first_place !== undefined ? String(data.prize_first_place) : null,
         has_perks_or_credits: data.has_perks_or_credits ?? false,
         raw_prize_text: data.raw_prize_text || null,
         prize_display_summary: data.prize_display_summary || null,
@@ -372,8 +372,8 @@ export type UpdateEventInput = {
   mode?: string;
   location?: string;
   prize_pool?: string;
-  prize_cash_pool?: number | null;
-  prize_first_place?: number | null;
+  prize_cash_pool?: number | string | null;
+  prize_first_place?: number | string | null;
   has_perks_or_credits?: boolean;
   raw_prize_text?: string | null;
   prize_display_summary?: string | null;
@@ -413,8 +413,8 @@ export async function updateEvent(input: UpdateEventInput) {
     if (eventFields.mode !== undefined) updatePayload.mode = eventFields.mode;
     if (eventFields.location !== undefined) updatePayload.location = eventFields.location;
     if (eventFields.prize_pool !== undefined) updatePayload.prize_pool = eventFields.prize_pool;
-    if (eventFields.prize_cash_pool !== undefined) updatePayload.prize_cash_pool = eventFields.prize_cash_pool;
-    if (eventFields.prize_first_place !== undefined) updatePayload.prize_first_place = eventFields.prize_first_place;
+    if (eventFields.prize_cash_pool !== undefined) updatePayload.prize_cash_pool = eventFields.prize_cash_pool !== null ? String(eventFields.prize_cash_pool) : null;
+    if (eventFields.prize_first_place !== undefined) updatePayload.prize_first_place = eventFields.prize_first_place !== null ? String(eventFields.prize_first_place) : null;
     if (eventFields.has_perks_or_credits !== undefined) updatePayload.has_perks_or_credits = eventFields.has_perks_or_credits;
     if (eventFields.raw_prize_text !== undefined) updatePayload.raw_prize_text = eventFields.raw_prize_text;
     if (eventFields.prize_display_summary !== undefined) updatePayload.prize_display_summary = eventFields.prize_display_summary;
