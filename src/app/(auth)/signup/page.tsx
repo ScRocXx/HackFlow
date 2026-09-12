@@ -83,7 +83,7 @@ export default function SignupPage() {
           Create Account
         </CardTitle>
         <CardDescription className="font-mono text-xs text-[#34433f]">
-          Join HackFlow to coordinate and execute multi-stage hackathons
+          Never lose track of a hackathon round again
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 pt-6">

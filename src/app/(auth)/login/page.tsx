@@ -89,7 +89,7 @@ function LoginForm() {
           Welcome Back
         </CardTitle>
         <CardDescription className="font-mono text-xs text-[#34433f]">
-          Enter your credentials to access your hackathon consoles
+          Sign in to check your rounds, deadlines, and tasks
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4 pt-6">

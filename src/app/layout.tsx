@@ -26,8 +26,8 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'HackFlow 2026 | Hackathon Execution Engine',
-  description: 'Auto-extract deadlines, track multi-stage rounds, and keep your hackathon team notified.',
+  title: 'HackFlow | Built for Hackathons',
+  description: "Stop losing hackathons to disorganization. Auto-extract rounds, deadlines, deliverables, and stay on schedule with your team.",
 }
 
 export default function RootLayout({

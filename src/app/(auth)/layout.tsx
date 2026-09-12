@@ -1,6 +1,6 @@
 import React from "react";
 import Link from "next/link";
-import { HackFlowSquares } from "@/components/brand/Logo";
+import { HackFlowLogo } from "@/components/brand/Logo";
 
 export default function AuthLayout({
   children,
@@ -29,17 +29,11 @@ export default function AuthLayout({
       </div>
 
       <div className="relative z-10 flex flex-col items-center mb-8">
-        <Link href="/" className="flex items-center gap-3">
-          <HackFlowSquares size="w-3.5 h-3.5" />
-          <span className="font-display text-3xl font-extrabold uppercase tracking-tight text-[#f7f7f2]">
-            HACK<span className="text-[#e97b77]">FLOW</span>
-            <span className="text-xs font-mono ml-1.5 px-1.5 py-0.5 border border-[#8bb2de] text-[#8bb2de] rounded">
-              2026
-            </span>
-          </span>
+        <Link href="/" className="flex items-center">
+          <HackFlowLogo textClassName="text-[#f7f7f2]" size="lg" />
         </Link>
-        <p className="font-mono text-xs text-[#8bb2de] uppercase tracking-wider mt-2">
-          Hackathon Execution Engine
+        <p className="font-mono text-xs text-[#8bb2de] tracking-wider mt-2">
+          Built for teams that'd rather build than panic
         </p>
       </div>
 
