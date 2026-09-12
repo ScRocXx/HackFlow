@@ -2,7 +2,23 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { HackFlowSquares } from '@/components/brand/Logo'
-import { ArrowRight, CheckCircle2, Zap, Trophy, Bell, FileText, Layers, ShieldCheck, ExternalLink } from 'lucide-react'
+import { 
+  ArrowRight, 
+  CheckCircle2, 
+  Zap, 
+  Trophy, 
+  Bell, 
+  FileText, 
+  Layers, 
+  ExternalLink,
+  Clock,
+  Users,
+  CheckSquare,
+  Sparkles,
+  Search,
+  Calendar,
+  Share2
+} from 'lucide-react'
 
 export default async function HomePage() {
   const supabase = await createClient()
@@ -22,44 +38,39 @@ export default async function HomePage() {
         Skip to content
       </a>
 
-      {/* Top Notification Announcement Banner (#8bb2de) */}
+      {/* 1. Announcement Bar */}
       <aside className="relative z-20 border-b-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] py-2 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between text-xs sm:text-sm font-mono font-bold tracking-wide">
           <div className="flex items-center gap-2 mx-auto sm:mx-0">
             <span className="w-2.5 h-2.5 bg-[#e53927] border border-[#10201d] inline-block" />
             <Link href="/signup" className="hover:underline flex items-center gap-1.5 text-center sm:text-left">
-              <span>HackFlow 2026 is Live! Auto-parse Unstop, Devfolio & Devpost deadlines</span>
+              <span>HackFlow is live — paste a hackathon link and get your rounds, deadlines & deliverables.</span>
               <ArrowRight className="w-3.5 h-3.5 inline-block transition-transform hover:translate-x-1" />
             </Link>
           </div>
           <span className="hidden md:inline-block text-[11px] font-mono uppercase tracking-widest text-[#10201d]/80">
-            Never Miss A Round
+            Built for college teams
           </span>
         </div>
       </aside>
 
-      {/* Retro-Brutalist Sticky Header (#3d5f58) */}
+      {/* 2. Navbar */}
       <header className="sticky top-0 z-30 border-b-2 border-[#10201d] bg-[#3d5f58] text-[#f7f7f2] shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 sm:h-20 flex items-center justify-between gap-4">
           {/* Brand Wordmark */}
           <Link href="/" className="flex items-center gap-3 select-none group">
             <HackFlowSquares size="w-3.5 h-3.5" />
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-display text-2xl sm:text-3xl font-extrabold uppercase tracking-tight text-[#f7f7f2]">
-                HACK<span className="text-[#e97b77]">FLOW</span>
-              </span>
-              <span className="font-mono text-[11px] font-bold px-1.5 py-0.5 border border-[#8bb2de] text-[#8bb2de] rounded">
-                2026
-              </span>
-            </div>
+            <span className="font-display text-2xl sm:text-3xl font-extrabold uppercase tracking-tight text-[#f7f7f2]">
+              HACK<span className="text-[#e97b77]">FLOW</span>
+            </span>
           </Link>
 
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-7 font-mono text-xs font-bold uppercase tracking-wider text-[#f7f7f2]">
-            <a href="#hero" className="hover:underline hover:text-[#e97b77] transition-colors">Overview</a>
-            <a href="#timeline" className="hover:underline hover:text-[#e97b77] transition-colors">Timeline</a>
-            <a href="#manifesto" className="hover:underline hover:text-[#e97b77] transition-colors">Manifesto</a>
-            <a href="#capabilities" className="hover:underline hover:text-[#e97b77] transition-colors">Features</a>
+            <a href="#how-it-works" className="hover:underline hover:text-[#e97b77] transition-colors">How It Works</a>
+            <a href="#workflow" className="hover:underline hover:text-[#e97b77] transition-colors">The Reality</a>
+            <a href="#why" className="hover:underline hover:text-[#e97b77] transition-colors">Why This Exists</a>
+            <a href="#features" className="hover:underline hover:text-[#e97b77] transition-colors">Features</a>
             <a href="#faq" className="hover:underline hover:text-[#e97b77] transition-colors">FAQs</a>
           </nav>
 
@@ -75,16 +86,16 @@ export default async function HomePage() {
               href="/signup"
               className="inline-flex items-center justify-center px-4 sm:px-5 py-2 sm:py-2.5 font-mono text-xs sm:text-sm font-bold uppercase tracking-tight text-[#10201d] border-2 border-[#10201d] bg-[#e97b77] shadow-[4px_4px_0_#671912] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#671912] transition-all"
             >
-              Launch Console
+              Open HackFlow
             </Link>
           </div>
         </div>
       </header>
 
       <main id="main" className="flex-1">
-        {/* ===================== HERO SECTION (#3d5f58) ===================== */}
-        <section id="hero" className="relative overflow-hidden border-b-2 border-[#10201d] bg-[#3d5f58] text-[#f7f7f2] py-16 sm:py-24 lg:py-32">
-          {/* Decorative Corner Pixel SVGs (From Hacktoberfest) */}
+        {/* ===================== HERO SECTION ===================== */}
+        <section id="hero" className="relative overflow-hidden border-b-2 border-[#10201d] bg-[#3d5f58] text-[#f7f7f2] py-16 sm:py-24 lg:py-28">
+          {/* Decorative Corner Pixel SVGs */}
           <div aria-hidden="true" className="absolute top-0 left-0 pointer-events-none opacity-40 lg:opacity-75 w-32 sm:w-48 lg:w-64">
             <svg viewBox="0 0 317.71 293.34" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M122.2 195.59H73.32V244.47H122.2V195.59Z" fill="#F7F7F2" />
@@ -129,67 +140,202 @@ export default async function HomePage() {
 
           {/* Hero Content Container */}
           <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 text-center flex flex-col items-center">
-            {/* 4 Colored Squares */}
-            <div className="flex items-center gap-1 mb-5" aria-hidden="true">
-              <span className="w-3.5 h-3.5 bg-[#e53927] inline-block" />
-              <span className="w-3.5 h-3.5 bg-[#8bb2de] inline-block" />
-              <span className="w-3.5 h-3.5 bg-[#f5b726] inline-block" />
-              <span className="w-3.5 h-3.5 bg-[#e97b77] inline-block" />
+            {/* 3. Hero Eyebrow */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 border-2 border-[#10201d] bg-[#f7f7f2] text-[#10201d] font-mono text-xs font-black uppercase tracking-widest shadow-[3px_3px_0_#10201d] mb-6">
+              <span className="w-2 h-2 bg-[#e53927] inline-block" />
+              BUILT FOR HACKATHONS
             </div>
 
-            {/* Eyebrow in Soft Pink */}
-            <p className="font-mono text-xs sm:text-sm font-bold uppercase tracking-[0.15em] text-[#f6c4c1] mb-4">
-              Autonomous Stage Intelligence · Unstop / Devfolio / Custom · Never Miss A Deadline
-            </p>
-
-            {/* Massive Heading in Barlow Semi Condensed */}
-            <h1 className="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-[0.92] text-[#f7f7f2] max-w-4xl mx-auto">
-              <span>HackFlow 2026:</span>{' '}
+            {/* 4. Hero Headline */}
+            <h1 className="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-[0.93] text-[#f7f7f2] max-w-4xl mx-auto">
+              Hackathons aren't hard because of the deadline.{' '}
               <em className="block text-[#8bb2de] font-extrabold not-italic mt-2">
-                Winning belongs to organized teams.
+                They're hard because there are five of them.
               </em>
             </h1>
 
-            {/* Hero Deck Description */}
-            <p className="mt-7 max-w-2xl mx-auto text-[#f7f7f2] text-base sm:text-lg md:text-xl leading-relaxed font-normal">
-              Traditional hackathon teams fail in the quiet gap between registration and submission. Paste any challenge URL to auto-extract sequential rounds, synchronized checklists, and automated dispatch reminders.
+            {/* 5. Hero Description */}
+            <p className="mt-7 max-w-2xl mx-auto text-[#f7f7f2]/90 text-base sm:text-lg md:text-xl leading-relaxed font-normal">
+              You register, drop the link in the group, everyone says "we'll do it later" — and suddenly it's 2 hours before submission.
+            </p>
+            <p className="mt-2 max-w-2xl mx-auto text-[#8bb2de] text-base sm:text-lg font-mono font-bold">
+              HackFlow turns the whole hackathon into one shared plan: rounds, deadlines, deliverables, links and who's doing what.
             </p>
 
-            {/* Dual CTA Buttons */}
+            {/* 6. Hero CTAs */}
             <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
               <Link
                 href="/signup"
                 className="w-full sm:w-auto inline-flex items-center justify-center min-h-[52px] px-8 py-3.5 font-mono text-sm font-bold uppercase tracking-wide text-[#10201d] border-2 border-[#10201d] bg-[#e97b77] shadow-[5px_5px_0_#671912] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_#671912] transition-all"
               >
-                Extract a Hackathon URL
+                Paste a hackathon link →
               </Link>
-              <Link
-                href="/login"
+              <a
+                href="#how-it-works"
                 className="w-full sm:w-auto inline-flex items-center justify-center min-h-[52px] px-8 py-3.5 font-mono text-sm font-bold uppercase tracking-wide text-[#f7f7f2] border-2 border-white/80 bg-transparent shadow-[5px_5px_0_#2e4742] hover:bg-[#f7f7f2] hover:text-[#10201d] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_#2e4742] transition-all"
               >
-                Explore Live Dashboard
-              </Link>
+                See how it works
+              </a>
             </div>
 
-            {/* Platform Support Chips */}
+            {/* 7. VISUAL CENTERPIECE: Live Product Demo Flow */}
+            <div id="how-it-works" className="mt-14 w-full max-w-4xl text-left">
+              {/* Terminal Mockup Wrapper */}
+              <div className="border-3 border-[#10201d] bg-[#f7f7f2] text-[#10201d] shadow-[8px_8px_0_#10201d] overflow-hidden">
+                {/* Simulated URL Input Header */}
+                <div className="bg-[#10201d] text-[#f7f7f2] px-4 py-3 border-b-2 border-[#10201d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 font-mono text-xs">
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    <div className="flex gap-1.5 shrink-0">
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#e53927] inline-block" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#f5b726] inline-block" />
+                      <span className="w-2.5 h-2.5 rounded-full bg-[#8bb2de] inline-block" />
+                    </div>
+                    <span className="text-[#8bb2de] truncate font-bold">
+                      https://unstop.com/hackathons/wcc-launchpad-30-wecodecoders-1751873
+                    </span>
+                  </div>
+                  <span className="px-2 py-0.5 border border-[#8bb2de] bg-[#8bb2de]/20 text-[#8bb2de] text-[10px] font-bold uppercase tracking-wider shrink-0">
+                    ⚡ PARSED IN 1.8s
+                  </span>
+                </div>
+
+                {/* Simulated Event Board Inside */}
+                <div className="p-4 sm:p-6 space-y-5 bg-[#f7f7f2]">
+                  {/* Event Title Row */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b-2 border-[#10201d]/20">
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="px-2 py-0.5 border-2 border-[#10201d] bg-[#ff9800] text-[#10201d] font-mono text-[10px] font-black uppercase shadow-[2px_2px_0_#10201d]">
+                          UNSTOP
+                        </span>
+                        <span className="px-2 py-0.5 border border-[#10201d] bg-white text-[#10201d] font-mono text-[10px] font-bold uppercase">
+                          🌐 Online
+                        </span>
+                        <span className="px-2 py-0.5 border border-[#10201d] bg-[#8bb2de] text-[#10201d] font-mono text-[10px] font-bold">
+                          🏆 ₹1,50,000 Cash Pool
+                        </span>
+                      </div>
+                      <h3 className="font-display text-2xl sm:text-3xl font-black text-[#10201d]">
+                        WCC Launchpad 3.0
+                      </h3>
+                      <p className="font-mono text-xs text-[#34433f]">WeCodeCoders · College Innovation Cup</p>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 font-mono text-xs font-bold self-start sm:self-center">
+                      <Users className="w-3.5 h-3.5 text-[#e53927]" />
+                      <span>4 Team Members Connected</span>
+                    </div>
+                  </div>
+
+                  {/* Visual Step 1: Rounds Extracted */}
+                  <div>
+                    <div className="font-mono text-[11px] font-black uppercase tracking-wider text-[#34433f] mb-2 flex items-center gap-1.5">
+                      <span className="w-2 h-2 bg-[#e53927]" />
+                      ROUNDS EXTRACTED AUTOMATICALLY:
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono text-xs">
+                      <div className="p-2.5 border-2 border-[#10201d] bg-[#e4e5da] text-[#34433f] opacity-80">
+                        <div className="text-[10px] uppercase font-bold text-green-700">✓ Round 1 (Passed)</div>
+                        <div className="font-bold text-[#10201d] truncate">Online Assessment Quiz</div>
+                      </div>
+                      <div className="p-2.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[3px_3px_0_#10201d] font-bold">
+                        <div className="text-[10px] uppercase text-[#e53927] font-black">● Round 2 (ACTIVE NOW)</div>
+                        <div className="truncate">Solution Architecture & PPT</div>
+                      </div>
+                      <div className="p-2.5 border-2 border-[#10201d] bg-white text-[#34433f]">
+                        <div className="text-[10px] uppercase font-bold text-gray-500">○ Round 3 (Upcoming)</div>
+                        <div className="font-bold text-[#10201d] truncate">Prototype Demo & Pitch</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Visual Step 2: Active Stage Details & Countdown */}
+                  <div className="border-2 border-[#10201d] bg-[#f2f2eb] p-4 shadow-[4px_4px_0_#2e4742]">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+                      <div>
+                        <span className="font-mono text-[10px] font-extrabold uppercase px-2 py-0.5 border border-[#10201d] bg-white text-[#10201d]">
+                          ROUND 2 DEADLINE
+                        </span>
+                        <h4 className="font-display text-lg font-bold text-[#10201d] mt-1">
+                          Submission Cutoff: 28 Oct 2026, 23:59 IST
+                        </h4>
+                      </div>
+
+                      {/* Monospace Countdown Timer */}
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-[#10201d] bg-[#e53927] text-[#f7f7f2] font-mono text-sm font-black shadow-[2px_2px_0_#10201d]">
+                        <Clock className="w-4 h-4 animate-pulse" />
+                        <span>02d : 14h : 38m : 12s</span>
+                      </div>
+                    </div>
+
+                    {/* Visual Step 3: Shared Team Checklist */}
+                    <div>
+                      <div className="font-mono text-[11px] font-black uppercase text-[#10201d] mb-2 flex justify-between items-center">
+                        <span>TEAM DELIVERABLES (3/4 DONE)</span>
+                        <span className="text-[#34433f] font-normal">Realtime Sync Active</span>
+                      </div>
+                      <div className="space-y-1.5 font-mono text-xs">
+                        <div className="flex items-center justify-between p-2 border border-[#10201d] bg-white">
+                          <div className="flex items-center gap-2 line-through text-[#34433f]">
+                            <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                            <span>System Architecture & High-Level Design diagram</span>
+                          </div>
+                          <span className="text-[10px] font-bold bg-[#e4e5da] px-1.5 py-0.5 border border-[#10201d]/40">Rohan</span>
+                        </div>
+                        <div className="flex items-center justify-between p-2 border border-[#10201d] bg-white">
+                          <div className="flex items-center gap-2 line-through text-[#34433f]">
+                            <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                            <span>12-Slide Pitch Deck exported to PDF (&lt;20MB)</span>
+                          </div>
+                          <span className="text-[10px] font-bold bg-[#e4e5da] px-1.5 py-0.5 border border-[#10201d]/40">Priya</span>
+                        </div>
+                        <div className="flex items-center justify-between p-2 border-2 border-[#e53927] bg-[#fff5f5] font-bold">
+                          <div className="flex items-center gap-2 text-[#10201d]">
+                            <span className="w-4 h-4 border-2 border-[#10201d] bg-white inline-block shrink-0" />
+                            <span>Record & edit 2-minute unlisted YouTube demo video</span>
+                          </div>
+                          <span className="text-[10px] font-bold bg-[#e53927] text-white px-1.5 py-0.5">Assigned to You</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Shared Links Bar */}
+                    <div className="mt-4 pt-3 border-t border-[#10201d]/15 flex flex-wrap gap-2 text-[11px] font-mono font-bold">
+                      <span className="px-2 py-1 border border-[#10201d] bg-white flex items-center gap-1">
+                        📄 Problem_Statement_v2.pdf
+                      </span>
+                      <span className="px-2 py-1 border border-[#10201d] bg-white flex items-center gap-1">
+                        🎨 Figma_Deck_Draft
+                      </span>
+                      <span className="px-2 py-1 border border-[#10201d] bg-white flex items-center gap-1">
+                        💻 github.com/team/launchpad
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 8. Works with the places you already find hackathons */}
             <div className="mt-14 flex flex-col items-center gap-3 w-full">
               <span className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-[#f6c4c1]">
-                Engineered For Every Major Platform
+                Works with the places you already find hackathons
               </span>
-              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
+              <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
                 {[
-                  { name: 'Unstop', desc: 'Full round timeline + rulebooks', bg: '#f7f7f2' },
-                  { name: 'Devfolio', desc: 'Web3 & Builder Hackathons', bg: '#f7f7f2' },
-                  { name: 'Devpost', desc: 'Global Hackathon Funnels', bg: '#f7f7f2' },
-                  { name: 'Internshala', desc: 'College Challenges & Contests', bg: '#f7f7f2' },
+                  { name: 'Unstop', color: 'bg-[#ff9800] text-[#10201d]' },
+                  { name: 'Devfolio', color: 'bg-[#3770ff] text-white' },
+                  { name: 'Devpost', color: 'bg-[#0086bf] text-white' },
+                  { name: 'Internshala', color: 'bg-[#8bb2de] text-[#10201d]' },
+                  { name: 'HackerEarth', color: 'bg-[#2c3454] text-[#29c5b6]' },
+                  { name: 'MLH', color: 'bg-[#e53927] text-white' },
                 ].map((plat) => (
                   <div 
                     key={plat.name}
-                    className="flex items-center gap-2 px-3.5 py-2 border-2 border-[#10201d] bg-[#f7f7f2] text-[#10201d] shadow-[4px_4px_0_#2e4742]"
+                    className="flex items-center gap-2 px-3 py-1.5 border-2 border-[#10201d] bg-[#f7f7f2] text-[#10201d] shadow-[3px_3px_0_#10201d]"
                   >
-                    <span className="w-2 h-2 bg-[#e53927] inline-block" />
+                    <span className={`w-2 h-2 ${plat.color} border border-[#10201d] inline-block`} />
                     <span className="font-display text-sm font-bold tracking-tight">{plat.name}</span>
-                    <span className="text-[11px] font-mono text-[#34433f]/70 hidden md:inline">· {plat.desc}</span>
                   </div>
                 ))}
               </div>
@@ -197,20 +343,20 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* ===================== THE TIMELINE SECTION (#f2f2eb) ===================== */}
-        <section id="timeline" className="py-20 sm:py-28 border-b-2 border-[#10201d] bg-[#f2f2eb]">
+        {/* ===================== 9-15. THE REALITY (WORKFLOW) SECTION ===================== */}
+        <section id="workflow" className="py-20 sm:py-28 border-b-2 border-[#10201d] bg-[#f2f2eb]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
               <div>
                 <p className="font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-[#10201d]">
-                  The Evolution of Hackathon Execution
+                  The usual hackathon workflow
                 </p>
                 <h2 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[0.94] text-[#10201d] mt-2">
-                  From manual chaos to <em className="text-[#e53927] not-italic">automated triumph.</em>
+                  We all know <em className="text-[#e53927] not-italic">how this goes.</em>
                 </h2>
               </div>
               <p className="max-w-md text-[#34433f] text-sm sm:text-base font-normal">
-                Traditional hackathons aren't single-day sprints anymore. They are multi-stage funnels where 70% of teams are disqualified for missing intermediate deliverable gates.
+                Most hackathons aren't one deadline. There are forms, PPTs, videos, quizzes, prototypes, shortlists and finally the demo. Missing one can end the whole thing.
               </p>
             </div>
 
@@ -219,98 +365,126 @@ export default async function HomePage() {
               {/* Card 1 */}
               <article className="border-2 border-[#10201d] bg-[#f7f7f2] p-6 sm:p-8 shadow-[7px_7px_0_#671912] flex flex-col justify-between">
                 <div>
-                  <span className="font-display text-3xl sm:text-4xl font-extrabold text-[#10201d]">2014–2024</span>
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider px-2 py-0.5 border border-[#10201d] bg-[#e4e5da] text-[#10201d] inline-block">
+                    The Problem
+                  </span>
                   <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#10201d] mt-4">
-                    The Spreadsheets & Forgotten Pings
+                    The "I'll send it in the group" system
                   </h3>
                   <p className="mt-3 text-sm text-[#34433f] leading-relaxed">
-                    Bookmarked links in browser folders, WhatsApp groups that fall silent after 2 days, and panicking 3 hours before the deadline realizing Round 1 required an architecture PPT and a 2-minute video.
+                    The link is somewhere in the WhatsApp group. The rulebook is 20 pages. Nobody remembers which round needs the PPT. Then someone asks, "bro deadline kab hai?"
                   </p>
                 </div>
                 <div className="mt-6 pt-4 border-t border-[#10201d]/10 font-mono text-xs font-bold text-[#e53927]">
-                  RESULT: 68% SUBMISSION FAILURE
+                  RESULT: Panicking 3 hours before cutoff
                 </div>
               </article>
 
               {/* Card 2 */}
               <article className="border-2 border-[#10201d] bg-[#f7f7f2] p-6 sm:p-8 shadow-[7px_7px_0_#671912] flex flex-col justify-between">
                 <div>
-                  <span className="font-display text-3xl sm:text-4xl font-extrabold text-[#10201d]">The Engine</span>
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider px-2 py-0.5 border border-[#10201d] bg-[#8bb2de] text-[#10201d] inline-block">
+                    The Useful Part
+                  </span>
                   <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#10201d] mt-4">
-                    Heuristic & Gemini Extraction
+                    Paste the link. We handle the boring part.
                   </h3>
                   <p className="mt-3 text-sm text-[#34433f] leading-relaxed">
-                    Paste any competition link. Jina Reader fetches full markdown, and our heuristic regex engine instantly dissects rounds, Indian standard time (IST) offsets, prizes, and embedded PDF rulebook links.
+                    Paste a hackathon link and HackFlow pulls out rounds, deadlines, requirements, prizes and useful documents. If AI extraction isn't available, the fallback parser still gets the important stuff.
                   </p>
                 </div>
                 <div className="mt-6 pt-4 border-t border-[#10201d]/10 font-mono text-xs font-bold text-[#3d5f58]">
-                  TIME TO PARSE: UNDER 3 SECONDS
+                  Fast enough that you won't notice
                 </div>
               </article>
 
               {/* Card 3 (Mustard Gold Highlight) */}
               <article className="border-2 border-[#10201d] bg-[#f5b726] p-6 sm:p-8 shadow-[7px_7px_0_#8a5d13] flex flex-col justify-between">
                 <div>
-                  <span className="font-display text-3xl sm:text-4xl font-extrabold text-[#10201d]">2026</span>
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider px-2 py-0.5 border border-[#10201d] bg-[#10201d] text-[#f7f7f2] inline-block">
+                    The Solution
+                  </span>
                   <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#10201d] mt-4">
-                    Total Multiplayer Execution
+                    Everyone sees the same thing
                   </h3>
                   <p className="mt-3 text-sm text-[#10201d] leading-relaxed font-medium">
-                    Live round countdown timers, Supabase Realtime synchronized deliverable checklists across teammates, and automated urgency alert gates (7d kickoff, 3d midpoint, 24h freeze, 6h critical).
+                    No more "which version of the PPT are you editing?" or "did anyone submit this?" Checklists, assignments and shared links update for the whole team in real time.
                   </p>
                 </div>
                 <div className="mt-6 pt-4 border-t border-[#10201d]/20 font-mono text-xs font-bold text-[#10201d]">
-                  RESULT: 100% ON-TIME SUBMISSION
+                  One shared source of truth
                 </div>
               </article>
             </div>
           </div>
         </section>
 
-        {/* ===================== THE MANIFESTO SECTION (#2e4742) ===================== */}
-        <section id="manifesto" className="py-20 sm:py-28 border-b-2 border-[#10201d] bg-[#2e4742] text-[#f7f7f2]">
+        {/* ===================== 21-26. WHY THIS EXISTS (HUMAN MANIFESTO) ===================== */}
+        <section id="why" className="py-20 sm:py-28 border-b-2 border-[#10201d] bg-[#2e4742] text-[#f7f7f2]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-16 items-start">
               <div className="lg:col-span-5">
                 <p className="font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-[#8bb2de]">
-                  The Manifesto
+                  Why this exists
                 </p>
                 <h2 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[0.94] text-[#f7f7f2] mt-3">
-                  Why we’re <em className="text-[#f5b726] not-italic">building HackFlow.</em>
+                  Because we’ve <em className="text-[#f5b726] not-italic">all been there.</em>
                 </h2>
               </div>
               <div className="lg:col-span-7 space-y-6 text-base sm:text-lg leading-relaxed text-[#f7f7f2]/90">
                 <p>
-                  <strong className="text-white font-bold">Hackathons are the purest forge of modern software creation.</strong> In 36 hours, strangers assemble to prototype the future, fine-tune models, and deploy ambitious systems. But hackathon teams rarely lose because of bad code. They lose because of disorganization.
+                  A hackathon can start with four people, one great idea and a ridiculous amount of confidence.
                 </p>
                 <p>
-                  <strong className="text-white font-bold">The Multi-Stage Illusion:</strong> Competitions on Unstop, HackerEarth, and Devpost are not single-deadline events. They are multi-stage funnels—Round 1: Online Quiz &rarr; Round 2: Solution Architecture Deck &rarr; Round 3: Working Prototype &rarr; Round 4: Offline Presentation. Teams tracking only the final demo date get eliminated before writing their first line of business logic.
+                  Then the rounds start.
                 </p>
                 <p>
-                  <strong className="text-white font-bold">Information Friction:</strong> Teammates rarely read 20-page guideline PDFs. By auto-extracting deliverable requirements, evaluation rubrics, presentation constraints, and slide templates directly onto an interactive kanban dashboard, HackFlow turns passive bookmarks into active accountability.
+                  Someone has the PPT. Someone has the GitHub repo. Someone saved the rulebook. Someone knows the deadline. And somehow nobody knows what is actually left to do.
                 </p>
-                <p className="font-mono text-sm uppercase tracking-wider text-[#8bb2de] pt-2">
-                  // Built for hackers, by hackers · Stop losing to logistics.
+                <p className="text-white font-bold text-lg">
+                  HackFlow is built to fix that part.
+                </p>
+
+                <div className="border-t border-[#f7f7f2]/20 pt-5 space-y-4">
+                  <h4 className="font-display text-xl font-bold text-[#8bb2de]">
+                    It’s never just one deadline.
+                  </h4>
+                  <p className="text-sm sm:text-base text-[#f7f7f2]/80 leading-relaxed">
+                    Round 1: Quiz &rarr; Round 2: PPT Submission &rarr; Round 3: Working Prototype &rarr; Round 4: Final Pitch. Teams tracking only the final demo date get eliminated before writing their first line of code.
+                  </p>
+                </div>
+
+                <div className="border-t border-[#f7f7f2]/20 pt-5 space-y-4">
+                  <h4 className="font-display text-xl font-bold text-[#f5b726]">
+                    Nobody reads the 20-page PDF
+                  </h4>
+                  <p className="text-sm sm:text-base text-[#f7f7f2]/80 leading-relaxed">
+                    So don’t make everyone read it. HackFlow pulls out the important requirements, documents, templates and links and puts them where the whole team can actually see them.
+                  </p>
+                </div>
+
+                <p className="font-mono text-xs sm:text-sm uppercase tracking-wider text-[#8bb2de] pt-3 font-bold">
+                  // Built for people who are tired of finding the deadline 3 hours before it.
                 </p>
               </div>
             </div>
           </div>
         </section>
 
-        {/* ===================== CORE CAPABILITIES SECTION (#e4e5da) ===================== */}
-        <section id="capabilities" className="py-20 sm:py-28 border-b-2 border-[#10201d] bg-[#e4e5da]">
+        {/* ===================== 27-33. WHAT HACKFLOW ACTUALLY DOES ===================== */}
+        <section id="features" className="py-20 sm:py-28 border-b-2 border-[#10201d] bg-[#e4e5da]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
               <div>
                 <p className="font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-[#10201d]">
-                  Engineered to Win
+                  What HackFlow actually does
                 </p>
                 <h2 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[0.94] text-[#10201d] mt-2">
-                  Everything you need to <em className="text-[#e53927] not-italic">ship and win.</em>
+                  Everything your team <em className="text-[#e53927] not-italic">keeps forgetting.</em>
                 </h2>
               </div>
               <p className="max-w-md text-[#34433f] text-sm sm:text-base">
-                Four battle-tested engines working in unison to ensure your team never drops the ball on deliverables, deadlines, or teammate coordination.
+                Four simple things that make hackathons less chaotic.
               </p>
             </div>
 
@@ -320,17 +494,17 @@ export default async function HomePage() {
               <div className="border-2 border-[#10201d] bg-[#f7f7f2] p-7 sm:p-9 shadow-[7px_7px_0_#671912] flex flex-col justify-between">
                 <div>
                   <span className="font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-1 bg-[#10201d] text-[#f7f7f2] rounded-sm inline-block mb-5">
-                    Stage Parsing
+                    Step 1
                   </span>
                   <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#10201d]">
-                    Zero-Friction Ingestion Pipeline
+                    1. Give us the link
                   </h3>
                   <p className="mt-3 text-sm sm:text-base text-[#34433f] leading-relaxed">
-                    Paste any competition URL. If AI credits are exhausted, our deterministic heuristic engine instantly parses complex multi-stage HTML timelines, exact IST dates, prize pools, and team requirements without failure.
+                    HackFlow reads the hackathon page and pulls out the rounds, dates, requirements, prizes and important links.
                   </p>
                 </div>
                 <div className="mt-6 flex items-center gap-2 font-mono text-xs text-[#10201d] font-bold">
-                  <span className="w-2 h-2 bg-[#8bb2de]" /> Unstop · Devfolio · Devpost · HackerEarth
+                  <span className="w-2 h-2 bg-[#8bb2de]" /> Unstop · Devfolio · Devpost · HackerEarth · MLH
                 </div>
               </div>
 
@@ -338,17 +512,17 @@ export default async function HomePage() {
               <div className="border-2 border-[#10201d] bg-[#f7f7f2] p-7 sm:p-9 shadow-[7px_7px_0_#671912] flex flex-col justify-between">
                 <div>
                   <span className="font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-1 bg-[#10201d] text-[#f7f7f2] rounded-sm inline-block mb-5">
-                    Multiplayer Sync
+                    Step 2
                   </span>
                   <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#10201d]">
-                    Real-Time Deliverables Engine
+                    2. Get the whole team on the same page
                   </h3>
                   <p className="mt-3 text-sm sm:text-base text-[#34433f] leading-relaxed">
-                    Curated checklist templates for PPT decks, prototype deployments, GitHub repos, and pitch rehearsals. Every checkbox toggle updates instantly across all connected teammates via Supabase Realtime.
+                    Assign work, check things off and add shared links. Everyone sees the changes instantly via real-time sync.
                   </p>
                 </div>
                 <div className="mt-6 flex items-center gap-2 font-mono text-xs text-[#10201d] font-bold">
-                  <span className="w-2 h-2 bg-[#f5b726]" /> Zero Sync Conflicts · Instant Optimistic UI
+                  <span className="w-2 h-2 bg-[#f5b726]" /> Powered by Supabase Realtime
                 </div>
               </div>
 
@@ -356,17 +530,17 @@ export default async function HomePage() {
               <div className="border-2 border-[#10201d] bg-[#f7f7f2] p-7 sm:p-9 shadow-[7px_7px_0_#671912] flex flex-col justify-between">
                 <div>
                   <span className="font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-1 bg-[#10201d] text-[#f7f7f2] rounded-sm inline-block mb-5">
-                    Notification Gates
+                    Step 3
                   </span>
                   <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#10201d]">
-                    Automated Urgency Dispatches
+                    3. Get reminded before it's too late
                   </h3>
                   <p className="mt-3 text-sm sm:text-base text-[#34433f] leading-relaxed">
-                    Four precise urgency checkpoints: 7-day kickoff alert, 3-day midpoint check, 24-hour code freeze warning, and 6-hour critical submission reminder. Never wonder if your team is on track.
+                    HackFlow watches the important deadlines and nudges the team as they get closer (7 days out, 3 days out, 24 hours freeze, and 6 hours remaining).
                   </p>
                 </div>
                 <div className="mt-6 flex items-center gap-2 font-mono text-xs text-[#10201d] font-bold">
-                  <span className="w-2 h-2 bg-[#e97b77]" /> In-App Toasts & Resend Email Alerts
+                  <span className="w-2 h-2 bg-[#e97b77]" /> In-app pings + email reminders
                 </div>
               </div>
 
@@ -374,37 +548,37 @@ export default async function HomePage() {
               <div className="border-2 border-[#10201d] bg-[#f7f7f2] p-7 sm:p-9 shadow-[7px_7px_0_#671912] flex flex-col justify-between">
                 <div>
                   <span className="font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-1 bg-[#10201d] text-[#f7f7f2] rounded-sm inline-block mb-5">
-                    Official Assets
+                    Step 4
                   </span>
                   <h3 className="font-display text-2xl sm:text-3xl font-bold text-[#10201d]">
-                    Problem Statement & Rulebook Vault
+                    4. Keep all the important links in one place
                   </h3>
                   <p className="mt-3 text-sm sm:text-base text-[#34433f] leading-relaxed">
-                    Auto-discovers PDF rulebooks, slide templates, datasets, and problem statement links from hackathon pages. Teammates can also attach their shared Figma, Canva, and GitHub repos.
+                    Rulebooks, problem statements, templates, Figma, Canva, GitHub — everything your team needs, without digging through old messages.
                   </p>
                 </div>
                 <div className="mt-6 flex items-center gap-2 font-mono text-xs text-[#10201d] font-bold">
-                  <span className="w-2 h-2 bg-[#e53927]" /> 1-Click Document Access for the Entire Team
+                  <span className="w-2 h-2 bg-[#e53927]" /> 1-Click access to team files
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        {/* ===================== FAQ SECTION (#f2f2eb) ===================== */}
+        {/* ===================== 34-36. FAQ SECTION ===================== */}
         <section id="faq" className="py-20 sm:py-28 border-b-2 border-[#10201d] bg-[#f2f2eb]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
               <div>
                 <p className="font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-[#10201d]">
-                  Common Questions
+                  FAQ
                 </p>
                 <h2 className="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight leading-[0.94] text-[#10201d] mt-2">
-                  Everything else, <em className="text-[#e53927] not-italic">answered.</em>
+                  Okay, but how does it <em className="text-[#e53927] not-italic">actually work?</em>
                 </h2>
               </div>
               <p className="max-w-md text-[#34433f] text-sm sm:text-base">
-                Have questions about how HackFlow extracts timelines, manages timezones, or syncs across your team? Here are the answers.
+                The boring-but-important details.
               </p>
             </div>
 
@@ -413,23 +587,23 @@ export default async function HomePage() {
               {[
                 {
                   q: 'Which hackathon platforms can HackFlow parse?',
-                  a: 'HackFlow currently features built-in extractors for Unstop, Devfolio, Devpost, Internshala, and MLH. For any custom hackathon or private college event, our fallback engine allows you to input custom rounds, deadlines, and deliverables in seconds.',
+                  a: 'HackFlow can parse Unstop, Devfolio, Devpost, Internshala, and MLH out of the box. For independent university competitions or custom hackathon sites, our parser extracts the content, or you can adjust dates and rounds manually with our editor in seconds.',
                 },
                 {
                   q: 'How does HackFlow handle Indian Time (IST) vs UTC deadlines?',
-                  a: 'Platforms like Unstop and HackerEarth host competitions running in IST (UTC+05:30), while Devpost defaults to EST or UTC. HackFlow auto-detects the host platform domain and normalizes all extracted timestamps into unambiguous ISO-8601 strings with explicit timezone offsets so your countdown timers are never off by 5.5 hours.',
+                  a: 'Platforms like Unstop run on Indian Standard Time (IST, UTC+05:30), while US platforms run on EST or UTC. HackFlow auto-detects the platform and converts dates into explicit ISO-8601 strings with timezone offsets so your countdown timers are never off by 5.5 hours.',
                 },
                 {
                   q: 'What happens if a hackathon has multiple elimination stages?',
-                  a: 'Unlike generic project tools that only track the final demo date, HackFlow treats every hackathon as a sequential funnel (e.g. Round 1: Quiz, Round 2: PPT Submission, Round 3: Prototype). The active stage displays an urgent countdown timer, and advancing to the next stage automatically spins up the appropriate deliverable template.',
+                  a: 'HackFlow treats every hackathon as a step-by-step journey: Round 1 (Quiz) → Round 2 (PPT) → Round 3 (Prototype) → Round 4 (Demo). The dashboard counts down to the active round deadline, and completing a round spins up the task checklist for the next one.',
                 },
                 {
                   q: 'How does multiplayer synchronization work?',
-                  a: 'HackFlow uses Supabase Postgres with Realtime websockets. When any teammate checks off "Upload pitch deck PDF" or appends a Figma link, the change renders instantly on all connected devices without page refreshes.',
+                  a: 'HackFlow is built on Supabase with Realtime websockets. When someone checks off "Upload pitch deck PDF" or adds the GitHub repo link, it updates on everyone’s screen instantly.',
                 },
                 {
                   q: 'Is HackFlow free to use for student hackathon teams?',
-                  a: 'Yes, HackFlow is 100% free for individual builders and hackathon teams. Simply sign up with Google or your email to track your first competition.',
+                  a: 'Yes, 100% free for builders and teams. Sign up with Google or email, invite your squad, and start tracking your hackathons.',
                 },
               ].map((item, idx) => (
                 <details key={idx} className="group p-6 sm:p-7 cursor-pointer transition-colors hover:bg-[#f2f2eb]/50">
@@ -448,34 +622,31 @@ export default async function HomePage() {
               ))}
             </div>
 
-            {/* Bottom FAQ CTA */}
+            {/* 37. Bottom FAQ CTA */}
             <div className="mt-12 flex justify-center">
               <Link
                 href="/signup"
                 className="inline-flex items-center justify-center min-h-[50px] px-8 py-3 font-mono text-sm font-bold uppercase tracking-tight text-[#10201d] border-2 border-[#10201d] bg-[#e97b77] shadow-[5px_5px_0_#671912] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_#671912] transition-all"
               >
-                Start Executing — Free
+                Try it on your next hackathon →
               </Link>
             </div>
           </div>
         </section>
       </main>
 
-      {/* ===================== FOOTER (#2e4742) ===================== */}
+      {/* ===================== 38. FOOTER ===================== */}
       <footer className="border-t-2 border-[#10201d] bg-[#2e4742] text-[#f7f7f2] py-12 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
             <HackFlowSquares size="w-3.5 h-3.5" />
             <span className="font-display text-2xl font-extrabold uppercase tracking-tight text-[#f7f7f2]">
               HACK<span className="text-[#e97b77]">FLOW</span>
-              <span className="text-xs font-mono ml-1.5 px-1.5 py-0.5 border border-[#8bb2de] text-[#8bb2de] rounded">
-                2026
-              </span>
             </span>
           </div>
 
           <p className="font-mono text-xs text-[#8bb2de] text-center">
-            Designed in the spirit of open-source community building. Dedicated to hackers everywhere.
+            Built for teams that'd rather build than panic.
           </p>
 
           <div className="flex items-center gap-5 font-mono text-xs font-bold uppercase tracking-wider text-[#f7f7f2]">
@@ -490,4 +661,3 @@ export default async function HomePage() {
     </div>
   )
 }
-
