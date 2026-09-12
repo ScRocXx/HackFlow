@@ -365,6 +365,160 @@ export async function updateEventStatus(eventId: string, status: string) {
   }
 }
 
+export type UpdateEventInput = {
+  eventId: string;
+  title?: string;
+  organizer?: string;
+  mode?: string;
+  location?: string;
+  prize_pool?: string;
+  prize_cash_pool?: number | null;
+  prize_first_place?: number | null;
+  has_perks_or_credits?: boolean;
+  raw_prize_text?: string | null;
+  prize_display_summary?: string | null;
+  overview?: string;
+  eligibility?: string;
+  status?: string;
+  stages?: {
+    id?: string;
+    round_number: number;
+    title: string;
+    stage_type: string;
+    deadline?: string | null;
+    window_start?: string | null;
+    window_end?: string | null;
+    actionable_deadline?: string | null;
+    raw_date_snippet?: string | null;
+    evaluation_format?: string;
+    deliverables_description?: string;
+  }[];
+};
+
+export async function updateEvent(input: UpdateEventInput) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const { eventId, stages, ...eventFields } = input;
+
+    // 1. Update events table
+    const updatePayload: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+    };
+    if (eventFields.title !== undefined) updatePayload.title = eventFields.title.trim();
+    if (eventFields.organizer !== undefined) updatePayload.organizer = eventFields.organizer.trim();
+    if (eventFields.mode !== undefined) updatePayload.mode = eventFields.mode;
+    if (eventFields.location !== undefined) updatePayload.location = eventFields.location;
+    if (eventFields.prize_pool !== undefined) updatePayload.prize_pool = eventFields.prize_pool;
+    if (eventFields.prize_cash_pool !== undefined) updatePayload.prize_cash_pool = eventFields.prize_cash_pool;
+    if (eventFields.prize_first_place !== undefined) updatePayload.prize_first_place = eventFields.prize_first_place;
+    if (eventFields.has_perks_or_credits !== undefined) updatePayload.has_perks_or_credits = eventFields.has_perks_or_credits;
+    if (eventFields.raw_prize_text !== undefined) updatePayload.raw_prize_text = eventFields.raw_prize_text;
+    if (eventFields.prize_display_summary !== undefined) updatePayload.prize_display_summary = eventFields.prize_display_summary;
+    if (eventFields.overview !== undefined) updatePayload.overview = eventFields.overview;
+    if (eventFields.eligibility !== undefined) updatePayload.eligibility = eventFields.eligibility;
+    if (eventFields.status !== undefined) updatePayload.status = eventFields.status;
+
+    const { error: eventUpdateError } = await supabase
+      .from('events')
+      .update(updatePayload)
+      .eq('id', eventId);
+
+    if (eventUpdateError) {
+      return { success: false, error: eventUpdateError.message };
+    }
+
+    // 2. Update stages if provided
+    if (stages && Array.isArray(stages)) {
+      const { data: existingStages } = await supabase
+        .from('event_stages')
+        .select('id')
+        .eq('event_id', eventId);
+
+      const existingIds = new Set((existingStages || []).map(s => s.id));
+      const incomingIds = new Set(stages.filter(s => !!s.id).map(s => s.id!));
+
+      // Delete removed stages
+      const idsToDelete = Array.from(existingIds).filter(id => !incomingIds.has(id));
+      if (idsToDelete.length > 0) {
+        await supabase
+          .from('event_stages')
+          .delete()
+          .in('id', idsToDelete);
+      }
+
+      // Upsert / update stages
+      for (const stg of stages) {
+        const effectiveDeadline = stg.deadline || null;
+        const effectiveEnd = stg.window_end || effectiveDeadline;
+        const effectiveActionable = stg.actionable_deadline || stg.window_start || effectiveDeadline;
+        const rawSnippet = stg.raw_date_snippet || (!effectiveDeadline ? 'TBA' : null);
+
+        if (stg.id && existingIds.has(stg.id)) {
+          await supabase
+            .from('event_stages')
+            .update({
+              round_number: stg.round_number,
+              title: stg.title.trim(),
+              stage_type: stg.stage_type || 'other',
+              deadline: effectiveDeadline,
+              window_start: stg.window_start || null,
+              window_end: effectiveEnd,
+              actionable_deadline: effectiveActionable,
+              raw_date_snippet: rawSnippet,
+              evaluation_format: stg.evaluation_format || '',
+              deliverables_description: stg.deliverables_description || '',
+            })
+            .eq('id', stg.id);
+        } else {
+          await supabase
+            .from('event_stages')
+            .insert({
+              event_id: eventId,
+              round_number: stg.round_number,
+              title: stg.title.trim(),
+              stage_type: stg.stage_type || 'other',
+              deadline: effectiveDeadline,
+              window_start: stg.window_start || null,
+              window_end: effectiveEnd,
+              actionable_deadline: effectiveActionable,
+              raw_date_snippet: rawSnippet,
+              evaluation_format: stg.evaluation_format || '',
+              deliverables_description: stg.deliverables_description || '',
+              is_completed: false,
+            });
+        }
+      }
+
+      // Ensure active_stage_id points to lowest uncompleted stage
+      const { data: updatedStages } = await supabase
+        .from('event_stages')
+        .select('id, round_number, is_completed')
+        .eq('event_id', eventId)
+        .order('round_number', { ascending: true });
+
+      if (updatedStages && updatedStages.length > 0) {
+        const nextActive = updatedStages.find(s => !s.is_completed) || updatedStages[0];
+        await supabase
+          .from('events')
+          .update({ active_stage_id: nextActive.id })
+          .eq('id', eventId);
+      }
+    }
+
+    revalidatePath('/dashboard');
+    revalidatePath('/events');
+    revalidatePath(`/events/${eventId}`);
+    return { success: true };
+  } catch (error: any) {
+    console.error('Error in updateEvent:', error);
+    return { success: false, error: error.message || 'Failed to update event' };
+  }
+}
+
 export async function deleteEvent(eventId: string) {
   try {
     const supabase = await createClient();
