@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { PdfUpload } from '@/components/ui/pdf-upload'
 import { upsertVaultProfile, createVaultAsset, deleteVaultAsset, getVaultProfiles, getVaultAssets } from '@/app/actions/vault'
 import type { TeamVaultProfile, TeamVaultAsset, Squad } from '@/lib/supabase/types'
 import { cn } from '@/lib/utils'
@@ -398,9 +399,16 @@ export function VaultView({
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2">
-                      <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d]">
-                        {asset.asset_type.replace('_', ' ')}
-                      </span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d]">
+                          {asset.asset_type.replace('_', ' ')}
+                        </span>
+                        {(asset.url.toLowerCase().endsWith('.pdf') || asset.url.toLowerCase().includes('hackflow_uploads') || asset.url.toLowerCase().includes('/uploads/')) && (
+                          <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 border-2 border-[#10201d] bg-[#e53927] text-white flex items-center gap-1 shadow-[1px_1px_0_#10201d]">
+                            <FileText className="w-3 h-3" /> PDF Deck
+                          </span>
+                        )}
+                      </div>
                       {asset.created_by === currentUserId && (
                         <button
                           onClick={() => handleDeleteAsset(asset.id)}
@@ -427,14 +435,25 @@ export function VaultView({
                   </div>
 
                   <div className="pt-4 mt-4 border-t-2 border-[#10201d] flex items-center justify-between">
-                    <a
-                      href={asset.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-mono text-xs font-bold text-[#10201d] hover:text-[#e53927] flex items-center gap-1.5 group underline"
-                    >
-                      Open Link <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                    </a>
+                    {(asset.url.toLowerCase().endsWith('.pdf') || asset.url.toLowerCase().includes('hackflow_uploads') || asset.url.toLowerCase().includes('/uploads/')) ? (
+                      <a
+                        href={asset.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-xs font-bold text-[#10201d] hover:text-[#e53927] flex items-center gap-1.5 group underline"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-[#e53927]" /> View PDF <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      </a>
+                    ) : (
+                      <a
+                        href={asset.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-xs font-bold text-[#10201d] hover:text-[#e53927] flex items-center gap-1.5 group underline"
+                      >
+                        Open Link <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      </a>
+                    )}
                     <button
                       onClick={() => handleCopy(`asset-${asset.id}`, asset.url, asset.title)}
                       className="font-mono text-[11px] font-bold px-2 py-1 border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[1px_1px_0_#10201d] flex items-center gap-1"
@@ -562,33 +581,36 @@ export function VaultView({
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">Asset Type</label>
-                <select
-                  value={assetForm.asset_type}
-                  onChange={(e) => setAssetForm({ ...assetForm, asset_type: e.target.value as any })}
-                  className="w-full h-10 px-3 border-2 border-[#10201d] bg-white font-mono text-xs shadow-[2px_2px_0_#10201d] focus:outline-none"
-                >
-                  <option value="pitch_deck">Pitch Deck Template</option>
-                  <option value="figma_kit">Figma UI Kit</option>
-                  <option value="boilerplate">Starter Boilerplate Repo</option>
-                  <option value="diagram">Architecture Diagram</option>
-                  <option value="other">Other Link</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">URL / Link *</label>
-                <Input
-                  value={assetForm.url}
-                  onChange={(e) => setAssetForm({ ...assetForm, url: e.target.value })}
-                  placeholder="https://..."
-                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
-                  required
-                />
-              </div>
+            <div className="space-y-1">
+              <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">Asset Type</label>
+              <select
+                value={assetForm.asset_type}
+                onChange={(e) => setAssetForm({ ...assetForm, asset_type: e.target.value as any })}
+                className="w-full h-10 px-3 border-2 border-[#10201d] bg-white font-mono text-xs shadow-[2px_2px_0_#10201d] focus:outline-none"
+              >
+                <option value="pitch_deck">Pitch Deck Template (PDF / Presentation)</option>
+                <option value="figma_kit">Figma UI Kit</option>
+                <option value="boilerplate">Starter Boilerplate Repo</option>
+                <option value="diagram">Architecture Diagram</option>
+                <option value="other">Other Resource</option>
+              </select>
             </div>
+
+            <PdfUpload
+              value={assetForm.url}
+              onChange={(url, meta) => {
+                setAssetForm((prev) => ({
+                  ...prev,
+                  url,
+                  title: !prev.title.trim() && meta?.fileName
+                    ? meta.fileName.replace(/\.[^/.]+$/, '').replace(/[-_]+/g, ' ')
+                    : prev.title,
+                }))
+              }}
+              label="Asset Document (Upload PDF or External Link) *"
+              placeholder={assetForm.asset_type === 'figma_kit' ? 'https://figma.com/@...' : 'https://drive.google.com/... or https://...'}
+              folder="vault_assets"
+            />
 
             <div className="space-y-1">
               <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">Description</label>

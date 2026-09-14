@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
 import { updatePostSubmissionDetails } from '@/app/actions/events'
 import { CountdownTimer } from '@/components/events/CountdownTimer'
+import { PdfUpload } from '@/components/ui/pdf-upload'
 import type { Event } from '@/lib/supabase/types'
 import { cn } from '@/lib/utils'
 
@@ -212,41 +213,30 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
                 </div>
               </div>
 
-              {/* Google Drive / Pitch Deck Checker */}
-              <div>
-                <label className="font-mono text-[11px] font-bold text-[#34433f] block">Pitch Deck / Google Drive Link</label>
-                <div className="flex gap-2 mt-1">
-                  <Input
-                    value={pitchDeckUrl}
-                    onChange={(e) => setPitchDeckUrl(e.target.value)}
-                    placeholder="https://drive.google.com/..."
-                    className="font-mono text-xs border-2 border-[#10201d] bg-[#f2f2eb] h-9 flex-1"
-                  />
-                  {pitchDeckUrl && (
-                    <a
-                      href={pitchDeckUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="font-mono text-xs font-bold px-2.5 py-1.5 border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[2px_2px_0_#10201d] inline-flex items-center gap-1 shrink-0"
-                      title="Open in new window to verify 'Anyone with link can view'"
-                    >
-                      Open Link <ExternalLink className="w-3 h-3" />
-                    </a>
-                  )}
-                </div>
+              {/* Pitch Deck / Presentation PDF */}
+              <div className="pt-2 border-t border-[#10201d]/15">
+                <PdfUpload
+                  value={pitchDeckUrl}
+                  onChange={(url) => setPitchDeckUrl(url)}
+                  label="Pitch Deck (Upload PDF or Link)"
+                  placeholder="https://drive.google.com/... or https://canva.com/..."
+                  folder="hackathon_submissions"
+                />
 
-                <div className="mt-2 flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="drive-check"
-                    checked={driveVerified}
-                    onChange={(e) => setDriveVerified(e.target.checked)}
-                    className="h-4 w-4 border-2 border-[#10201d] rounded-none accent-[#10201d]"
-                  />
-                  <label htmlFor="drive-check" className="font-mono text-[11px] text-[#34433f] select-none cursor-pointer">
-                    Verified: Link is set to "Anyone with the link can view" (No request access gate)
-                  </label>
-                </div>
+                {pitchDeckUrl && pitchDeckUrl.includes('drive.google.com') && (
+                  <div className="mt-2 flex items-center gap-2 p-2 border border-[#10201d] bg-white">
+                    <input
+                      type="checkbox"
+                      id="drive-check"
+                      checked={driveVerified}
+                      onChange={(e) => setDriveVerified(e.target.checked)}
+                      className="h-4 w-4 border-2 border-[#10201d] rounded-none accent-[#10201d]"
+                    />
+                    <label htmlFor="drive-check" className="font-mono text-[11px] text-[#34433f] select-none cursor-pointer">
+                      Verified: Link is set to "Anyone with the link can view" (No request access gate)
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
           </div>

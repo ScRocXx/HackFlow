@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Globe, ExternalLink, Calendar, Users, Trophy, FileText, Database, Link2, Plus, Trash2, Loader2, Sparkles, UserPlus, Shield, Edit3, AlertTriangle } from 'lucide-react'
+import { MapPin, Globe, ExternalLink, Calendar, Users, Trophy, FileText, Database, Link2, Plus, Trash2, Loader2, Sparkles, UserPlus, Shield, Edit3, AlertTriangle, UploadCloud } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -60,6 +60,7 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
   const [newUrl, setNewUrl] = useState('')
   const [newType, setNewType] = useState('problem_statement')
   const [addingResource, setAddingResource] = useState(false)
+  const [uploadingDoc, setUploadingDoc] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const { toast } = useToast()
 
@@ -135,6 +136,45 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
       })
     } finally {
       setAddingResource(false)
+    }
+  }
+
+  const handleUploadResourceFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingDoc(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'event_resources')
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'Failed to upload document')
+      }
+
+      const cleanFileName = data.fileName ? data.fileName.replace(/\.[^/.]+$/, '').replace(/[-_]+/g, ' ') : 'Attached Document'
+      setNewTitle(cleanFileName)
+      setNewUrl(data.url)
+      setNewType('template')
+      toast({
+        title: 'PDF Uploaded',
+        description: `"${data.fileName}" uploaded. Click "Add" to attach it to team resources.`,
+      })
+    } catch (err: any) {
+      toast({
+        title: 'Upload Failed',
+        description: err.message,
+        variant: 'destructive',
+      })
+    } finally {
+      setUploadingDoc(false)
+      e.target.value = ''
     }
   }
 
@@ -363,7 +403,11 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
                         rel="noopener noreferrer"
                         className="hidden sm:inline-flex items-center gap-1 font-mono text-xs font-bold text-[#10201d] hover:bg-[#e97b77] hover:text-white px-2.5 py-1.5 border-2 border-[#10201d] bg-[#f2f2eb] shadow-[2px_2px_0_#10201d] transition-all"
                       >
-                        Open <ExternalLink className="h-3 w-3" />
+                        {(res.url.toLowerCase().endsWith('.pdf') || res.url.includes('hackflow_uploads') || res.url.includes('/uploads/')) ? (
+                          <>View PDF <ExternalLink className="h-3 w-3" /></>
+                        ) : (
+                          <>Open <ExternalLink className="h-3 w-3" /></>
+                        )}
                       </a>
                       <Button
                         type="button"
@@ -397,9 +441,22 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
 
               {/* Add Custom Resource Form */}
               <div className="p-4 bg-[#e4e5da] border-2 border-[#10201d] shadow-[4px_4px_0_#10201d] space-y-3">
-                <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">
-                  Add Team Resource or Custom Link
-                </span>
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">
+                    Add Team Resource or Custom Link
+                  </span>
+                  <label className="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 font-mono text-[10px] font-bold uppercase border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[1px_1px_0_#10201d] transition-all">
+                    {uploadingDoc ? <Loader2 className="w-3 h-3 animate-spin" /> : <UploadCloud className="w-3 h-3" />}
+                    <span>{uploadingDoc ? 'Uploading...' : 'Upload PDF / Slide Deck'}</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.ppt,.pptx"
+                      className="hidden"
+                      onChange={handleUploadResourceFile}
+                      disabled={uploadingDoc}
+                    />
+                  </label>
+                </div>
                 <form onSubmit={handleAddResource} className="space-y-2.5">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <Input
