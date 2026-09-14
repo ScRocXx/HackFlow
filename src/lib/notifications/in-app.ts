@@ -24,6 +24,26 @@ export async function createInAppNotification(params: {
   }
 }
 
+export async function createBatchInAppNotifications(notifications: Array<{
+  userId: string;
+  title: string;
+  body: string;
+  link?: string;
+}>) {
+  if (!notifications || notifications.length === 0) return;
+  const rows = notifications.map(n => ({
+    user_id: n.userId,
+    title: n.title,
+    body: n.body,
+    link: n.link,
+    read: false,
+  }));
+  const { error } = await supabaseAdmin.from('notifications').insert(rows);
+  if (error) {
+    console.error('Error creating batch in-app notifications:', error);
+  }
+}
+
 export async function markNotificationRead(notificationId: string, userId: string) {
   const { error } = await supabaseAdmin
     .from('notifications')

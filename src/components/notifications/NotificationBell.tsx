@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { Bell, Check, Trash2, X, AlertTriangle, Clock, Calendar, Sparkles } from 'lucide-react';
+import { Bell, Check, Trash2, X, AlertTriangle, Clock, Calendar, Sparkles, Users, FileText, UserPlus } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -139,6 +139,7 @@ export function NotificationBell({ userId }: { userId: string }) {
   };
 
   const getUrgencyBadge = (title: string) => {
+    const t = title.toLowerCase();
     if (title.includes('Critical') || title.includes('🚨')) {
       return (
         <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-[#e53927] text-white border border-[#10201d]">
@@ -146,23 +147,44 @@ export function NotificationBell({ userId }: { userId: string }) {
         </span>
       );
     }
-    if (title.includes('Freeze') || title.includes('TOMORROW')) {
+    if (title.includes('Freeze') || title.includes('TOMORROW') || t.includes('24h')) {
       return (
         <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-[#f5b726] text-[#10201d] border border-[#10201d]">
           <Clock className="w-2.5 h-2.5" /> 24h Left
         </span>
       );
     }
-    if (title.includes('Midpoint')) {
+    if (title.includes('Midpoint') || t.includes('3 days')) {
       return (
         <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-[#8bb2de] text-[#10201d] border border-[#10201d]">
           <Calendar className="w-2.5 h-2.5" /> 3 Days
         </span>
       );
     }
+    if (t.includes('team') || t.includes('squad') || t.includes('collaborator') || t.includes('invited')) {
+      return (
+        <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-[#2e4742] text-[#8bb2de] border border-[#10201d]">
+          <Users className="w-2.5 h-2.5" /> Team
+        </span>
+      );
+    }
+    if (t.includes('resource') || t.includes('statement') || t.includes('rulebook') || t.includes('deck') || t.includes('dataset')) {
+      return (
+        <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-[#d4ebd0] text-[#1e4620] border border-[#10201d]">
+          <FileText className="w-2.5 h-2.5" /> Resource
+        </span>
+      );
+    }
+    if (t.includes('friend')) {
+      return (
+        <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-[#d8ccf4] text-[#3b1d7d] border border-[#10201d]">
+          <UserPlus className="w-2.5 h-2.5" /> Friend
+        </span>
+      );
+    }
     return (
       <span className="inline-flex items-center gap-1 font-mono text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-[#e4e5da] text-[#10201d] border border-[#10201d]">
-        <Sparkles className="w-2.5 h-2.5" /> Kickoff
+        <Sparkles className="w-2.5 h-2.5" /> Update
       </span>
     );
   };

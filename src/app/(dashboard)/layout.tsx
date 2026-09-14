@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { DashboardShell } from '@/components/layout/DashboardShell'
+import { triggerThrottledDeadlineEvaluation } from '@/lib/notifications/engine'
 
 export default async function DashboardLayout({
   children,
@@ -44,6 +45,11 @@ export default async function DashboardLayout({
     full_name: fullName,
     avatar_url: avatarUrl,
   }
+
+  // Trigger background deadline evaluation if cooldown elapsed
+  triggerThrottledDeadlineEvaluation().catch(err => {
+    console.error('Background deadline evaluation error in layout:', err);
+  });
 
   return (
     <DashboardShell user={userData}>

@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { Squad, SquadMember, TeamVaultProfile, TeamVaultAsset, Profile } from '@/lib/supabase/types'
+import { createInAppNotification, createBatchInAppNotifications } from '@/lib/notifications/in-app'
 
 export async function createSquad(name: string, memberIds: string[] = []) {
   try {
@@ -55,6 +56,26 @@ export async function createSquad(name: string, memberIds: string[] = []) {
 
     if (membersErr) {
       console.error('createSquad members insert error:', membersErr)
+    } else if (membersToInsert.length > 1) {
+      // Dispatch in-app notifications to other members
+      try {
+        const { data: creatorProfile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const creatorName = creatorProfile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'A squad leader'
+        const otherUserIds = membersToInsert.filter(m => m.user_id !== user.id).map(m => m.user_id)
+
+        if (otherUserIds.length > 0) {
+          await createBatchInAppNotifications(
+            otherUserIds.map(uid => ({
+              userId: uid,
+              title: `Added to Squad: ${squad.name}`,
+              body: `${creatorName} added you to the squad "${squad.name}". Check out your squad vault!`,
+              link: '/vault',
+            }))
+          )
+        }
+      } catch (notifErr) {
+        console.error('Error sending squad creation notifications:', notifErr)
+      }
     }
 
     revalidatePath('/vault')
@@ -220,6 +241,25 @@ export async function addSquadMember(squadId: string, userId: string) {
 
     if (error) {
       return { success: false, error: error.message }
+    }
+
+    // Notify the added squad member
+    if (userId !== user.id) {
+      try {
+        const { data: squad } = await supabase.from('squads').select('name').eq('id', squadId).single()
+        const { data: adderProfile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+        const adderName = adderProfile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'A squad leader'
+        const squadName = squad?.name || 'Squad'
+
+        await createInAppNotification({
+          userId: userId,
+          title: `Added to Squad: ${squadName}`,
+          body: `${adderName} added you as a member to "${squadName}". Check out your squad vault!`,
+          link: '/vault',
+        })
+      } catch (notifErr) {
+        console.error('Error dispatching squad member notification:', notifErr)
+      }
     }
 
     revalidatePath('/vault')

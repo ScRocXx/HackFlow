@@ -113,10 +113,25 @@ export async function evaluateAndDispatchNotifications() {
       console.warn(`[NotificationEngine] Error fetching participants for event ${eventId}:`, membersError);
     }
 
+    // Also get members from team_members (supports both roster architectures)
+    const { data: teamMembers, error: tmError } = await supabaseAdmin
+      .from('team_members')
+      .select('user_id, email')
+      .eq('event_id', eventId);
+
+    if (tmError) {
+      console.warn(`[NotificationEngine] Error fetching team_members for event ${eventId}:`, tmError);
+    }
+
     const userIds = new Set<string>();
     if (participants) {
       participants.forEach(p => {
         if (p.user_id) userIds.add(p.user_id);
+      });
+    }
+    if (teamMembers) {
+      teamMembers.forEach(tm => {
+        if (tm.user_id) userIds.add(tm.user_id);
       });
     }
     if (eventCreatorId) {
@@ -209,3 +224,21 @@ export async function evaluateAndDispatchNotifications() {
   return { evaluated, dispatched, totalLogged: logSet.size };
 }
 
+let lastEvaluationTimestamp = 0;
+const EVALUATION_COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes
+
+export async function triggerThrottledDeadlineEvaluation(): Promise<{ triggered: boolean; result?: any }> {
+  const now = Date.now();
+  if (now - lastEvaluationTimestamp < EVALUATION_COOLDOWN_MS) {
+    return { triggered: false };
+  }
+  lastEvaluationTimestamp = now;
+
+  try {
+    const result = await evaluateAndDispatchNotifications();
+    return { triggered: true, result };
+  } catch (err) {
+    console.error('[NotificationEngine] Background evaluation error:', err);
+    return { triggered: false };
+  }
+}

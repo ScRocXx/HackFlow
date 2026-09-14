@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { HackFlowLogo } from '@/components/brand/Logo'
 import { NotificationToast } from '@/components/notifications/NotificationToast'
+import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { ProfileSidebarWidget } from '@/components/profile/ProfileSidebarWidget'
 
 export interface UserData {
@@ -133,6 +134,9 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
             <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border border-[#10201d] bg-[#2e4742] text-[#8bb2de] hidden sm:inline-block">
               Team Workspace
             </span>
+            {user?.id && (
+              <NotificationBell userId={user.id} />
+            )}
           </div>
         </header>
 

@@ -3,6 +3,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { getDefaultDeliverables } from '@/lib/deliverables/templates';
+import { createInAppNotification, createBatchInAppNotifications } from '@/lib/notifications/in-app';
+import { sendTeamInviteEmail } from '@/lib/notifications/send-email';
+import { triggerThrottledDeadlineEvaluation } from '@/lib/notifications/engine';
 
 export type CreateEventInput = {
   title: string;
@@ -310,6 +313,26 @@ export async function createEvent(data: CreateEventInput) {
 
     if (partError) {
       console.warn('Event participants insertion warning:', partError);
+    } else if (data.squad_id && participantsToInsert.length > 1) {
+      // Notify all other squad members that they were added to the hackathon
+      try {
+        const { data: creatorProfile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
+        const creatorName = creatorProfile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Your squad leader';
+        const otherUserIds = participantsToInsert.filter(p => p.user_id !== user.id).map(p => p.user_id);
+
+        if (otherUserIds.length > 0) {
+          await createBatchInAppNotifications(
+            otherUserIds.map(uid => ({
+              userId: uid,
+              title: `New Hackathon: ${event.title}`,
+              body: `${creatorName} registered your squad for "${event.title}". Check out the timeline and rounds!`,
+              link: `/events/${event.id}`,
+            }))
+          );
+        }
+      } catch (notifErr) {
+        console.error('Error dispatching squad event notifications:', notifErr);
+      }
     }
 
     revalidatePath('/dashboard');
@@ -743,6 +766,11 @@ export async function getUserEvents() {
       return deadlineA - deadlineB;
     });
 
+    // Trigger background deadline evaluation if cooldown elapsed
+    triggerThrottledDeadlineEvaluation().catch(err => {
+      console.error('Background deadline evaluation error in getUserEvents:', err);
+    });
+
     return { success: true, data: sortedEvents };
   } catch (error: any) {
     console.error('Error in getUserEvents:', error);
@@ -780,6 +808,58 @@ export async function addEventResource(eventId: string, resource: {
 
     if (error) {
       return { success: false, error: error.message };
+    }
+
+    // Dispatch notifications to all event collaborators (excluding the uploader)
+    try {
+      const { data: event } = await supabase.from('events').select('title, created_by').eq('id', eventId).single();
+      const { data: uploaderProfile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
+      const uploaderName = uploaderProfile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'A teammate';
+      const eventTitle = event?.title || 'Hackathon';
+
+      const recipientIds = new Set<string>();
+      if (event?.created_by && event.created_by !== user.id) {
+        recipientIds.add(event.created_by);
+      }
+
+      const { data: participants } = await supabase
+        .from('event_participants')
+        .select('user_id')
+        .eq('event_id', eventId);
+      participants?.forEach((p) => {
+        if (p.user_id && p.user_id !== user.id) recipientIds.add(p.user_id);
+      });
+
+      const { data: teamMembers } = await supabase
+        .from('team_members')
+        .select('user_id')
+        .eq('event_id', eventId);
+      teamMembers?.forEach((tm) => {
+        if (tm.user_id && tm.user_id !== user.id) recipientIds.add(tm.user_id);
+      });
+
+      if (recipientIds.size > 0) {
+        const resourceTypeLabel = resource.resource_type === 'problem_statement'
+          ? 'Problem Statement'
+          : resource.resource_type === 'rulebook'
+          ? 'Rulebook'
+          : resource.resource_type === 'template'
+          ? 'Pitch Deck'
+          : resource.resource_type === 'dataset'
+          ? 'Dataset'
+          : 'Resource';
+
+        await createBatchInAppNotifications(
+          Array.from(recipientIds).map((uid) => ({
+            userId: uid,
+            title: `New ${resourceTypeLabel}: ${eventTitle}`,
+            body: `${uploaderName} uploaded "${resource.title.trim()}" to ${eventTitle}.`,
+            link: `/events/${eventId}`,
+          }))
+        );
+      }
+    } catch (notifErr) {
+      console.error('Error dispatching resource notifications:', notifErr);
     }
 
     revalidatePath(`/events/${eventId}`);
@@ -1020,6 +1100,37 @@ export async function addEventParticipant(eventId: string, userId: string, role:
         return { success: false, error: 'User is already a participant in this event' };
       }
       return { success: false, error: error.message };
+    }
+
+    // Dispatch in-app notification & email to added participant
+    if (userId !== user.id) {
+      try {
+        const { data: event } = await supabase.from('events').select('title').eq('id', eventId).single();
+        const { data: adderProfile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
+        const adderName = adderProfile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'A teammate';
+        const eventTitle = event?.title || 'Hackathon';
+        const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const eventUrl = `${appBaseUrl}/events/${eventId}`;
+
+        await createInAppNotification({
+          userId: userId,
+          title: `Added to Team: ${eventTitle}`,
+          body: `${adderName} added you to the hackathon team for "${eventTitle}" as a ${role}.`,
+          link: `/events/${eventId}`,
+        });
+
+        const { data: targetProfile } = await supabase.from('profiles').select('email').eq('id', userId).single();
+        if (targetProfile?.email) {
+          await sendTeamInviteEmail({
+            to: targetProfile.email,
+            inviterName: adderName,
+            eventTitle: eventTitle,
+            inviteUrl: eventUrl,
+          });
+        }
+      } catch (notifErr) {
+        console.error('Error sending participant notification:', notifErr);
+      }
     }
 
     revalidatePath(`/events/${eventId}`);

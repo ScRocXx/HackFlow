@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { createInAppNotification } from '@/lib/notifications/in-app';
+import { sendTeamInviteEmail } from '@/lib/notifications/send-email';
 
 export async function inviteTeamMember(eventId: string, email: string) {
   try {
@@ -25,7 +27,7 @@ export async function inviteTeamMember(eventId: string, email: string) {
     // Lookup profile
     const { data: profiles } = await supabase
       .from('profiles')
-      .select('id')
+      .select('id, full_name, email')
       .eq('email', email)
       .limit(1);
     
@@ -48,7 +50,7 @@ export async function inviteTeamMember(eventId: string, email: string) {
 
     const { error } = await supabase.from('team_members').insert({
       event_id: eventId,
-      email: email, // Assuming team_members has an email column for pending invites
+      email: email,
       user_id: targetUserId,
       role: 'member',
       joined_at: targetUserId ? new Date().toISOString() : null
@@ -56,9 +58,46 @@ export async function inviteTeamMember(eventId: string, email: string) {
 
     if (error) return { success: false, error: error.message };
 
-    // TODO: send invite email via Resend (will be implemented in notification engine)
+    // Also sync to event_participants if registered user
+    if (targetUserId) {
+      await supabase.from('event_participants').upsert({
+        event_id: eventId,
+        user_id: targetUserId,
+        role: 'collaborator',
+        joined_at: new Date().toISOString()
+      }, { onConflict: 'event_id,user_id' });
+    }
+
+    // Dispatch in-app notification and email
+    try {
+      const { data: event } = await supabase.from('events').select('title').eq('id', eventId).single();
+      const { data: inviterProfile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
+      const inviterName = inviterProfile?.full_name || user.email?.split('@')[0] || 'Team Lead';
+      const eventTitle = event?.title || 'Hackathon';
+      const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const eventUrl = `${appBaseUrl}/events/${eventId}`;
+
+      if (targetUserId) {
+        await createInAppNotification({
+          userId: targetUserId,
+          title: `Invited to Team: ${eventTitle}`,
+          body: `${inviterName} invited you to join the team for "${eventTitle}".`,
+          link: `/events/${eventId}`,
+        });
+      }
+
+      await sendTeamInviteEmail({
+        to: email,
+        inviterName: inviterName,
+        eventTitle: eventTitle,
+        inviteUrl: eventUrl,
+      });
+    } catch (notifErr) {
+      console.error('Error dispatching team invite notification/email:', notifErr);
+    }
 
     revalidatePath(`/events/${eventId}`);
+    revalidatePath('/dashboard');
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message || 'Failed to invite team member' };
