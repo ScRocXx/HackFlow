@@ -102,24 +102,34 @@ export async function sendFriendRequest(receiverEmail: string) {
 
     // Fire off transactional email invite
     try {
+      const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
       await sendEmail({
         to: cleanEmail,
         subject: `${senderName} invited you to collaborate on HackFlow`,
-        react: React.createElement(
-          'div',
-          { style: { fontFamily: 'sans-serif', padding: '24px', backgroundColor: '#f9f9f9' } },
-          React.createElement('h2', { style: { color: '#10201d' } }, 'HackFlow Squad Invite'),
-          React.createElement(
-            'p',
-            null,
-            `${senderName} (${user.email}) wants to connect as a squad friend on HackFlow to coordinate hackathon sprints, share vaults, and track team deadlines.`
-          ),
-          React.createElement(
-            'p',
-            null,
-            'Log in to HackFlow or create an account to accept the request!'
-          )
-        ),
+        html: `<!DOCTYPE html>
+<html lang="en">
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f6f9fc; padding: 24px; margin: 0;">
+  <div style="background-color: #ffffff; max-width: 560px; margin: 0 auto; border: 2px solid #10201d; box-shadow: 4px 4px 0 #10201d; border-radius: 6px; overflow: hidden;">
+    <div style="background-color: #10201d; padding: 18px; text-align: center;">
+      <h1 style="color: #f7f7f2; margin: 0; font-size: 20px; font-weight: bold;">⚡ HackFlow Squad Invite</h1>
+    </div>
+    <div style="padding: 28px;">
+      <h2 style="color: #10201d; margin-top: 0; font-size: 18px;">${senderName} wants to collaborate!</h2>
+      <p style="color: #34433f; font-size: 15px; line-height: 1.6;">
+        <strong>${senderName}</strong> (${user.email}) invited you to connect as a squad friend on HackFlow to coordinate hackathon sprints, share vaults, and track team deadlines.
+      </p>
+      <div style="text-align: center; margin: 28px 0 16px;">
+        <a href="${appBaseUrl}/friends" style="background-color: #e53927; color: #ffffff; padding: 12px 24px; text-decoration: none; font-weight: bold; font-size: 14px; display: inline-block; border-radius: 4px;">
+          Accept Friend Request &rarr;
+        </a>
+      </div>
+    </div>
+    <div style="border-top: 1px solid #e6ebf1; padding: 14px; text-align: center; font-size: 12px; color: #8898aa;">
+      Sent automatically by HackFlow
+    </div>
+  </div>
+</body>
+</html>`,
       })
     } catch (emailErr) {
       console.warn('Failed to send friend invite email:', emailErr)
