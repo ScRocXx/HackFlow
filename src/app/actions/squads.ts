@@ -97,50 +97,40 @@ export async function getMySquads(): Promise<{ success: boolean; data: Squad[]; 
       return { success: false, data: [], error: 'Unauthorized' }
     }
 
-    // 1. Get squad IDs where user is member or creator
-    const { data: memberRows, error: memberErr } = await supabase
-      .from('squad_members')
-      .select('squad_id')
-      .eq('user_id', user.id)
+    // 1. Parallel fetch: squad IDs where user is member or creator
+    const [memberRes, createdRes] = await Promise.all([
+      supabase.from('squad_members').select('squad_id').eq('user_id', user.id),
+      supabase.from('squads').select('id').eq('created_by', user.id),
+    ])
 
-    if (memberErr) {
-      return { success: false, data: [], error: memberErr.message }
+    if (memberRes.error) {
+      return { success: false, data: [], error: memberRes.error.message }
     }
 
-    const squadIds = (memberRows || []).map((r) => r.squad_id)
-
-    // Also get squads created by user
-    const { data: createdSquads } = await supabase
-      .from('squads')
-      .select('id')
-      .eq('created_by', user.id)
-
-    createdSquads?.forEach((s) => {
-      if (!squadIds.includes(s.id)) squadIds.push(s.id)
-    })
+    const squadIdSet = new Set<string>()
+    memberRes.data?.forEach((r) => r.squad_id && squadIdSet.add(r.squad_id))
+    createdRes.data?.forEach((s) => s.id && squadIdSet.add(s.id))
+    const squadIds = Array.from(squadIdSet)
 
     if (squadIds.length === 0) {
       return { success: true, data: [] }
     }
 
-    // 2. Fetch the squads
-    const { data: squads, error: squadErr } = await supabase
-      .from('squads')
-      .select('*')
-      .in('id', squadIds)
-      .order('created_at', { ascending: false })
+    // 2. Parallel fetch: squads and all members concurrently
+    const [squadsRes, membersRes] = await Promise.all([
+      supabase.from('squads').select('*').in('id', squadIds).order('created_at', { ascending: false }),
+      supabase.from('squad_members').select('id, squad_id, user_id, role, joined_at').in('squad_id', squadIds),
+    ])
 
-    if (squadErr) {
-      return { success: false, data: [], error: squadErr.message }
+    if (squadsRes.error) {
+      return { success: false, data: [], error: squadsRes.error.message }
     }
 
-    // 3. Fetch members with profiles for each squad
-    const { data: allMembers } = await supabase
-      .from('squad_members')
-      .select('id, squad_id, user_id, role, joined_at')
-      .in('squad_id', squadIds)
+    const squads = squadsRes.data || []
+    const allMembers = membersRes.data || []
 
-    const allMemberUserIds = Array.from(new Set((allMembers || []).map((m) => m.user_id)))
+    // 3. Fetch profiles in bulk for all unique member user IDs
+    const allMemberUserIds = Array.from(new Set(allMembers.map((m) => m.user_id)))
     const { data: profiles } = allMemberUserIds.length > 0
       ? await supabase.from('profiles').select('*').in('id', allMemberUserIds)
       : { data: [] }

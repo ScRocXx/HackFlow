@@ -199,6 +199,32 @@ export async function deleteVaultAsset(assetId: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized' };
 
+    // Fetch asset to verify ownership
+    const { data: asset } = await supabase
+      .from('team_vault_assets')
+      .select('created_by, squad_id')
+      .eq('id', assetId)
+      .maybeSingle();
+
+    if (!asset) return { success: false, error: 'Asset not found' };
+
+    if (asset.created_by !== user.id) {
+      if (asset.squad_id) {
+        // Allow squad leader to delete
+        const { data: squadMembership } = await supabase
+          .from('squad_members')
+          .select('role')
+          .eq('squad_id', asset.squad_id)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (squadMembership?.role !== 'leader') {
+          return { success: false, error: 'Forbidden: Only the creator or squad leader can delete this asset' };
+        }
+      } else {
+        return { success: false, error: 'Forbidden: You can only delete assets you created' };
+      }
+    }
+
     const { error } = await supabase
       .from('team_vault_assets')
       .delete()

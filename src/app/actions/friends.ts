@@ -220,6 +220,23 @@ export async function declineFriendRequest(friendshipId: string) {
       return { success: false, error: 'Unauthorized' }
     }
 
+    const { data: friendship, error: fetchErr } = await supabase
+      .from('friendships')
+      .select('id, sender_id, receiver_id, receiver_email')
+      .eq('id', friendshipId)
+      .maybeSingle()
+
+    if (fetchErr || !friendship) {
+      return { success: false, error: 'Friendship request not found' }
+    }
+
+    const isReceiver = friendship.receiver_id === user.id || 
+      (user.email && friendship.receiver_email?.toLowerCase() === user.email.toLowerCase());
+
+    if (!isReceiver) {
+      return { success: false, error: 'Forbidden: Only the recipient can decline this request' }
+    }
+
     const { error } = await supabase
       .from('friendships')
       .update({
@@ -246,6 +263,24 @@ export async function removeFriend(friendshipId: string) {
 
     if (!user) {
       return { success: false, error: 'Unauthorized' }
+    }
+
+    const { data: friendship, error: fetchErr } = await supabase
+      .from('friendships')
+      .select('id, sender_id, receiver_id, receiver_email')
+      .eq('id', friendshipId)
+      .maybeSingle()
+
+    if (fetchErr || !friendship) {
+      return { success: false, error: 'Friendship record not found' }
+    }
+
+    const isParty = friendship.sender_id === user.id || 
+      friendship.receiver_id === user.id || 
+      (user.email && friendship.receiver_email?.toLowerCase() === user.email.toLowerCase());
+
+    if (!isParty) {
+      return { success: false, error: 'Forbidden: You are not authorized to remove this connection' }
     }
 
     const { error } = await supabase
