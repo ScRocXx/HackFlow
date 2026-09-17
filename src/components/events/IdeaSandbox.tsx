@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { 
-  Lightbulb, Check, Plus, Trash2, Loader2, Sparkles, Star, Tag, Edit3
+  Lightbulb, Check, Plus, Trash2, Loader2, Sparkles, Star, Tag, Edit3, FileUp
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,7 @@ import {
   updateProblemStatement, 
   deleteProblemStatement 
 } from '@/app/actions/events'
+import { extractProblemStatementsFromPdf } from '@/app/actions/extract-pdf'
 import type { EventProblemStatement } from '@/lib/supabase/types'
 import { cn } from '@/lib/utils'
 
@@ -27,6 +28,8 @@ export function IdeaSandbox({ eventId, problemStatements = [] }: IdeaSandboxProp
   const [statements, setStatements] = useState<EventProblemStatement[]>(problemStatements)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploadingPdf, setIsUploadingPdf] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   
   // New statement form
   const [newTitle, setNewTitle] = useState('')
@@ -37,6 +40,68 @@ export function IdeaSandbox({ eventId, problemStatements = [] }: IdeaSandboxProp
   // Inline bullet adder state: map statementId -> string
   const [bulletInputs, setBulletInputs] = useState<Record<string, string>>({})
   const { toast } = useToast()
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.type !== 'application/pdf') {
+      toast({
+        title: 'PDF Required',
+        description: 'Please select a hackathon brochure or problem statement PDF.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (file.size > 15 * 1024 * 1024) {
+      toast({
+        title: 'File Too Large',
+        description: 'PDF exceeds 15MB limit for native Gemini analysis.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setIsUploadingPdf(true)
+    try {
+      const reader = new FileReader()
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result as string
+          const res = await extractProblemStatementsFromPdf(base64, eventId)
+          if (!res.success) {
+            throw new Error(res.error || 'Failed to parse problem statements from PDF.')
+          }
+
+          if (Array.isArray(res.data) && res.data.length > 0) {
+            setStatements(prev => [...prev, ...(res.data as EventProblemStatement[])])
+            toast({
+              title: 'Brochure Ingested!',
+              description: `Extracted and saved ${res.data.length} track(s) directly into your sandbox.`,
+            })
+          }
+        } catch (err: any) {
+          toast({
+            title: 'Extraction Notice',
+            description: err.message,
+            variant: 'destructive',
+          })
+        } finally {
+          setIsUploadingPdf(false)
+          if (fileInputRef.current) fileInputRef.current.value = ''
+        }
+      }
+      reader.readAsDataURL(file)
+    } catch (err: any) {
+      setIsUploadingPdf(false)
+      toast({
+        title: 'File Read Error',
+        description: err.message,
+        variant: 'destructive',
+      })
+    }
+  }
 
   const handleChoose = async (statementId: string) => {
     try {
@@ -160,13 +225,40 @@ export function IdeaSandbox({ eventId, problemStatements = [] }: IdeaSandboxProp
           </div>
         </div>
 
-        <Button
-          size="sm"
-          onClick={() => setIsAddModalOpen(true)}
-          className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[2px_2px_0_#8a5d13] shrink-0"
-        >
-          <Plus className="h-3.5 w-3.5 mr-1" /> Add Track / Idea
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={isUploadingPdf}
+            onClick={() => fileInputRef.current?.click()}
+            className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#8bb2de] hover:bg-[#a9c9f0] text-[#10201d] shadow-[2px_2px_0_#10201d] shrink-0"
+          >
+            {isUploadingPdf ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Ingesting PDF...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-3.5 w-3.5 mr-1 text-[#10201d]" /> Ingest PDF Brochure
+              </>
+            )}
+          </Button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept="application/pdf"
+            className="hidden"
+            onChange={handlePdfUpload}
+          />
+
+          <Button
+            size="sm"
+            onClick={() => setIsAddModalOpen(true)}
+            className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[2px_2px_0_#8a5d13] shrink-0"
+          >
+            <Plus className="h-3.5 w-3.5 mr-1" /> Add Track / Idea
+          </Button>
+        </div>
       </div>
 
       <CardContent className="p-5 space-y-4">

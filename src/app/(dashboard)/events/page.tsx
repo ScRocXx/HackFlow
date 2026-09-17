@@ -1,11 +1,5 @@
-import { getUserEvents } from '@/app/actions/events'
-import { DashboardContent } from '@/components/events/DashboardContent'
+import { redirect } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
-
-export default async function EventsPage() {
-  const result = await getUserEvents()
-  const events = result.success && result.data ? result.data : []
-
-  return <DashboardContent events={events as any} />
+export default function EventsPage() {
+  redirect('/dashboard')
 }

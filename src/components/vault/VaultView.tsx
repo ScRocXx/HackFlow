@@ -100,6 +100,75 @@ export function VaultView({
     }, 1500)
   }
 
+  const copySquadUnstopFormat = () => {
+    if (profiles.length === 0) return
+    const currentSquad = squads.find(s => s.id === selectedSquadId)
+    const squadName = currentSquad?.name || 'Squad'
+    
+    let text = `=== SQUAD REGISTRATION (UNSTOP FORMAT) ===\nTeam Name: ${squadName}\nTeam Size: ${profiles.length}\n\n`
+    profiles.forEach((p, idx) => {
+      text += `Member ${idx + 1} (${idx === 0 ? 'Leader' : 'Teammate'}):\n`
+      text += `Name: ${p.full_name || 'N/A'}\n`
+      text += `Email: ${p.email || 'N/A'}\n`
+      text += `Phone: ${p.phone || 'N/A'}\n`
+      text += `College: ${p.college || 'N/A'}\n`
+      if (p.roll_number) text += `Roll/ID: ${p.roll_number}\n`
+      text += `GitHub: ${p.github_url || 'N/A'}\n`
+      text += `LinkedIn: ${p.linkedin_url || 'N/A'}\n`
+      if (p.resume_url) text += `Resume: ${p.resume_url}\n`
+      text += `\n`
+    })
+    navigator.clipboard.writeText(text.trim())
+    toast({
+      title: 'Unstop Squad Roster Copied!',
+      description: `Copied details for ${profiles.length} member(s) formatted for Unstop registration.`,
+    })
+  }
+
+  const copySquadDevfolioFormat = () => {
+    if (profiles.length === 0) return
+    const currentSquad = squads.find(s => s.id === selectedSquadId)
+    const squadName = currentSquad?.name || 'HackFlow Team'
+
+    let text = `=== SQUAD REGISTRATION (DEVFOLIO FORMAT) ===\nTeam: ${squadName}\n\n`
+    profiles.forEach((p, idx) => {
+      text += `[Member ${idx + 1}${idx === 0 ? ' - Lead' : ''}]\n`
+      text += `Full Name: ${p.full_name || ''}\n`
+      text += `Email: ${p.email || ''}\n`
+      text += `GitHub: ${p.github_url || ''}\n`
+      text += `LinkedIn: ${p.linkedin_url || ''}\n`
+      text += `Portfolio: ${p.portfolio_url || ''}\n`
+      text += `Mobile: ${p.phone || ''}\n\n`
+    })
+    navigator.clipboard.writeText(text.trim())
+    toast({
+      title: 'Devfolio Squad Roster Copied!',
+      description: `Copied details for ${profiles.length} member(s) formatted for Devfolio registration.`,
+    })
+  }
+
+  const copySquadTsvFormat = () => {
+    if (profiles.length === 0) return
+    const header = ['Name', 'Email', 'Phone', 'College', 'Roll No', 'GitHub', 'LinkedIn', 'Portfolio', 'Resume'].join('\t')
+    const rows = profiles.map(p => [
+      p.full_name || '',
+      p.email || '',
+      p.phone || '',
+      p.college || '',
+      p.roll_number || '',
+      p.github_url || '',
+      p.linkedin_url || '',
+      p.portfolio_url || '',
+      p.resume_url || '',
+    ].join('\t'))
+    const tsv = [header, ...rows].join('\n')
+    navigator.clipboard.writeText(tsv)
+    toast({
+      title: 'TSV / Sheets Format Copied!',
+      description: `Copied table for ${profiles.length} member(s) — paste directly into Google Sheets or Excel!`,
+    })
+  }
+
   const handleSaveAsset = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!assetForm.title.trim() || !assetForm.url.trim()) {
@@ -271,6 +340,48 @@ export function VaultView({
             <span className="font-mono text-[11px] text-[#34433f] hidden sm:inline">
               Copies value & shows check confirmation
             </span>
+          </div>
+
+          {/* 1-Click Squad Registration Bridge Bar */}
+          <div className="p-3 bg-[#10201d] text-[#f7f7f2] border-2 border-[#10201d] shadow-[4px_4px_0_#10201d] flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-[#f5b726]" />
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#f7f7f2]">
+                1-Click Squad Registration Bridge:
+              </span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                type="button"
+                size="sm"
+                disabled={profiles.length === 0}
+                onClick={copySquadUnstopFormat}
+                className="h-7 text-xs font-mono font-bold bg-[#8bb2de] text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-[#b0cced]"
+              >
+                <Copy className="h-3 w-3 mr-1" />
+                Copy Unstop Format
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={profiles.length === 0}
+                onClick={copySquadDevfolioFormat}
+                className="h-7 text-xs font-mono font-bold bg-[#f5b726] text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-[#ffcf66]"
+              >
+                <Copy className="h-3 w-3 mr-1" />
+                Copy Devfolio Format
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={profiles.length === 0}
+                onClick={copySquadTsvFormat}
+                className="h-7 text-xs font-mono font-bold bg-white text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-slate-100"
+              >
+                <Copy className="h-3 w-3 mr-1" />
+                Copy Sheets / TSV
+              </Button>
+            </div>
           </div>
 
           {profiles.length === 0 ? (
