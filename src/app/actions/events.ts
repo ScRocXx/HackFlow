@@ -426,6 +426,24 @@ export async function updateEvent(input: UpdateEventInput) {
 
     const { eventId, stages, ...eventFields } = input;
 
+    // Verify user is an authorized participant or the event creator
+    const { data: participant } = await supabase
+      .from('event_participants')
+      .select('id, role')
+      .eq('event_id', eventId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const { data: ev } = await supabase
+      .from('events')
+      .select('created_by')
+      .eq('id', eventId)
+      .maybeSingle();
+
+    if (!participant && ev?.created_by !== user.id) {
+      return { success: false, error: 'Forbidden: You are not authorized to edit this event' };
+    }
+
     // 1. Update events table
     const updatePayload: Record<string, any> = {
       updated_at: new Date().toISOString(),
@@ -472,7 +490,10 @@ export async function updateEvent(input: UpdateEventInput) {
           .in('id', idsToDelete);
       }
 
-      // Upsert / update stages
+      // Upsert / update stages in parallel batches
+      const stagesToInsert: any[] = [];
+      const updatePromises: PromiseLike<any>[] = [];
+
       for (const stg of stages) {
         const effectiveDeadline = stg.deadline || null;
         const effectiveEnd = stg.window_end || effectiveDeadline;
@@ -480,40 +501,46 @@ export async function updateEvent(input: UpdateEventInput) {
         const rawSnippet = stg.raw_date_snippet || (!effectiveDeadline ? 'TBA' : null);
 
         if (stg.id && existingIds.has(stg.id)) {
-          await supabase
-            .from('event_stages')
-            .update({
-              round_number: stg.round_number,
-              title: stg.title.trim(),
-              stage_type: stg.stage_type || 'other',
-              deadline: effectiveDeadline,
-              window_start: stg.window_start || null,
-              window_end: effectiveEnd,
-              actionable_deadline: effectiveActionable,
-              raw_date_snippet: rawSnippet,
-              evaluation_format: stg.evaluation_format || '',
-              deliverables_description: stg.deliverables_description || '',
-            })
-            .eq('id', stg.id);
+          updatePromises.push(
+            supabase
+              .from('event_stages')
+              .update({
+                round_number: stg.round_number,
+                title: stg.title.trim(),
+                stage_type: stg.stage_type || 'other',
+                deadline: effectiveDeadline,
+                window_start: stg.window_start || null,
+                window_end: effectiveEnd,
+                actionable_deadline: effectiveActionable,
+                raw_date_snippet: rawSnippet,
+                evaluation_format: stg.evaluation_format || '',
+                deliverables_description: stg.deliverables_description || '',
+              })
+              .eq('id', stg.id)
+          );
         } else {
-          await supabase
-            .from('event_stages')
-            .insert({
-              event_id: eventId,
-              round_number: stg.round_number,
-              title: stg.title.trim(),
-              stage_type: stg.stage_type || 'other',
-              deadline: effectiveDeadline,
-              window_start: stg.window_start || null,
-              window_end: effectiveEnd,
-              actionable_deadline: effectiveActionable,
-              raw_date_snippet: rawSnippet,
-              evaluation_format: stg.evaluation_format || '',
-              deliverables_description: stg.deliverables_description || '',
-              is_completed: false,
-            });
+          stagesToInsert.push({
+            event_id: eventId,
+            round_number: stg.round_number,
+            title: stg.title.trim(),
+            stage_type: stg.stage_type || 'other',
+            deadline: effectiveDeadline,
+            window_start: stg.window_start || null,
+            window_end: effectiveEnd,
+            actionable_deadline: effectiveActionable,
+            raw_date_snippet: rawSnippet,
+            evaluation_format: stg.evaluation_format || '',
+            deliverables_description: stg.deliverables_description || '',
+            is_completed: false,
+          });
         }
       }
+
+      const stageOperations: PromiseLike<any>[] = [...updatePromises];
+      if (stagesToInsert.length > 0) {
+        stageOperations.push(supabase.from('event_stages').insert(stagesToInsert));
+      }
+      await Promise.all(stageOperations);
 
       // Ensure active_stage_id points to lowest uncompleted stage
       const { data: updatedStages } = await supabase
@@ -963,6 +990,24 @@ export async function addProblemStatement(eventId: string, statement: {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized' };
 
+    // Authorization check
+    const { data: participant } = await supabase
+      .from('event_participants')
+      .select('id')
+      .eq('event_id', eventId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const { data: ev } = await supabase
+      .from('events')
+      .select('created_by')
+      .eq('id', eventId)
+      .maybeSingle();
+
+    if (!participant && ev?.created_by !== user.id) {
+      return { success: false, error: 'Forbidden: You are not authorized for this event' };
+    }
+
     if (!statement.title?.trim()) {
       return { success: false, error: 'Title is required for problem statement' };
     }
@@ -995,20 +1040,45 @@ export async function chooseProblemStatement(eventId: string, statementId: strin
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized' };
 
-    // Reset others to false
-    await supabase
-      .from('event_problem_statements')
-      .update({ is_chosen: false })
-      .eq('event_id', eventId);
+    // Authorization check
+    const { data: participant } = await supabase
+      .from('event_participants')
+      .select('id')
+      .eq('event_id', eventId)
+      .eq('user_id', user.id)
+      .maybeSingle();
 
-    // Set target to true
-    const { error } = await supabase
-      .from('event_problem_statements')
-      .update({ is_chosen: true })
-      .eq('id', statementId)
-      .eq('event_id', eventId);
+    const { data: ev } = await supabase
+      .from('events')
+      .select('created_by')
+      .eq('id', eventId)
+      .maybeSingle();
 
-    if (error) return { success: false, error: error.message };
+    if (!participant && ev?.created_by !== user.id) {
+      return { success: false, error: 'Forbidden: You are not a member of this event.' };
+    }
+
+    // Try atomic RPC first
+    const { error: rpcError } = await supabase.rpc('choose_problem_statement', {
+      p_event_id: eventId,
+      p_statement_id: statementId,
+    });
+
+    if (rpcError) {
+      // Fallback: Batch update both sets concurrently
+      await Promise.all([
+        supabase
+          .from('event_problem_statements')
+          .update({ is_chosen: false })
+          .eq('event_id', eventId)
+          .neq('id', statementId),
+        supabase
+          .from('event_problem_statements')
+          .update({ is_chosen: true })
+          .eq('id', statementId)
+          .eq('event_id', eventId),
+      ]);
+    }
 
     revalidatePath(`/events/${eventId}`);
     return { success: true };
@@ -1028,6 +1098,24 @@ export async function updateProblemStatement(statementId: string, eventId: strin
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized' };
+
+    // Authorization check
+    const { data: participant } = await supabase
+      .from('event_participants')
+      .select('id')
+      .eq('event_id', eventId)
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const { data: ev } = await supabase
+      .from('events')
+      .select('created_by')
+      .eq('id', eventId)
+      .maybeSingle();
+
+    if (!participant && ev?.created_by !== user.id) {
+      return { success: false, error: 'Forbidden: You are not authorized for this event' };
+    }
 
     const { error } = await supabase
       .from('event_problem_statements')
