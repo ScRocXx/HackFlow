@@ -5,7 +5,6 @@ import { revalidatePath } from 'next/cache';
 import { getDefaultDeliverables } from '@/lib/deliverables/templates';
 import { createInAppNotification, createBatchInAppNotifications } from '@/lib/notifications/in-app';
 import { sendTeamInviteEmail } from '@/lib/notifications/send-email';
-import { triggerThrottledDeadlineEvaluation } from '@/lib/notifications/engine';
 
 export type CreateEventInput = {
   title: string;
@@ -765,12 +764,6 @@ export async function getUserEvents() {
       const deadlineB = targetB ? new Date(targetB).getTime() : Infinity;
       return deadlineA - deadlineB;
     });
-
-    // Trigger background deadline evaluation if cooldown elapsed
-    triggerThrottledDeadlineEvaluation().catch(err => {
-      console.error('Background deadline evaluation error in getUserEvents:', err);
-    });
-
     return { success: true, data: sortedEvents };
   } catch (error: any) {
     console.error('Error in getUserEvents:', error);

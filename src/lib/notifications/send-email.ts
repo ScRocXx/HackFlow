@@ -1,4 +1,4 @@
-import { renderDeadlineReminderHtml, renderTeamInviteHtml } from './email-templates';
+import { renderDeadlineReminderHtml, renderTeamInviteHtml, type DeadlineReminderEmailProps } from './email-templates';
 
 export interface SendEmailOptions {
   to: string;
@@ -133,18 +133,11 @@ export async function sendEmail(options: SendEmailOptions) {
   return { success: true, simulated: true };
 }
 
-export async function sendDeadlineEmail(params: {
-  to: string;
-  eventTitle: string;
-  stageName: string;
-  timeRemaining: string;
-  checklistProgress: string;
-  eventUrl: string;
-  intervalKey: string;
-}) {
+export async function sendDeadlineEmail(params: DeadlineReminderEmailProps & { to: string }) {
+  const urgencyPrefix = params.intervalKey === '6h' ? '🚨 [CRITICAL 6H]' : params.intervalKey === '24h' ? '⚡ [FREEZE 24H]' : params.intervalKey === '3d' ? '⏳ [MIDPOINT 3D]' : '🚀 [KICKOFF 7D]';
   return sendEmail({
     to: params.to,
-    subject: `HackFlow Reminder: ${params.eventTitle} - ${params.stageName}`,
+    subject: `${urgencyPrefix} ${params.eventTitle}: ${params.stageName}`,
     html: renderDeadlineReminderHtml(params),
   });
 }
