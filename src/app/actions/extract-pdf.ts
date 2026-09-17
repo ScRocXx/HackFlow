@@ -3,6 +3,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
 import type { EventProblemStatement } from '@/lib/supabase/types';
 
 export interface ExtractedProblemStatement {
@@ -21,15 +22,75 @@ export async function extractProblemStatementsFromPdf(
   eventId?: string
 ): Promise<{ success: boolean; data?: EventProblemStatement[] | ExtractedProblemStatement[]; error?: string }> {
   try {
+    // 1. Check Content-Length header before buffering the PDF
+    try {
+      const reqHeaders = headers();
+      const contentLengthHeader = reqHeaders.get('content-length');
+      if (contentLengthHeader) {
+        const contentLength = parseInt(contentLengthHeader, 10);
+        if (!isNaN(contentLength) && contentLength > 4 * 1024 * 1024) {
+          return {
+            success: false,
+            error: 'File exceeds 4MB serverless limit. Please paste the rulebook text directly into the text tab.',
+          };
+        }
+      }
+    } catch {
+      // In case headers() is invoked in a non-request environment
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return { success: false, error: 'GEMINI_API_KEY is not configured.' };
     }
 
+    let pdfPayload = base64Pdf;
+
+    // If a direct URL to a PDF was supplied, inspect remote Content-Length before buffering
+    if (base64Pdf.startsWith('http://') || base64Pdf.startsWith('https://')) {
+      try {
+        const headRes = await fetch(base64Pdf, { method: 'HEAD' });
+        const remoteContentLength = headRes.headers.get('content-length');
+        if (remoteContentLength && parseInt(remoteContentLength, 10) > 4 * 1024 * 1024) {
+          return {
+            success: false,
+            error: 'File exceeds 4MB serverless limit. Please paste the rulebook text directly into the text tab.',
+          };
+        }
+        const getRes = await fetch(base64Pdf);
+        const getCl = getRes.headers.get('content-length');
+        if (getCl && parseInt(getCl, 10) > 4 * 1024 * 1024) {
+          return {
+            success: false,
+            error: 'File exceeds 4MB serverless limit. Please paste the rulebook text directly into the text tab.',
+          };
+        }
+        const arrayBuffer = await getRes.arrayBuffer();
+        if (arrayBuffer.byteLength > 4 * 1024 * 1024) {
+          return {
+            success: false,
+            error: 'File exceeds 4MB serverless limit. Please paste the rulebook text directly into the text tab.',
+          };
+        }
+        pdfPayload = Buffer.from(arrayBuffer).toString('base64');
+      } catch (fetchErr: any) {
+        return { success: false, error: `Failed to fetch remote PDF: ${fetchErr?.message || 'Network error'}` };
+      }
+    }
+
     // Clean base64 string (strip data:application/pdf;base64, prefix if present)
-    const cleanBase64 = base64Pdf.replace(/^data:application\/pdf;base64,/, '').trim();
+    const cleanBase64 = pdfPayload.replace(/^data:application\/pdf;base64,/, '').trim();
     if (!cleanBase64) {
       return { success: false, error: 'Invalid or empty PDF payload.' };
+    }
+
+    // Check base64 payload size (approximate byte size = (len * 3) / 4)
+    const approxBytes = Math.ceil((cleanBase64.length * 3) / 4);
+    if (approxBytes > 4 * 1024 * 1024) {
+      return {
+        success: false,
+        error: 'File exceeds 4MB serverless limit. Please paste the rulebook text directly into the text tab.',
+      };
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);

@@ -38,7 +38,7 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
   const [pitchDeckUrl, setPitchDeckUrl] = useState(event.pitch_deck_url || '')
 
   // GitHub Permission Checker State
-  const [githubStatus, setGithubStatus] = useState<'checking' | 'public' | 'private_or_missing' | 'idle'>('idle')
+  const [githubStatus, setGithubStatus] = useState<'checking' | 'public' | 'private_or_missing' | 'rate_limited' | 'idle'>('idle')
   // Drive verification manual checkbox
   const [driveVerified, setDriveVerified] = useState(false)
 
@@ -79,6 +79,8 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
         } else {
           setGithubStatus('private_or_missing')
         }
+      } else if (res.status === 403) {
+        setGithubStatus('rate_limited')
       } else {
         setGithubStatus('private_or_missing')
       }
@@ -136,6 +138,13 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
                 detail: 'Repository is PRIVATE. Evaluators will receive a 404 error.',
               })
             }
+          } else if (res.status === 403) {
+            results.push({
+              id: 'github',
+              name: 'GitHub Repository Public Visibility',
+              status: 'warning',
+              detail: '⚠️ Rate limit reached (Verify manually in incognito)',
+            })
           } else {
             results.push({
               id: 'github',
@@ -438,6 +447,11 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
                   {githubStatus === 'public' && (
                     <span className="font-mono text-[10px] font-bold px-2 py-0.5 border border-[#10201d] bg-emerald-100 text-emerald-800 flex items-center gap-1">
                       <Check className="w-3 h-3 text-emerald-700" /> Public (Accessible)
+                    </span>
+                  )}
+                  {githubStatus === 'rate_limited' && (
+                    <span className="font-mono text-[10px] font-bold px-2 py-0.5 border border-[#10201d] bg-amber-100 text-amber-800 flex items-center gap-1">
+                      ⚠️ Rate limit reached (Verify manually in incognito)
                     </span>
                   )}
                   {githubStatus === 'private_or_missing' && (
