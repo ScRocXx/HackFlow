@@ -38,11 +38,11 @@ export const StageSchema = z.object({
     const valid = ['quiz', 'ppt_submission', 'prototype', 'hackathon_sprint', 'presentation', 'other'];
     return typeof val === 'string' && valid.includes(val) ? val : 'other';
   }, z.enum(['quiz', 'ppt_submission', 'prototype', 'hackathon_sprint', 'presentation', 'other'])).default('other'),
+  raw_date_snippet: nullableSnippetString,
+  deadline: nullableDateString,
   window_start: nullableDateString,
   window_end: nullableDateString,
   actionable_deadline: nullableDateString,
-  deadline: nullableDateString,
-  raw_date_snippet: nullableSnippetString,
   evaluation_format: z.string().nullable().optional().transform(v => v || '').default(''),
   deliverables_description: z.string().nullable().optional().transform(v => v || '').default(''),
   deliverables: z.array(z.string()).nullable().optional().default([]),
@@ -415,7 +415,15 @@ PRIZE POOL EVALUATION:
 - 'cash_pool': Verified hard cash amount only (e.g. "₹75,000" or "$10,000").
 - 'first_place_cash': First prize cash amount.
 - 'has_perks_or_credits': Set to true if prizes include credits, subscriptions, swags, or vouchers.
-- 'display_summary': Short summary highlighting tangible cash, e.g. "₹1,00,000 Cash + Cloud Credits" or "$5,000 Cash".
+TWO-PASS SELF-CORRECTION PROTOCOL:
+You must perform a strict two-pass self-audit before finalizing your JSON:
+- Pass 1 (Draft Extraction): Extract title, organizer, prizes, and sequential rounds/stages.
+- Pass 2 (Verification): Cross-reference every extracted deadline and time window against the raw text. You MUST copy the verbatim text snippet into 'raw_date_snippet'. If an extracted deadline does not have an exact matching date phrase or snippet in the text, you MUST force:
+  * "deadline": null
+  * "window_end": null
+  * "actionable_deadline": null
+  * "raw_date_snippet": "TBA"
+Never invent plausible dates. An unannounced or unverified deadline MUST be null / TBA.
 
 RESOURCE EXTRACTION:
 - Extract direct links to problem statements, guidelines, rulebooks, slide templates, datasets, or reference links.
@@ -446,11 +454,11 @@ OUTPUT JSON SCHEMA:
       "round_number": 1,
       "title": "string",
       "stage_type": "quiz" | "ppt_submission" | "prototype" | "hackathon_sprint" | "presentation" | "other",
+      "raw_date_snippet": "string (verbatim quote from text, or 'TBA')",
+      "deadline": "YYYY-MM-DDTHH:mm:ss+05:30" | null,
       "window_start": "YYYY-MM-DDTHH:mm:ss+05:30" | null,
       "window_end": "YYYY-MM-DDTHH:mm:ss+05:30" | null,
       "actionable_deadline": "YYYY-MM-DDTHH:mm:ss+05:30" | null,
-      "deadline": "YYYY-MM-DDTHH:mm:ss+05:30" | null,
-      "raw_date_snippet": "string",
       "evaluation_format": "string",
       "deliverables_description": "string"
     }
@@ -527,6 +535,29 @@ OUTPUT JSON SCHEMA:
             deliverables_description: 'Deliverables as per competition guidelines',
           }
         ];
+      } else {
+        // Pass 2 Programmatic Self-Correction:
+        // Cross-reference extracted stages with raw source text to guarantee zero synthetic dates
+        const textLower = contentToAnalyze.toLowerCase();
+        parsed.stages = parsed.stages.map((stage: any) => {
+          const rawSnippet = (stage.raw_date_snippet || '').trim().toLowerCase();
+          const hasSnippetInText = rawSnippet.length >= 3 && rawSnippet !== 'tba' && textLower.includes(rawSnippet);
+          const hasJsonLdAnchor = jsonLd?.date_anchors?.some((a: string) => textLower.includes(a.toLowerCase())) || jsonLd?.endDate || jsonLd?.startDate;
+
+          // If a stage claims to have a deadline but has no matching text snippet, no jsonld anchor, and snippet is TBA or missing:
+          if ((!rawSnippet || rawSnippet === 'tba' || (!hasSnippetInText && !hasJsonLdAnchor)) && !stage.deadline) {
+            return {
+              ...stage,
+              window_start: null,
+              window_end: null,
+              actionable_deadline: null,
+              deadline: null,
+              raw_date_snippet: 'TBA',
+            };
+          }
+
+          return stage;
+        });
       }
 
       // Filter resources

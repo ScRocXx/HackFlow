@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
-import { Loader2, Plus, Trash2, Calendar, AlertCircle, Sparkles, Check, Tag, FileText, Database, ExternalLink, Link2, Users } from 'lucide-react'
+import { Loader2, Plus, Trash2, Calendar, AlertCircle, Sparkles, Check, Tag, FileText, Database, ExternalLink, Link2, Users, RefreshCw, Zap, FileCode, Eye } from 'lucide-react'
 import { createEvent } from '@/app/actions/events'
 import { getMySquads } from '@/app/actions/squads'
 import type { Squad } from '@/lib/supabase/types'
@@ -137,7 +137,11 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
     }
   }, [open, initialUrl])
 
-  const performExtract = async (payload: { url?: string; text?: string }) => {
+  const [stashedRawText, setStashedRawText] = useState<string>('')
+  const [showRawEditor, setShowRawEditor] = useState(false)
+  const [isFromCache, setIsFromCache] = useState(false)
+
+  const performExtract = async (payload: { url?: string; text?: string; forceFresh?: boolean; reparseOnly?: boolean }) => {
     setExtracting(true)
     setExtractError(null)
 
@@ -153,6 +157,11 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
       if (!res.ok) {
         throw new Error(data.error || 'I suppose this is not a hackathon...')
       }
+
+      if (data.rawContent) {
+        setStashedRawText(data.rawContent)
+      }
+      setIsFromCache(Boolean(data.fromCache))
 
       // Populate parsed metadata
       setTitle(data.title || '')
@@ -307,6 +316,45 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
       text: textToParse,
       url: optionalUrl || undefined,
     })
+  }
+
+  const handleFreshReScrape = async () => {
+    let parseUrl = url.trim().replace(/[.,;'"\s]+$/, '').trim()
+    if (!parseUrl) {
+      toast({
+        title: 'URL Required',
+        description: 'Please enter a URL for fresh re-scrape.',
+        variant: 'destructive',
+      })
+      return
+    }
+    await performExtract({ url: parseUrl, forceFresh: true })
+  }
+
+  const handleQuickReParse = async () => {
+    let parseUrl = url.trim().replace(/[.,;'"\s]+$/, '').trim()
+    if (!parseUrl && !stashedRawText) {
+      toast({
+        title: 'Cannot Re-parse',
+        description: 'No URL or raw text available in stash.',
+        variant: 'destructive',
+      })
+      return
+    }
+    await performExtract({ url: parseUrl || undefined, text: stashedRawText || undefined, reparseOnly: true })
+  }
+
+  const handleReparseEditedText = async () => {
+    if (!stashedRawText.trim()) {
+      toast({
+        title: 'Empty Raw Text',
+        description: 'Please ensure raw text is not empty before re-parsing.',
+        variant: 'destructive',
+      })
+      return
+    }
+    let parseUrl = url.trim().replace(/[.,;'"\s]+$/, '').trim()
+    await performExtract({ text: stashedRawText, url: parseUrl || undefined })
   }
 
   const handleAddResource = () => {
@@ -685,6 +733,82 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
         ) : (
           /* Step 2: Review and Edit Auto-Populated Cards */
           <div className="space-y-6 py-2">
+            {/* Raw Text Stash & Re-Parse Engine Bar */}
+            <div className="p-3 bg-[#e8ece9] border-2 border-[#10201d] shadow-[3px_3px_0_#10201d] flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] flex items-center gap-1">
+                  <Zap className="h-3.5 w-3.5 text-[#10201d]" />
+                  Raw Stash:
+                </span>
+                <span className={`font-mono text-[11px] font-bold px-2 py-0.5 border border-[#10201d] ${isFromCache ? 'bg-[#98c1d9] text-[#10201d]' : 'bg-[#d8f3dc] text-[#10201d]'}`}>
+                  {isFromCache ? '⚡ In-Memory Cache (10m TTL)' : '🌐 Fresh Extracted'}
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {url && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={extracting}
+                    onClick={handleFreshReScrape}
+                    className="h-7 text-xs font-mono font-bold bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-[#ffeedd]"
+                  >
+                    {extracting ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
+                    Fresh Re-scrape
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={extracting || (!url && !stashedRawText)}
+                  onClick={handleQuickReParse}
+                  className="h-7 text-xs font-mono font-bold bg-[#e3efd8] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-[#c9e4b6]"
+                >
+                  {extracting ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Zap className="h-3 w-3 mr-1" />}
+                  Re-parse Stash (Skip Jina)
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setShowRawEditor(!showRawEditor)}
+                  className="h-7 text-xs font-mono font-bold bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-slate-100"
+                >
+                  <Eye className="h-3 w-3 mr-1" />
+                  {showRawEditor ? 'Hide Raw Text' : 'View / Edit Raw Text'}
+                </Button>
+              </div>
+            </div>
+
+            {showRawEditor && (
+              <div className="p-3 bg-[#ffffff] border-2 border-[#10201d] shadow-[3px_3px_0_#10201d] space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d]">
+                    Raw Scraped Markdown / Text Stash
+                  </label>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={extracting || !stashedRawText.trim()}
+                    onClick={handleReparseEditedText}
+                    className="h-7 text-xs font-mono font-bold bg-[#e53927] text-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-[#c82717]"
+                  >
+                    {extracting ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
+                    Re-parse Edited Text
+                  </Button>
+                </div>
+                <textarea
+                  rows={8}
+                  value={stashedRawText}
+                  onChange={(e) => setStashedRawText(e.target.value)}
+                  placeholder="Raw scraped text or markdown content..."
+                  className="w-full font-mono text-xs p-2 border-2 border-[#10201d] bg-[#fbfbf8] focus:outline-none focus:ring-1 focus:ring-[#10201d] resize-y"
+                />
+              </div>
+            )}
+
             {/* Event Metadata */}
             <div className="p-4 bg-[#f2f2eb] border-2 border-[#10201d] shadow-[4px_4px_0_#10201d] space-y-4">
               <div className="flex items-center justify-between">
