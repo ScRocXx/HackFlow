@@ -1,5 +1,3 @@
-import * as React from 'react';
-import { Html, Body, Container, Heading, Text, Button, Hr, Section } from '@react-email/components';
 
 export interface DeliverableItem {
   title: string;
@@ -185,26 +183,7 @@ function escapeHtml(str: string): string {
     .replace(/'/g, '&#039;');
 }
 
-export const DeadlineReminderEmail: React.FC<Readonly<DeadlineReminderEmailProps>> = (props) => {
-  return (
-    <Html>
-      <Body style={main}>
-        <Container style={container}>
-          <Heading style={header}>HackFlow Emergency HUD</Heading>
-          <Heading style={title}>{props.eventTitle}: {props.stageName}</Heading>
-          <Text style={urgencyText}>Due in: <strong>{props.timeRemaining}</strong></Text>
-          <Button style={button} href={props.eventUrl}>
-            Open War-Room
-          </Button>
-          <Hr style={hr} />
-          <Text style={footer}>Sent by HackFlow</Text>
-        </Container>
-      </Body>
-    </Html>
-  );
-};
-
-interface TeamInviteEmailProps {
+export interface TeamInviteEmailProps {
   inviterName: string;
   eventTitle: string;
   inviteUrl: string;
@@ -245,30 +224,7 @@ export function renderTeamInviteHtml(props: TeamInviteEmailProps): string {
 </html>`;
 }
 
-export const TeamInviteEmail: React.FC<Readonly<TeamInviteEmailProps>> = ({
-  inviterName,
-  eventTitle,
-  inviteUrl,
-}) => {
-  return (
-    <Html>
-      <Body style={main}>
-        <Container style={container}>
-          <Heading style={header}>HackFlow</Heading>
-          <Heading style={title}>You've been invited to join {eventTitle}</Heading>
-          <Text style={text}>Invited by {inviterName}</Text>
-          <Button style={button} href={inviteUrl}>
-            Accept Invitation
-          </Button>
-          <Hr style={hr} />
-          <Text style={footer}>Sent by HackFlow</Text>
-        </Container>
-      </Body>
-    </Html>
-  );
-};
-
-interface StageCompletedEmailProps {
+export interface StageCompletedEmailProps {
   eventTitle: string;
   completedStage: string;
   nextStage?: string;
@@ -311,92 +267,3 @@ export function renderStageCompletedHtml(props: StageCompletedEmailProps): strin
 </body>
 </html>`;
 }
-
-export const StageCompletedEmail: React.FC<Readonly<StageCompletedEmailProps>> = ({
-  eventTitle,
-  completedStage,
-  nextStage,
-  eventUrl,
-}) => {
-  return (
-    <Html>
-      <Body style={main}>
-        <Container style={container}>
-          <Heading style={header}>🎉 HackFlow</Heading>
-          <Heading style={title}>{completedStage} completed!</Heading>
-          {nextStage && (
-            <Text style={text}>Next up: {nextStage}</Text>
-          )}
-          <Button style={button} href={eventUrl}>
-            View Event
-          </Button>
-          <Hr style={hr} />
-          <Text style={footer}>Sent by HackFlow</Text>
-        </Container>
-      </Body>
-    </Html>
-  );
-};
-
-const main = {
-  backgroundColor: '#080f0e',
-  fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
-};
-
-const container = {
-  backgroundColor: '#10201d',
-  margin: '0 auto',
-  padding: '20px 0 48px',
-  marginBottom: '64px',
-};
-
-const header = {
-  fontSize: '24px',
-  fontWeight: 'bold',
-  textAlign: 'center' as const,
-  margin: '30px 0',
-  color: '#f7f7f2',
-};
-
-const title = {
-  fontSize: '20px',
-  padding: '0 48px',
-  color: '#f7f7f2',
-};
-
-const urgencyText = {
-  fontSize: '18px',
-  padding: '0 48px',
-  color: '#e53927',
-};
-
-const text = {
-  fontSize: '16px',
-  lineHeight: '26px',
-  padding: '0 48px',
-  color: '#c4d4d0',
-};
-
-const button = {
-  backgroundColor: '#e53927',
-  color: '#fff',
-  fontSize: '16px',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  display: 'block',
-  width: '200px',
-  margin: '0 auto',
-  padding: '12px',
-  borderRadius: '4px',
-};
-
-const hr = {
-  borderColor: '#233934',
-  margin: '20px 0',
-};
-
-const footer = {
-  color: '#5c746f',
-  fontSize: '12px',
-  textAlign: 'center' as const,
-};

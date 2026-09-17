@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { evaluateAndDispatchNotifications } from '@/lib/notifications/engine';
 
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
 
 // NOTE: External cron service (or Vercel Cron) calls this endpoint with:
 // Authorization: Bearer <CRON_SECRET>
