@@ -6,9 +6,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EventCard } from '@/components/events/EventCard'
-import { URLParseDialog } from '@/components/events/URLParseDialog'
+import dynamic from 'next/dynamic'
 import { cn } from '@/lib/utils'
 import type { Event, EventStage } from '@/lib/supabase/types'
+
+const URLParseDialog = dynamic(
+  () => import('@/components/events/URLParseDialog').then(mod => mod.URLParseDialog),
+  { ssr: false }
+)
 
 type ExtendedEvent = Event & {
   active_stage?: EventStage

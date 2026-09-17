@@ -1,11 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, CheckCircle, Circle } from 'lucide-react'
-import { createClient } from '@/lib/supabase/client'
+import { Plus, Trash2, Loader2 } from 'lucide-react'
 import { toggleDeliverable, addDeliverable, deleteDeliverable } from '@/app/actions/deliverables'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useEventRoom } from '@/lib/supabase/event-channel'
 import { cn } from '@/lib/utils'
 
 interface StageChecklistProps {
@@ -18,43 +18,53 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
   const [items, setItems] = useState(initialDeliverables)
   const [newTask, setNewTask] = useState('')
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set())
-  const supabase = createClient()
 
   useEffect(() => {
     setItems(initialDeliverables)
   }, [initialDeliverables])
 
-  useEffect(() => {
-    const channel = supabase
-      .channel(`stage_${stageId}`)
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'stage_deliverables',
-        filter: `stage_id=eq.${stageId}`
-      }, (payload) => {
-        if (payload.eventType === 'INSERT') {
-          setItems(prev => [...prev, payload.new])
-        } else if (payload.eventType === 'UPDATE') {
-          setItems(prev => prev.map(item => item.id === payload.new.id ? payload.new : item))
-        } else if (payload.eventType === 'DELETE') {
-          setItems(prev => prev.filter(item => item.id !== payload.old.id))
-        }
-      })
-      .subscribe()
+  // Multiplexed Realtime on single Event Room channel
+  useEventRoom(eventId, {
+    onDeliverableChange: (payload) => {
+      if (payload.eventType === 'INSERT') {
+        const newItem = payload.new
+        if (newItem.stage_id !== stageId) return
+        setItems(prev => {
+          // Check if it already exists or matches a temporary optimistic item
+          const exists = prev.some(i => i.id === newItem.id)
+          if (exists) return prev
 
-    return () => {
-      supabase.removeChannel(channel)
+          // Replace temp item if matching title
+          const tempIdx = prev.findIndex(i => i.id.startsWith('temp-') && i.title === newItem.title)
+          if (tempIdx !== -1) {
+            const copy = [...prev]
+            copy[tempIdx] = newItem
+            return copy
+          }
+          return [...prev, newItem]
+        })
+      } else if (payload.eventType === 'UPDATE') {
+        const updated = payload.new
+        if (updated.stage_id !== stageId) return
+        setItems(prev => prev.map(item => item.id === updated.id ? updated : item))
+      } else if (payload.eventType === 'DELETE') {
+        setItems(prev => prev.filter(item => item.id !== payload.old.id))
+      }
     }
-  }, [stageId, supabase])
+  })
 
+  // 0ms Zero-Latency Optimistic Toggle
   const handleToggle = async (id: string, currentIsDone: boolean) => {
     setLoadingIds(prev => new Set(prev).add(id))
     const newIsDone = !currentIsDone
     setItems(prev => prev.map(item => item.id === id ? { ...item, is_done: newIsDone } : item))
     
     try {
-      await toggleDeliverable(id, newIsDone)
+      const res = await toggleDeliverable(id, newIsDone)
+      if (res && !res.success) {
+        // Rollback
+        setItems(prev => prev.map(item => item.id === id ? { ...item, is_done: currentIsDone } : item))
+      }
     } catch {
       setItems(prev => prev.map(item => item.id === id ? { ...item, is_done: currentIsDone } : item))
     } finally {
@@ -66,25 +76,54 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
     }
   }
 
+  // 0ms Zero-Latency Optimistic Add
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!newTask.trim()) return
+    const title = newTask.trim()
+    if (!title) return
 
-    const title = newTask
+    const tempId = `temp-${Date.now()}`
+    const optimisticItem = {
+      id: tempId,
+      stage_id: stageId,
+      title: title,
+      is_done: false,
+      sort_order: items.length + 1,
+    }
+
     setNewTask('')
+    setItems(prev => [...prev, optimisticItem])
+
     try {
-      await addDeliverable(stageId, title)
+      const res = await addDeliverable(stageId, title)
+      if (res && !res.success) {
+        // Rollback optimistic item
+        setItems(prev => prev.filter(i => i.id !== tempId))
+        setNewTask(title)
+      }
     } catch (error) {
       console.error(error)
+      setItems(prev => prev.filter(i => i.id !== tempId))
       setNewTask(title)
     }
   }
 
+  // 0ms Zero-Latency Optimistic Delete
   const handleDelete = async (id: string) => {
+    const deletedItem = items.find(item => item.id === id)
+    setItems(prev => prev.filter(item => item.id !== id))
+
     try {
-      await deleteDeliverable(id)
+      const res = await deleteDeliverable(id)
+      if (res && !res.success && deletedItem) {
+        // Rollback
+        setItems(prev => [...prev, deletedItem])
+      }
     } catch (error) {
       console.error(error)
+      if (deletedItem) {
+        setItems(prev => [...prev, deletedItem])
+      }
     }
   }
 
@@ -113,7 +152,9 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
                   onClick={() => handleToggle(item.id, isDone)}
                   className="shrink-0 w-5 h-5 border-2 border-[#10201d] bg-white flex items-center justify-center transition-colors"
                 >
-                  {isDone ? (
+                  {isLoading ? (
+                    <Loader2 className="w-3 h-3 animate-spin text-[#10201d]" />
+                  ) : isDone ? (
                     <span className="w-3 h-3 bg-[#e53927] inline-block" />
                   ) : null}
                 </button>
@@ -144,9 +185,14 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
             placeholder="Add new deliverable..." 
             value={newTask}
             onChange={(e) => setNewTask(e.target.value)}
-            className="flex-1 font-mono text-xs"
+            className="flex-1 font-mono text-xs border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
           />
-          <Button type="submit" size="icon" disabled={!newTask.trim()}>
+          <Button 
+            type="submit" 
+            size="icon" 
+            disabled={!newTask.trim()}
+            className="border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
+          >
             <Plus className="w-4 h-4 stroke-[3]" />
           </Button>
         </form>
@@ -154,4 +200,3 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
     </div>
   )
 }
-

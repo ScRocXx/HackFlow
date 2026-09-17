@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { cn } from '@/lib/utils'
+import { useTicker } from '@/lib/hooks/useTicker'
 
 interface CountdownTimerProps {
   deadline?: string | null
@@ -20,112 +21,17 @@ export function CountdownTimer({
   showMilestoneLabel = false,
   onMilestoneChange
 }: CountdownTimerProps) {
-  // Safeguard 3: If deadline, windowStart, and windowEnd are all null/empty, immediately return the brutalist "📅 Dates TBA" badge without running any setInterval or date calculations
+  // Safeguard 3: If deadline, windowStart, and windowEnd are all null/empty, immediately return the brutalist "📅 Dates TBA" badge without running any timer calculations
   const hasAnyDate = Boolean(deadline?.trim() || windowStart?.trim() || windowEnd?.trim())
-
-  const [timeLeft, setTimeLeft] = useState<{
-    days: number
-    hours: number
-    minutes: number
-    seconds: number
-    isPast: boolean
-    invalid: boolean
-    milestone: 'kickoff' | 'submission' | 'passed'
-  }>({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-    isPast: false,
-    invalid: false,
-    milestone: 'submission',
-  })
+  const nowMs = useTicker()
   const [mounted, setMounted] = useState(false)
+  const lastMilestoneRef = useRef<'kickoff' | 'submission' | 'passed' | null>(null)
 
   useEffect(() => {
-    if (!hasAnyDate) return
-
     setMounted(true)
+  }, [])
 
-    const updateTimer = () => {
-      const now = new Date()
-      
-      // Parse potential dates
-      const startDate = windowStart ? new Date(windowStart) : null
-      const hasValidStart = Boolean(startDate && !isNaN(startDate.getTime()))
-      
-      const effectiveDeadlineStr = windowEnd || deadline
-      const endDate = effectiveDeadlineStr ? new Date(effectiveDeadlineStr) : null
-      const hasValidEnd = Boolean(endDate && !isNaN(endDate.getTime()))
-
-      if (!hasValidStart && !hasValidEnd) {
-        setTimeLeft(prev => ({ ...prev, invalid: true }))
-        return
-      }
-
-      // Dynamic milestone transition (Runtime Safeguard 3):
-      // If window_start is in the future, count down to kickoff!
-      // Once now >= window_start, automatically pivot to window_end / submission deadline.
-      let targetDate: Date
-      let currentMilestone: 'kickoff' | 'submission' | 'passed'
-
-      if (startDate && hasValidStart && now.getTime() < startDate.getTime()) {
-        targetDate = startDate
-        currentMilestone = 'kickoff'
-      } else if (endDate && hasValidEnd) {
-        targetDate = endDate
-        currentMilestone = now.getTime() >= endDate.getTime() ? 'passed' : 'submission'
-      } else if (startDate) {
-        targetDate = startDate
-        currentMilestone = 'passed'
-      } else {
-        setTimeLeft(prev => ({ ...prev, invalid: true }))
-        return
-      }
-
-      if (onMilestoneChange) {
-        onMilestoneChange(currentMilestone)
-      }
-
-      const diffMs = targetDate.getTime() - now.getTime()
-
-      if (diffMs <= 0) {
-        setTimeLeft({
-          days: 0,
-          hours: 0,
-          minutes: 0,
-          seconds: 0,
-          isPast: true,
-          invalid: false,
-          milestone: currentMilestone,
-        })
-        return
-      }
-
-      const totalSeconds = Math.floor(diffMs / 1000)
-      const days = Math.floor(totalSeconds / (3600 * 24))
-      const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600)
-      const minutes = Math.floor((totalSeconds % 3600) / 60)
-      const seconds = totalSeconds % 60
-
-      setTimeLeft({ 
-        days, 
-        hours, 
-        minutes, 
-        seconds, 
-        isPast: false, 
-        invalid: false,
-        milestone: currentMilestone 
-      })
-    }
-
-    updateTimer()
-    const interval = setInterval(updateTimer, 1000)
-
-    return () => clearInterval(interval)
-  }, [deadline, windowStart, windowEnd, onMilestoneChange])
-
-  if (!hasAnyDate || timeLeft.invalid) {
+  if (!hasAnyDate) {
     return (
       <div className={cn("inline-flex items-center gap-1 text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-1 border-2 border-[#10201d] bg-[#e4e5da] text-[#10201d] shadow-[2px_2px_0_#10201d] select-none", className)}>
         <span>📅 Dates TBA</span>
@@ -133,11 +39,59 @@ export function CountdownTimer({
     )
   }
 
-  if (!mounted) {
+  if (!mounted || nowMs === 0) {
     return <div className="h-7 w-28 bg-[#e4e5da] border-2 border-[#10201d] animate-pulse" />
   }
 
-  if (timeLeft.isPast) {
+  const now = new Date(nowMs)
+  const startDate = windowStart ? new Date(windowStart) : null
+  const hasValidStart = Boolean(startDate && !isNaN(startDate.getTime()))
+  
+  const effectiveDeadlineStr = windowEnd || deadline
+  const endDate = effectiveDeadlineStr ? new Date(effectiveDeadlineStr) : null
+  const hasValidEnd = Boolean(endDate && !isNaN(endDate.getTime()))
+
+  if (!hasValidStart && !hasValidEnd) {
+    return (
+      <div className={cn("inline-flex items-center gap-1 text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-1 border-2 border-[#10201d] bg-[#e4e5da] text-[#10201d] shadow-[2px_2px_0_#10201d] select-none", className)}>
+        <span>📅 Dates TBA</span>
+      </div>
+    )
+  }
+
+  // Dynamic milestone transition:
+  // If window_start is in the future, count down to kickoff!
+  // Once now >= window_start, automatically pivot to window_end / submission deadline.
+  let targetDate: Date
+  let currentMilestone: 'kickoff' | 'submission' | 'passed'
+
+  if (startDate && hasValidStart && now.getTime() < startDate.getTime()) {
+    targetDate = startDate
+    currentMilestone = 'kickoff'
+  } else if (endDate && hasValidEnd) {
+    targetDate = endDate
+    currentMilestone = now.getTime() >= endDate.getTime() ? 'passed' : 'submission'
+  } else if (startDate) {
+    targetDate = startDate
+    currentMilestone = 'passed'
+  } else {
+    return (
+      <div className={cn("inline-flex items-center gap-1 text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-1 border-2 border-[#10201d] bg-[#e4e5da] text-[#10201d] shadow-[2px_2px_0_#10201d] select-none", className)}>
+        <span>📅 Dates TBA</span>
+      </div>
+    )
+  }
+
+  if (lastMilestoneRef.current !== currentMilestone) {
+    lastMilestoneRef.current = currentMilestone
+    if (onMilestoneChange) {
+      setTimeout(() => onMilestoneChange(currentMilestone), 0)
+    }
+  }
+
+  const diffMs = targetDate.getTime() - now.getTime()
+
+  if (diffMs <= 0 || currentMilestone === 'passed') {
     return (
       <div className={cn("inline-flex items-center text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-1 border-2 border-[#10201d] bg-[#e53927] text-[#f7f7f2] shadow-[2px_2px_0_#671912]", className)}>
         Deadline Passed
@@ -145,7 +99,12 @@ export function CountdownTimer({
     )
   }
 
-  const { days, hours, minutes, seconds, milestone } = timeLeft
+  const totalSeconds = Math.floor(diffMs / 1000)
+  const days = Math.floor(totalSeconds / (3600 * 24))
+  const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  const milestone = currentMilestone
   const totalHours = days * 24 + hours
 
   let bgClass = "bg-[#f7f7f2] text-[#10201d]"
