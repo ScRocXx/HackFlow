@@ -35,10 +35,15 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone()
   
   const isAuthRoute = url.pathname.startsWith('/login') || url.pathname.startsWith('/signup')
-  const isDashboardRoute = url.pathname.startsWith('/dashboard') || url.pathname.startsWith('/events')
+  const isProtectedRoute = 
+    url.pathname.startsWith('/dashboard') || 
+    url.pathname.startsWith('/events') ||
+    url.pathname.startsWith('/vault') ||
+    url.pathname.startsWith('/friends') ||
+    url.pathname.startsWith('/archive')
   
   // Redirect unauthenticated users away from protected routes
-  if (isDashboardRoute && !user) {
+  if (isProtectedRoute && !user) {
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
