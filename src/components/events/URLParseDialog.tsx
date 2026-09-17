@@ -155,7 +155,16 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
       const data = await res.json()
 
       if (!res.ok) {
-        throw new Error(data.error || 'I suppose this is not a hackathon...')
+        if (data.code === 'SCRAPE_BLOCKED' || data.suggestion === 'copy_paste' || data.error === 'scrape_blocked') {
+          setActiveTab('text')
+          setExtractError(data.message || 'This portal is protected by anti-bot verification. Please paste the guidelines or page text below.')
+          toast({
+            title: 'Portal Protection Detected',
+            description: 'Switched to Text tab: Paste announcement or flyer text below for instant AI extraction.',
+          })
+          return
+        }
+        throw new Error(data.message || data.error || 'Failed to extract competition details')
       }
 
       if (data.rawContent) {

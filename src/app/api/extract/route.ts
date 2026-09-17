@@ -143,15 +143,51 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (!content || content.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'I suppose this is not a hackathon...' },
-        { status: 400 }
-      );
+    // Detection for Cloudflare / anti-bot challenges and empty SPA shells
+    const isAntiBotBlocked = (text: string): boolean => {
+      const lower = text.toLowerCase();
+      if (
+        lower.includes('just a moment...') || 
+        lower.includes('attention required! | cloudflare') ||
+        lower.includes('enable javascript and cookies to continue') ||
+        lower.includes('checking your browser before accessing') ||
+        lower.includes('ddos protection by cloudflare') ||
+        lower.includes('cf-browser-verification') ||
+        lower.includes('access denied') ||
+        lower.includes('security check to access') ||
+        lower.includes('verify you are human') ||
+        lower.includes('bot detection')
+      ) {
+        return true;
+      }
+      // Empty client-side SPA shell without rendered DOM
+      if (text.length < 200 && (lower.includes('javascript') || lower.includes('root') || lower.includes('__next') || lower.includes('app-root'))) {
+        return true;
+      }
+      return false;
+    };
+
+    if (!content || content.trim().length === 0 || (rawUrl && isAntiBotBlocked(content))) {
+      return NextResponse.json({
+        error: 'scrape_blocked',
+        code: 'SCRAPE_BLOCKED',
+        message: 'This competition portal is protected by Cloudflare or requires client-side JavaScript. Please copy and paste the announcement text or guidelines into the Text tab for instant AI extraction.',
+        suggestion: 'copy_paste',
+        url: rawUrl || undefined,
+      }, { status: 422 });
     }
 
     // Parse structured metadata and multi-round timeline via Gemini with verified anchors
     const parsedData = await parseHackathonContent(content, finalUrl, jsonLd, pageTitle);
+
+    if (!parsedData || !parsedData.stages || parsedData.stages.length === 0) {
+      return NextResponse.json({
+        error: 'not_a_hackathon',
+        code: 'NOT_A_HACKATHON',
+        message: 'Could not detect competition stages or deadlines. Try copying and pasting the schedule or problem statement text directly.',
+        suggestion: 'copy_paste',
+      }, { status: 422 });
+    }
 
     return NextResponse.json({
       ...parsedData,
@@ -160,10 +196,29 @@ export async function POST(req: NextRequest) {
     }, { status: 200 });
   } catch (error: any) {
     console.error('Extraction error:', error);
-    const message = error?.message || 'I suppose this is not a hackathon...';
-    return NextResponse.json(
-      { error: message },
-      { status: 400 }
-    );
+    const errMsg = (error?.message || '').toLowerCase();
+    const isScrapeBlocked = 
+      errMsg.includes('403') || 
+      errMsg.includes('429') || 
+      errMsg.includes('cloudflare') || 
+      errMsg.includes('forbidden') || 
+      errMsg.includes('blocked') || 
+      errMsg.includes('timeout');
+
+    if (isScrapeBlocked) {
+      return NextResponse.json({
+        error: 'scrape_blocked',
+        code: 'SCRAPE_BLOCKED',
+        message: 'Scraper was blocked by portal anti-bot protection or rate limit. Copy and paste the competition text into the Text tab for instant AI parsing.',
+        suggestion: 'copy_paste',
+      }, { status: 422 });
+    }
+
+    return NextResponse.json({
+      error: 'parse_failed',
+      code: 'PARSE_FAILED',
+      message: error?.message || 'Failed to extract competition details. Try pasting text directly.',
+      suggestion: 'copy_paste',
+    }, { status: 400 });
   }
 }
