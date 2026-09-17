@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
-import fs from 'fs';
 import path from 'path';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB limit
@@ -45,60 +44,46 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const storagePath = `${user.id}/${folder}/${Date.now()}_${cleanName}`;
 
-    // 1. Primary: Supabase Storage
-    try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-      const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-      if (supabaseUrl && serviceRoleKey) {
-        const adminClient = createServiceClient(supabaseUrl, serviceRoleKey);
-
-        // Ensure bucket exists with public access
-        await adminClient.storage.createBucket(BUCKET_NAME, {
-          public: true,
-          fileSizeLimit: MAX_FILE_SIZE,
-        }).catch(() => {});
-
-        const { error: uploadError } = await adminClient.storage
-          .from(BUCKET_NAME)
-          .upload(storagePath, buffer, {
-            contentType: file.type || 'application/pdf',
-            upsert: true,
-          });
-
-        if (!uploadError) {
-          const { data: { publicUrl } } = adminClient.storage
-            .from(BUCKET_NAME)
-            .getPublicUrl(storagePath);
-
-          return NextResponse.json({
-            success: true,
-            url: publicUrl,
-            fileName: originalName,
-            fileSize: file.size,
-            mimeType: file.type || 'application/pdf',
-          });
-        }
-        console.warn('Supabase storage upload error, falling back to local storage:', uploadError);
-      }
-    } catch (storageErr) {
-      console.warn('Supabase storage failure, using local file fallback:', storageErr);
+    if (!supabaseUrl || !serviceRoleKey) {
+      return NextResponse.json(
+        { error: 'Cloud storage is not configured. Missing SUPABASE_SERVICE_ROLE_KEY.' },
+        { status: 500 }
+      );
     }
 
-    // 2. Reliable Fallback: public/uploads
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
+    const adminClient = createServiceClient(supabaseUrl, serviceRoleKey);
+
+    // Ensure bucket exists with public access
+    await adminClient.storage.createBucket(BUCKET_NAME, {
+      public: true,
+      fileSizeLimit: MAX_FILE_SIZE,
+    }).catch(() => {});
+
+    const { error: uploadError } = await adminClient.storage
+      .from(BUCKET_NAME)
+      .upload(storagePath, buffer, {
+        contentType: file.type || 'application/pdf',
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error('[UploadRoute] Supabase storage upload error:', uploadError);
+      return NextResponse.json(
+        { error: `Storage upload failed: ${uploadError.message}` },
+        { status: 502 }
+      );
     }
 
-    const localFileName = `${Date.now()}_${cleanName}`;
-    const localFilePath = path.join(uploadsDir, localFileName);
-    fs.writeFileSync(localFilePath, buffer);
+    const { data: { publicUrl } } = adminClient.storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(storagePath);
 
-    const localUrl = `/uploads/${localFileName}`;
     return NextResponse.json({
       success: true,
-      url: localUrl,
+      url: publicUrl,
       fileName: originalName,
       fileSize: file.size,
       mimeType: file.type || 'application/pdf',
