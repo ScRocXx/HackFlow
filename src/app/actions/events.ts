@@ -91,31 +91,148 @@ export async function createEvent(data: CreateEventInput) {
       }
     }
 
+    // Prepare stages & deliverables
+    const stagesData = (data.stages && data.stages.length > 0) 
+      ? data.stages 
+      : [{
+          round_number: 1,
+          title: 'Round 1: Final Submission',
+          stage_type: 'prototype',
+          deadline: null,
+          window_start: null,
+          window_end: null,
+          actionable_deadline: null,
+          raw_date_snippet: 'TBA',
+          evaluation_format: 'Online Evaluation',
+          deliverables_description: 'Working prototype and presentation'
+        }];
+
+    const allDeliverables: Array<{
+      round_number: number;
+      title: string;
+      sort_order: number;
+    }> = [];
+
+    stagesData.forEach((stg, stageIdx) => {
+      let deliverablesTitles: string[] = [];
+      if (stg.deliverables && stg.deliverables.length > 0) {
+        deliverablesTitles = stg.deliverables;
+      } else if (stg.deliverables_description) {
+        deliverablesTitles = stg.deliverables_description
+          .split(/[,;\n]+/)
+          .map(s => s.trim())
+          .filter(Boolean);
+      }
+      if (deliverablesTitles.length === 0) {
+        deliverablesTitles = getDefaultDeliverables(stg.stage_type);
+      }
+      deliverablesTitles.forEach((title, dIdx) => {
+        allDeliverables.push({
+          round_number: stg.round_number || stageIdx + 1,
+          title: title.trim(),
+          sort_order: dIdx,
+        });
+      });
+    });
+
+    const eventPayload = {
+      title: data.title.trim(),
+      organizer: data.organizer || '',
+      source_url: data.source_url?.trim() || null,
+      source_platform: sourcePlatform,
+      mode: data.mode || 'online',
+      location: data.location || '',
+      banner_url: data.banner_url || '',
+      prize_pool: data.prize_pool || '',
+      prize_cash_pool: data.prize_cash_pool !== null && data.prize_cash_pool !== undefined ? String(data.prize_cash_pool) : null,
+      prize_first_place: data.prize_first_place !== null && data.prize_first_place !== undefined ? String(data.prize_first_place) : null,
+      has_perks_or_credits: data.has_perks_or_credits ?? false,
+      raw_prize_text: data.raw_prize_text || null,
+      prize_display_summary: data.prize_display_summary || null,
+      overview: data.overview || '',
+      eligibility: data.eligibility || '',
+      team_size_min: data.team_size_min || 1,
+      team_size_max: data.team_size_max || 4,
+      squad_id: data.squad_id || null,
+      status: 'registered',
+    };
+
+    const stagesPayload = stagesData.map((stage, idx) => {
+      const effectiveDeadline = stage.deadline || null;
+      const effectiveEnd = stage.window_end || effectiveDeadline;
+      const effectiveActionable = stage.actionable_deadline || stage.window_start || effectiveDeadline;
+      const rawSnippet = stage.raw_date_snippet || (!effectiveDeadline ? 'TBA' : null);
+
+      return {
+        round_number: stage.round_number || idx + 1,
+        title: stage.title.trim() || `Round ${idx + 1}`,
+        stage_type: stage.stage_type || 'other',
+        deadline: effectiveDeadline,
+        window_start: stage.window_start || null,
+        window_end: effectiveEnd,
+        actionable_deadline: effectiveActionable,
+        raw_date_snippet: rawSnippet,
+        evaluation_format: stage.evaluation_format || '',
+        deliverables_description: stage.deliverables_description || '',
+      };
+    });
+
+    const resourcesPayload = (data.resources || [])
+      .filter(r => r.title?.trim() && r.url?.trim())
+      .map(r => ({
+        title: r.title.trim(),
+        url: r.url.trim(),
+        resource_type: r.resource_type || 'other',
+      }));
+
+    // ATOMIC TRANSACTION: Execute create_event_with_stages RPC in 1 roundtrip
+    const { data: rpcResult, error: rpcError } = await supabase.rpc('create_event_with_stages', {
+      p_event: eventPayload,
+      p_stages: stagesPayload,
+      p_deliverables: allDeliverables,
+      p_resources: resourcesPayload,
+      p_creator_id: user.id,
+    });
+
+    if (!rpcError && rpcResult?.id) {
+      if (data.squad_id) {
+        try {
+          const { data: squadMembers } = await supabase
+            .from('squad_members')
+            .select('user_id')
+            .eq('squad_id', data.squad_id);
+
+          const otherUserIds = (squadMembers || []).filter(sm => sm.user_id !== user.id).map(sm => sm.user_id);
+          if (otherUserIds.length > 0) {
+            const { data: creatorProfile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
+            const creatorName = creatorProfile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'Your squad leader';
+            await createBatchInAppNotifications(
+              otherUserIds.map((uid) => ({
+                userId: uid,
+                title: `Added to Hackathon: ${data.title.trim()}`,
+                body: `${creatorName} added your squad to ${data.title.trim()}! Coordinate sprint deliverables in workspace.`,
+                link: `/events/${rpcResult.id}`,
+              }))
+            );
+          }
+        } catch (squadNotifErr) {
+          console.warn('Squad notification error:', squadNotifErr);
+        }
+      }
+
+      revalidatePath('/dashboard');
+      revalidatePath(`/events/${rpcResult.id}`);
+      return { success: true, data: { id: rpcResult.id, title: rpcResult.title } };
+    }
+
+    // Fallback: Sequential insertion if RPC procedure is not yet migrated on remote database
     // 1. Insert Event with active_stage_id explicitly NULL (avoids circular FK violation)
     const { data: event, error: eventError } = await supabase
       .from('events')
       .insert({
-        title: data.title.trim(),
-        organizer: data.organizer || '',
-        source_url: data.source_url?.trim() || null,
-        source_platform: sourcePlatform,
-        mode: data.mode || 'online',
-        location: data.location || '',
-        banner_url: data.banner_url || '',
-        prize_pool: data.prize_pool || '',
-        prize_cash_pool: data.prize_cash_pool !== null && data.prize_cash_pool !== undefined ? String(data.prize_cash_pool) : null,
-        prize_first_place: data.prize_first_place !== null && data.prize_first_place !== undefined ? String(data.prize_first_place) : null,
-        has_perks_or_credits: data.has_perks_or_credits ?? false,
-        raw_prize_text: data.raw_prize_text || null,
-        prize_display_summary: data.prize_display_summary || null,
-        overview: data.overview || '',
-        eligibility: data.eligibility || '',
-        team_size_min: data.team_size_min || 1,
-        team_size_max: data.team_size_max || 4,
+        ...eventPayload,
         created_by: user.id,
-        squad_id: data.squad_id || null,
-        status: 'registered',
-        active_stage_id: null, // explicitly NULL initially
+        active_stage_id: null,
       })
       .select('*')
       .single();
@@ -135,52 +252,29 @@ export async function createEvent(data: CreateEventInput) {
       };
     }
 
-    // 2. Prepare and Insert Stages (Safeguard: Zero synthetic date fabrication)
-    const stagesData = (data.stages && data.stages.length > 0) 
-      ? data.stages 
-      : [{
-          round_number: 1,
-          title: 'Round 1: Final Submission',
-          stage_type: 'prototype',
-          deadline: null,
-          window_start: null,
-          window_end: null,
-          actionable_deadline: null,
-          raw_date_snippet: 'TBA',
-          evaluation_format: 'Online Evaluation',
-          deliverables_description: 'Working prototype and presentation'
-        }];
-
-    const stagesToInsert = stagesData.map((stage, idx) => {
-      const effectiveDeadline = stage.deadline || null;
-      const effectiveEnd = stage.window_end || effectiveDeadline;
-      const effectiveActionable = stage.actionable_deadline || stage.window_start || effectiveDeadline;
-      const rawSnippet = stage.raw_date_snippet || (!effectiveDeadline ? 'TBA' : null);
-
-      return {
-        event_id: event.id,
-        round_number: stage.round_number || idx + 1,
-        title: stage.title.trim() || `Round ${idx + 1}`,
-        stage_type: stage.stage_type || 'other',
-        deadline: effectiveDeadline,
-        window_start: stage.window_start || null,
-        window_end: effectiveEnd,
-        actionable_deadline: effectiveActionable,
-        raw_date_snippet: rawSnippet,
-        evaluation_format: stage.evaluation_format || '',
-        deliverables_description: stage.deliverables_description || '',
-        is_completed: false,
-      };
-    });
+    // 2. Prepare and Insert Stages (using already computed stagesPayload)
+    const fallbackStagesToInsert = stagesPayload.map(s => ({
+      event_id: event.id,
+      round_number: s.round_number,
+      title: s.title,
+      stage_type: s.stage_type,
+      deadline: s.deadline,
+      window_start: s.window_start,
+      window_end: s.window_end,
+      actionable_deadline: s.actionable_deadline,
+      raw_date_snippet: s.raw_date_snippet,
+      evaluation_format: s.evaluation_format,
+      deliverables_description: s.deliverables_description,
+      is_completed: false,
+    }));
 
     const { data: stages, error: stagesError } = await supabase
       .from('event_stages')
-      .insert(stagesToInsert)
+      .insert(fallbackStagesToInsert)
       .select('*')
       .order('round_number', { ascending: true });
 
     if (stagesError || !stages || stages.length === 0) {
-      // Rollback the created event to prevent orphaned records
       await supabase.from('events').delete().eq('id', event.id);
       const detail = stagesError?.details ? ` (${stagesError.details})` : '';
       return { 
@@ -206,44 +300,20 @@ export async function createEvent(data: CreateEventInput) {
     }
 
     // 4. Insert stage_deliverables for EACH stage
-    const allDeliverables: Array<{
-      stage_id: string;
-      title: string;
-      sort_order: number;
-      is_done: boolean;
-    }> = [];
+    const stageIdByRound = new Map<number, string>();
+    stages.forEach(stg => stageIdByRound.set(stg.round_number, stg.id));
 
-    stages.forEach((insertedStage, stageIdx) => {
-      const stageInput = stagesData[stageIdx];
-      let deliverablesTitles: string[] = [];
+    const fallbackDeliverablesToInsert = allDeliverables.map(d => ({
+      stage_id: stageIdByRound.get(d.round_number) || firstStage.id,
+      title: d.title,
+      sort_order: d.sort_order,
+      is_done: false,
+    }));
 
-      if (stageInput?.deliverables && stageInput.deliverables.length > 0) {
-        deliverablesTitles = stageInput.deliverables;
-      } else if (stageInput?.deliverables_description) {
-        deliverablesTitles = stageInput.deliverables_description
-          .split(/[,;\n]+/)
-          .map(s => s.trim())
-          .filter(Boolean);
-      }
-
-      if (deliverablesTitles.length === 0) {
-        deliverablesTitles = getDefaultDeliverables(insertedStage.stage_type);
-      }
-
-      deliverablesTitles.forEach((title, dIdx) => {
-        allDeliverables.push({
-          stage_id: insertedStage.id,
-          title: title.trim(),
-          sort_order: dIdx,
-          is_done: false,
-        });
-      });
-    });
-
-    if (allDeliverables.length > 0) {
+    if (fallbackDeliverablesToInsert.length > 0) {
       const { error: deliverablesError } = await supabase
         .from('stage_deliverables')
-        .insert(allDeliverables);
+        .insert(fallbackDeliverablesToInsert);
 
       if (deliverablesError) {
         console.warn('Deliverables insertion warning:', deliverablesError);
