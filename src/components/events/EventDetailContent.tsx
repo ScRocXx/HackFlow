@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Globe, ExternalLink, Calendar, Users, Trophy, FileText, Database, Link2, Plus, Trash2, Loader2, Sparkles, UserPlus, Shield, Edit3, AlertTriangle, UploadCloud } from 'lucide-react'
+import { MapPin, Globe, ExternalLink, Calendar, Users, Trophy, FileText, Database, Link2, Plus, Trash2, Loader2, Sparkles, UserPlus, Shield, Edit3, AlertTriangle, UploadCloud, Package } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/use-toast'
+import { downloadOfflinePitchPackage } from '@/lib/export/offline-packager'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { StatusPills } from '@/components/events/StatusPills'
 import { StageTimeline } from '@/components/events/StageTimeline'
@@ -62,7 +63,38 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
   const [addingResource, setAddingResource] = useState(false)
   const [uploadingDoc, setUploadingDoc] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [isPackagingOffline, setIsPackagingOffline] = useState(false)
   const { toast } = useToast()
+
+  const handleExportOfflineKit = async () => {
+    setIsPackagingOffline(true)
+    try {
+      await downloadOfflinePitchPackage({
+        event,
+        stages: event.stages,
+        deliverables: event.current_stage_deliverables,
+        problemStatements: event.problem_statements,
+        resources: event.resources,
+        participants: (event.event_participants || []).map((p: any) => ({
+          full_name: p.profile?.full_name,
+          email: p.profile?.email,
+          role: p.role,
+        })),
+      })
+      toast({
+        title: 'Offline Kit Downloaded!',
+        description: 'Generated complete pitch, manifest, and checklist .zip archive.',
+      })
+    } catch (err: any) {
+      toast({
+        title: 'Export Failed',
+        description: err?.message || 'Could not package offline kit.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsPackagingOffline(false)
+    }
+  }
 
   const handleDeleteEvent = async () => {
     setIsDeletingEvent(true)
@@ -247,6 +279,20 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
               <StatusPills eventId={event.id} currentStatus={event.status || 'registered'} />
             </div>
             <div className="w-full sm:w-auto flex flex-wrap md:justify-end items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isPackagingOffline}
+                onClick={handleExportOfflineKit}
+                className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#8bb2de] hover:bg-[#a9c9f0] text-[#10201d] shadow-[2px_2px_0_#10201d]"
+              >
+                {isPackagingOffline ? (
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                ) : (
+                  <Package className="w-3.5 h-3.5 mr-1.5" />
+                )}
+                Offline Kit (.zip)
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -554,7 +600,7 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
                 </h3>
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-xs font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#2e4742]">
-                    {(event.event_participants || event.team_members)?.length || 0} Members
+                    {event.event_participants?.length || 0} Members
                   </span>
                   <Button
                     size="sm"
@@ -589,7 +635,7 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
               )}
               
               <div className="space-y-2.5">
-                {(event.event_participants || event.team_members || []).map((member: any) => {
+                {(event.event_participants || []).map((member: any) => {
                   const roleLabel = (member.role === 'lead' || member.role === 'owner') ? 'Lead' : 'Collaborator'
                   const isLead = roleLabel === 'Lead'
 
@@ -647,7 +693,7 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
                       const friendName = f.friend_profile?.full_name || f.receiver_email
                       const friendEmail = f.friend_profile?.email || f.receiver_email
 
-                      const existingIds = (event.event_participants || event.team_members || []).map((m: any) => m.user_id)
+                      const existingIds = (event.event_participants || []).map((m: any) => m.user_id)
                       const isAlreadyIn = friendUserId && existingIds.includes(friendUserId)
 
                       return (

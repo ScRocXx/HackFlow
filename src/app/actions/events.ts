@@ -830,14 +830,6 @@ export async function addEventResource(eventId: string, resource: {
         if (p.user_id && p.user_id !== user.id) recipientIds.add(p.user_id);
       });
 
-      const { data: teamMembers } = await supabase
-        .from('team_members')
-        .select('user_id')
-        .eq('event_id', eventId);
-      teamMembers?.forEach((tm) => {
-        if (tm.user_id && tm.user_id !== user.id) recipientIds.add(tm.user_id);
-      });
-
       if (recipientIds.size > 0) {
         const resourceTypeLabel = resource.resource_type === 'problem_statement'
           ? 'Problem Statement'
