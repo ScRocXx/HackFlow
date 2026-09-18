@@ -26,6 +26,7 @@ export async function toggleDeliverable(deliverableId: string, isDone: boolean) 
     const { data: stage } = await supabase.from('event_stages').select('event_id').eq('id', data.stage_id).single();
     if (stage) {
       revalidatePath(`/events/${stage.event_id}`);
+      revalidatePath('/dashboard');
     }
 
     return { success: true };
@@ -64,6 +65,7 @@ export async function addDeliverable(stageId: string, title: string) {
     const { data: stage } = await supabase.from('event_stages').select('event_id').eq('id', stageId).single();
     if (stage) {
       revalidatePath(`/events/${stage.event_id}`);
+      revalidatePath('/dashboard');
     }
 
     return { success: true };
@@ -93,6 +95,7 @@ export async function deleteDeliverable(deliverableId: string) {
     const { data: stage } = await supabase.from('event_stages').select('event_id').eq('id', deliv.stage_id).single();
     if (stage) {
       revalidatePath(`/events/${stage.event_id}`);
+      revalidatePath('/dashboard');
     }
 
     return { success: true };

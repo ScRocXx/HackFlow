@@ -42,19 +42,6 @@ export async function sendFriendRequest(receiverEmail: string) {
       }
     }
 
-    // Check if the recipient sent us a request
-    if (user.email) {
-      const { data: existingIncoming } = await supabase
-        .from('friendships')
-        .select('id, status')
-        .eq('receiver_email', user.email.toLowerCase())
-        .maybeSingle()
-
-      if (existingIncoming && existingIncoming.status === 'accepted') {
-        return { success: false, error: 'You are already friends with this user' }
-      }
-    }
-
     // Check if receiver is already a registered user
     const { data: receiverProfile } = await supabase
       .from('profiles')
@@ -63,6 +50,25 @@ export async function sendFriendRequest(receiverEmail: string) {
       .maybeSingle()
 
     const receiverId = receiverProfile?.id || null
+
+    // Check if this specific recipient already sent us a request
+    if (user.email && receiverId) {
+      const { data: existingIncoming } = await supabase
+        .from('friendships')
+        .select('id, status')
+        .eq('sender_id', receiverId)
+        .eq('receiver_email', user.email.toLowerCase())
+        .maybeSingle()
+
+      if (existingIncoming) {
+        if (existingIncoming.status === 'accepted') {
+          return { success: false, error: 'You are already friends with this user' }
+        }
+        if (existingIncoming.status === 'pending') {
+          return { success: false, error: 'This user has already sent you a friend request. Check your incoming requests.' }
+        }
+      }
+    }
 
     // Insert friendship row
     const { data: friendship, error } = await supabase

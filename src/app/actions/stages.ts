@@ -11,16 +11,56 @@ export async function completeStage(stageId: string) {
 
     if (!user) return { success: false, error: 'Unauthorized' };
 
+    // 1. Fetch current stage and event info BEFORE any update
     const { data: currentStage, error: stageError } = await supabase
       .from('event_stages')
-      .update({ is_completed: true, completed_at: new Date().toISOString() })
+      .select('*, events!event_stages_event_id_fkey(id, created_by, squad_id)')
       .eq('id', stageId)
-      .select('*')
       .single();
 
     if (stageError || !currentStage) return { success: false, error: stageError?.message || 'Stage not found' };
 
-    // Get all stages for event to find the next one
+    // 2. Strict authorization: Verify user is event creator, participant, or squad member
+    const eventData = (currentStage as any).events;
+    const isCreator = eventData?.created_by === user.id;
+
+    let isAuthorized = isCreator;
+    if (!isAuthorized) {
+      const [participantRes, squadRes] = await Promise.all([
+        supabase
+          .from('event_participants')
+          .select('id')
+          .eq('event_id', currentStage.event_id)
+          .eq('user_id', user.id)
+          .maybeSingle(),
+        eventData?.squad_id
+          ? supabase
+              .from('squad_members')
+              .select('id')
+              .eq('squad_id', eventData.squad_id)
+              .eq('user_id', user.id)
+              .maybeSingle()
+          : Promise.resolve({ data: null })
+      ]);
+
+      if (participantRes.data || squadRes.data) {
+        isAuthorized = true;
+      }
+    }
+
+    if (!isAuthorized) {
+      return { success: false, error: 'You are not authorized to modify this event' };
+    }
+
+    // 3. Mark current stage completed
+    const { error: updateError } = await supabase
+      .from('event_stages')
+      .update({ is_completed: true, completed_at: new Date().toISOString() })
+      .eq('id', stageId);
+
+    if (updateError) return { success: false, error: updateError.message };
+
+    // 4. Get all stages for event to find the next one
     const { data: allStages } = await supabase
       .from('event_stages')
       .select('*')
@@ -38,15 +78,24 @@ export async function completeStage(stageId: string) {
         .update({ active_stage_id: nextStage.id })
         .eq('id', currentStage.event_id);
 
-      const defaultDeliverables = getDefaultDeliverables(nextStage.stage_type);
-      if (defaultDeliverables && defaultDeliverables.length > 0) {
-        const deliverablesToInsert = defaultDeliverables.map((title, index) => ({
-          stage_id: nextStage.id,
-          title,
-          sort_order: index,
-          is_done: false,
-        }));
-        await supabase.from('stage_deliverables').insert(deliverablesToInsert);
+      // Guard: only insert default deliverables if no deliverables already exist for this stage
+      const { count } = await supabase
+        .from('stage_deliverables')
+        .select('*', { count: 'exact', head: true })
+        .eq('stage_id', nextStage.id);
+
+      if (!count || count === 0) {
+        const defaultDeliverables = getDefaultDeliverables(nextStage.stage_type);
+        if (defaultDeliverables && defaultDeliverables.length > 0) {
+          const deliverablesToInsert = defaultDeliverables.map((title, index) => ({
+            stage_id: nextStage.id,
+            event_id: currentStage.event_id,
+            title,
+            sort_order: index,
+            is_done: false,
+          }));
+          await supabase.from('stage_deliverables').insert(deliverablesToInsert);
+        }
       }
     } else {
       // Event complete
