@@ -12,7 +12,7 @@ export async function fetchUrlContent(url: string): Promise<{
   // Site-agnostic headers with zero platform-specific selector pruning
   const headers: Record<string, string> = {
     'Accept': 'application/json',
-    'X-Timeout': '30',
+    'X-Timeout': '4',
   };
 
   if (apiKey) {
@@ -20,7 +20,7 @@ export async function fetchUrlContent(url: string): Promise<{
   }
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  const timeoutId = setTimeout(() => controller.abort(), 4000);
 
   // Run universal metadata extraction and Jina Reader in parallel for maximum speed
   let cachedHtml: string | null = null;
@@ -33,7 +33,7 @@ export async function fetchUrlContent(url: string): Promise<{
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         },
-        signal: AbortSignal.timeout(7000)
+        signal: AbortSignal.timeout(3500)
       });
       if (res.ok) {
         cachedHtml = await res.text();
@@ -90,7 +90,7 @@ export async function fetchUrlContent(url: string): Promise<{
     } catch (fallbackError) {
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
-          throw new Error(`Fetch timed out after 30 seconds for URL: ${url}`);
+          throw new Error(`Fetch timed out after 4 seconds for URL: ${url}`);
         }
         throw error;
       }
@@ -119,7 +119,7 @@ async function fetchDirectHtmlFallback(
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
           'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         },
-        signal: AbortSignal.timeout(12000),
+        signal: AbortSignal.timeout(4000),
       });
 
       if (!res.ok) {

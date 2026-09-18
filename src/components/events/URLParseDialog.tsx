@@ -272,7 +272,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
       })
     } catch (err: any) {
       console.error('Extraction failure:', err)
-      const message = err?.message || 'I suppose this is not a hackathon...'
+      const message = err?.message || 'Failed to extract hackathon details. Please verify the URL or paste the guidelines directly.'
       setExtractError(message)
       toast({
         title: 'Extraction Notice',

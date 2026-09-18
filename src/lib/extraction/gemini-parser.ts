@@ -358,75 +358,20 @@ Rule: Treat these verified values as authoritative ground-truth baselines. Adopt
     ? `Source URL: ${sourceUrl} (Host: ${hostInfo?.displayName || platform})`
     : `Source URL: Not provided (Content pasted directly from guidelines, flyer, or rules text)`;
 
-  const systemPrompt = `You are an elite, site-agnostic competitive technology event parser.
-Your mission is to analyze competition text (scraped web content, raw pasted guidelines, flyers, or rules) with extreme precision and output structured JSON.
+  const systemPrompt = `Extract structured competition data from the provided text and return valid JSON matching the schema below.
 
-CURRENT TIME ANCHOR: ${currentIso} (Current Year: ${currentYear})
+Current Time Anchor: ${currentIso} (Year: ${currentYear})
 ${sourceContext}
 ${jsonLdContext}
 
-THE 4 UNIVERSAL COMPETITION LIFECYCLE PHASES:
-Every competitive event anywhere in the world (hackathons, ideathons, coding contests, case competitions, sprints) follows some combination of these 4 chronological lifecycle phases:
-1. Registration / Application Phase:
-   - When signups, team registrations, or applications open and close.
-   - Stage Type: 'other' or 'ppt_submission' (if registration requires initial proposal/idea).
-2. Preparation / Screening Phase (Optional):
-   - Preliminary filters: Online quiz, aptitude test, idea submission, executive summary, abstract, or PPT deck submission.
-   - Stage Type: 'quiz' | 'ppt_submission'.
-3. Active Hacking / Sprint Window:
-   - The primary building or hacking window where participants build their prototypes/solutions (Kickoff / Code Start -> Code Freeze / Submission Cutoff).
-   - If an event is a 24-48h hackathon, identify the Sprint Kickoff ('window_start') and the Submission Cutoff ('window_end' / 'deadline').
-   - Stage Type: 'hackathon_sprint' | 'prototype'.
-4. Final Evaluation / Demo Day:
-   - The presentation, pitching session, judging, prototype review, or Demo Day finale.
-   - Stage Type: 'presentation'.
-
-CHRONOLOGICAL SCANNING & MULTI-STAGE EXTRACTION:
-- Scan the entire text for ANY chronological checkpoints, deadlines, milestones, or schedules.
-- If an event is a 24-48h hackathon, identify the Sprint Kickoff and the Submission Cutoff.
-- If an event has sequential elimination rounds (Round 1, Round 2, Round 3), extract each round in sequential order with round_number (1, 2, 3...).
-- Extract any stated cash amounts into the prize pool.
-
-STRICT ZERO-HALLUCINATION DATE & TIMEZONE RULES:
-1. Parse dates STRICTLY from the provided text. You must NEVER invent, extrapolate, or fabricate any date or time.
-2. If a lifecycle phase or stage is mentioned or exists in the competition structure, but has NO explicit date or timestamp stated in the text (e.g., 'Dates TBA', 'To be announced', or simply unscheduled):
-   - You MUST output:
-     * "window_start": null
-     * "window_end": null
-     * "actionable_deadline": null
-     * "deadline": null
-     * "raw_date_snippet": "TBA"
-   - NEVER make up synthetic dates or use the current time as a fake deadline. A null deadline is strictly required when dates are unannounced.
-3. Timezone Resolution:
-   - If the source URL, domain (.in, etc.), currency (INR / ₹), or text references Indian locations/institutes/IST, resolve local dates and times in Asia/Kolkata (IST, UTC+05:30).
-   - If another explicit timezone is given (e.g., EST, PST, UTC, GMT, CET, SGT, BST), preserve or convert that offset accurately.
-   - Otherwise, default to UTC (+00:00).
-   - Always format parsed timestamps as ISO 8601 strings with timezone offset (e.g. "YYYY-MM-DDTHH:mm:ss+05:30" or "YYYY-MM-DDTHH:mm:ssZ").
-4. For Sprint / Time Window stages:
-   - 'window_start': ISO 8601 string when hacking/stage kicks off.
-   - 'window_end': ISO 8601 string when submissions close.
-   - 'deadline': Same as 'window_end'.
-   - 'actionable_deadline': Points to 'window_start' if currently before kickoff; rolls over to 'window_end' once kickoff passes.
-   - 'raw_date_snippet': Verbatim date string copied from the text.
-
-PRIZE POOL EVALUATION:
-- Scan for any stated cash amounts and prize breakdowns into the prize pool.
-- Differentiate hard cash from vanity perks / cloud credits.
-- 'cash_pool': Verified hard cash amount only (e.g. "₹75,000" or "$10,000").
-- 'first_place_cash': First prize cash amount.
-- 'has_perks_or_credits': Set to true if prizes include credits, subscriptions, swags, or vouchers.
-TWO-PASS SELF-CORRECTION PROTOCOL:
-You must perform a strict two-pass self-audit before finalizing your JSON:
-- Pass 1 (Draft Extraction): Extract title, organizer, prizes, and sequential rounds/stages.
-- Pass 2 (Verification): Cross-reference every extracted deadline and time window against the raw text. You MUST copy the verbatim text snippet into 'raw_date_snippet'. If an extracted deadline does not have an exact matching date phrase or snippet in the text, you MUST force:
-  * "deadline": null
-  * "window_end": null
-  * "actionable_deadline": null
-  * "raw_date_snippet": "TBA"
-Never invent plausible dates. An unannounced or unverified deadline MUST be null / TBA.
-
-RESOURCE EXTRACTION:
-- Extract direct links to problem statements, guidelines, rulebooks, slide templates, datasets, or reference links.
+EXTRACTION RULES:
+1. Stages & Rounds: Identify chronological rounds, checkpoints, sprint windows, and final demos in sequence with round_number (1, 2, 3...). Assign stage_type ('quiz' | 'ppt_submission' | 'prototype' | 'presentation' | 'other').
+2. Strict Zero-Hallucination Dates: Never invent dates. If a round deadline is unannounced or TBA, set window_start, window_end, actionable_deadline, and deadline to null, and set raw_date_snippet to "TBA".
+3. Timezones: Format all timestamps as ISO 8601 strings with timezone offset. If text or host references Indian context/IST/INR, resolve to Asia/Kolkata (+05:30); otherwise preserve stated timezone or default to UTC.
+4. Sprint Windows: For time-bounded hackathons, set window_start to hacking kickoff and window_end/deadline to submission cutoff.
+5. Prizes: Distinguish hard cash pool from perks/credits.
+6. Resources: Extract direct links to problem statements, guidelines, or datasets.
+7. Exact Anchors: Set raw_date_snippet to the verbatim date text from the source.
 
 OUTPUT JSON SCHEMA:
 {
@@ -504,7 +449,7 @@ OUTPUT JSON SCHEMA:
       const parsed = JSON.parse(jsonStr);
 
       if (parsed.is_hackathon === false) {
-        throw new Error('I suppose this is not a hackathon...');
+        throw new Error('This content does not appear to be a competitive tech event or hackathon.');
       }
 
       // Ground-truth fallback baselines from extracted metadata
@@ -571,7 +516,7 @@ OUTPUT JSON SCHEMA:
 
       return ParsedHackathonSchema.parse(parsed);
     } catch (err: any) {
-      if (err.message === 'I suppose this is not a hackathon...') {
+      if (err.message === 'This content does not appear to be a competitive tech event or hackathon.') {
         throw err;
       }
       console.warn(`Attempt with ${modelName} encountered: ${err.message}. Trying next option...`);

@@ -18,6 +18,7 @@ interface StashedContent {
 }
 
 const TTL_MS = 10 * 60 * 1000; // 10 minutes
+const MAX_ENTRIES = 20; // Serverless memory bound
 
 // In-memory cache keyed by normalized URL string
 const rawTextStash = new Map<string, StashedContent>();
@@ -32,7 +33,7 @@ function normalizeUrlKey(url: string): string {
 }
 
 /**
- * Clean up expired entries periodically
+ * Clean up expired entries periodically and bound cache size
  */
 function purgeExpired() {
   const now = Date.now();
@@ -40,6 +41,11 @@ function purgeExpired() {
     if (now - value.stashedAt > TTL_MS) {
       rawTextStash.delete(key);
     }
+  }
+  while (rawTextStash.size >= MAX_ENTRIES) {
+    const oldestKey = rawTextStash.keys().next().value;
+    if (oldestKey) rawTextStash.delete(oldestKey);
+    else break;
   }
 }
 
