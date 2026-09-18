@@ -39,19 +39,19 @@ export async function sendDiscordWebhook(
       return { success: false, error: 'Invalid Discord Webhook URL' }
     }
 
-    const response = await fetch(webhookUrl, {
+    const res = await fetch(webhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        username: payload.username || 'HackFlow Telemetry',
+        username: payload.username || 'HackFlow Notifications',
         avatar_url: payload.avatar_url || 'https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/zap.png',
         ...payload,
       }),
     })
 
-    if (!response.ok) {
-      const errText = await response.text()
-      console.error(`[DiscordAlert] Webhook returned HTTP ${response.status}:`, errText)
+    if (!res.ok) {
+      const errText = await res.text()
+      console.error(`[DiscordAlert] Webhook returned HTTP ${res.status}:`, errText)
       return { success: false, error: errText }
     }
 
@@ -112,13 +112,13 @@ export async function sendDiscordDeadlineAlert(params: {
         inline: false,
       },
       {
-        name: '⚡ Action Directive',
-        value: `[Open HackFlow War-Room Workspace](${params.eventUrl})`,
+        name: '🔗 Event Workspace',
+        value: `[Open HackFlow Workspace](${params.eventUrl})`,
         inline: false,
       },
     ],
     footer: {
-      text: 'HackFlow Squad Telemetry Engine',
+      text: 'HackFlow Deadline Alerts',
     },
     timestamp: new Date().toISOString(),
   }

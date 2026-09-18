@@ -307,48 +307,52 @@ export function EventCard({ event }: EventCardProps) {
       </div>
 
       {/* Edit Dialog */}
-      <EditEventDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        event={event}
-      />
+      {editOpen && (
+        <EditEventDialog
+          open={editOpen}
+          onOpenChange={setEditOpen}
+          event={event}
+        />
+      )}
 
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent className="max-w-md border-2 border-[#10201d] bg-[#f7f7f2] p-6 shadow-[8px_8px_0_#671912]">
-          <DialogHeader>
-            <div className="flex items-center gap-2 text-[#e53927]">
-              <AlertTriangle className="w-5 h-5" />
-              <DialogTitle className="font-display text-xl font-black uppercase text-[#10201d]">
-                Delete Hackathon?
-              </DialogTitle>
-            </div>
-            <DialogDescription className="font-mono text-xs text-[#34433f] mt-2">
-              Are you sure you want to permanently delete <strong className="text-[#10201d] font-bold">"{event.title}"</strong>? All associated rounds, checklist tasks, and resources will be removed. This cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
+      {deleteOpen && (
+        <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <DialogContent className="max-w-md border-2 border-[#10201d] bg-[#f7f7f2] p-6 shadow-[8px_8px_0_#671912]">
+            <DialogHeader>
+              <div className="flex items-center gap-2 text-[#e53927]">
+                <AlertTriangle className="w-5 h-5" />
+                <DialogTitle className="font-display text-xl font-black uppercase text-[#10201d]">
+                  Delete Hackathon?
+                </DialogTitle>
+              </div>
+              <DialogDescription className="font-mono text-xs text-[#34433f] mt-2">
+                Are you sure you want to permanently delete <strong className="text-[#10201d] font-bold">"{event.title}"</strong>? All associated rounds, checklist tasks, and resources will be removed. This cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
 
-          <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-4 border-t-2 border-[#10201d] mt-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setDeleteOpen(false)}
-              disabled={isDeleting}
-              className="w-full sm:w-auto font-mono text-xs border-2 border-[#10201d]"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="w-full sm:w-auto font-mono text-xs bg-[#e53927] hover:bg-[#b02213] text-[#f7f7f2] border-2 border-[#10201d] shadow-[3px_3px_0_#10201d] font-bold"
-            >
-              {isDeleting ? 'Deleting...' : 'Delete Permanently'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-4 border-t-2 border-[#10201d] mt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDeleteOpen(false)}
+                disabled={isDeleting}
+                className="w-full sm:w-auto font-mono text-xs border-2 border-[#10201d]"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="w-full sm:w-auto font-mono text-xs bg-[#e53927] hover:bg-[#b02213] text-[#f7f7f2] border-2 border-[#10201d] shadow-[3px_3px_0_#10201d] font-bold"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Permanently'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   )
 }

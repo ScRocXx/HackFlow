@@ -192,7 +192,7 @@ export default async function HomePage() {
                     </span>
                   </div>
                   <span className="px-2 py-0.5 border border-[#8bb2de] bg-[#8bb2de]/20 text-[#8bb2de] text-[10px] font-bold uppercase tracking-wider shrink-0">
-                    ⚡ PARSED IN 1.8s
+                    EXTRACTED TIMELINE & DELIVERABLES
                   </span>
                 </div>
 
@@ -220,7 +220,7 @@ export default async function HomePage() {
 
                     <div className="flex items-center gap-1.5 font-mono text-xs font-bold self-start sm:self-center">
                       <Users className="w-3.5 h-3.5 text-[#e53927]" />
-                      <span>4 Team Members Connected</span>
+                      <span>Active Squad Workspace</span>
                     </div>
                   </div>
 
@@ -277,14 +277,14 @@ export default async function HomePage() {
                             <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
                             <span>System Architecture & High-Level Design diagram</span>
                           </div>
-                          <span className="text-[10px] font-bold bg-[#e4e5da] px-1.5 py-0.5 border border-[#10201d]/40">Rohan</span>
+                          <span className="text-[10px] font-bold bg-[#e4e5da] px-1.5 py-0.5 border border-[#10201d]/40">System Architect</span>
                         </div>
                         <div className="flex items-center justify-between p-2 border border-[#10201d] bg-white">
                           <div className="flex items-center gap-2 line-through text-[#34433f]">
                             <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
                             <span>12-Slide Pitch Deck exported to PDF (&lt;20MB)</span>
                           </div>
-                          <span className="text-[10px] font-bold bg-[#e4e5da] px-1.5 py-0.5 border border-[#10201d]/40">Priya</span>
+                          <span className="text-[10px] font-bold bg-[#e4e5da] px-1.5 py-0.5 border border-[#10201d]/40">Frontend Lead</span>
                         </div>
                         <div className="flex items-center justify-between p-2 border-2 border-[#e53927] bg-[#fff5f5] font-bold">
                           <div className="flex items-center gap-2 text-[#10201d]">

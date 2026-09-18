@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { 
   CheckCircle2, AlertTriangle, ExternalLink, Calendar, Trophy, 
   ShieldAlert, Award, FileText, Check, Loader2, RefreshCw,
-  FlaskConical, ShieldCheck, XCircle, AlertCircle
+  FlaskConical, ShieldCheck, XCircle, AlertCircle, ChevronDown, ChevronUp
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -303,17 +303,23 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
 
   const isConcluded = ['winner', 'runner_up', 'participated', 'archived'].includes(event.status)
   const isFinalist = event.status === 'finalist'
+  const isSubmissionPhase = ['submitted', 'under_review', 'finalist', 'winner', 'runner_up', 'participated', 'archived'].includes(event.status)
+  const [isExpanded, setIsExpanded] = useState(isSubmissionPhase)
 
   return (
     <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[7px_7px_0_#671912] overflow-hidden">
-      <div className="bg-[#3d5f58] p-5 border-b-2 border-[#10201d] text-[#f7f7f2] flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+      <div 
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="bg-[#3d5f58] p-5 border-b-2 border-[#10201d] text-[#f7f7f2] flex flex-col sm:flex-row justify-between sm:items-center gap-3 cursor-pointer select-none hover:bg-[#34524c] transition-colors"
+      >
         <div className="flex items-center gap-3">
           <div className="p-2 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d]">
             <Trophy className="h-5 w-5" />
           </div>
           <div>
-            <h3 className="font-display text-2xl font-bold tracking-tight text-[#f7f7f2]">
+            <h3 className="font-display text-2xl font-bold tracking-tight text-[#f7f7f2] flex items-center gap-2">
               Submission Confirmation & Follow-up
+              {!isExpanded && <span className="font-mono text-xs font-normal text-[#8bb2de]">(Click to expand)</span>}
             </h3>
             <p className="font-mono text-xs text-[#8bb2de]">
               Keep submission proof, verify public repo access for judges, and track results.
@@ -325,10 +331,23 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
           <span className="font-mono text-xs font-bold uppercase px-2.5 py-1 border-2 border-[#10201d] bg-[#e97b77] text-[#10201d] shadow-[2px_2px_0_#671912]">
             Stage: {event.status.replace('_', ' ')}
           </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="border-2 border-[#10201d] bg-[#f7f7f2] text-[#10201d] p-1.5 h-auto"
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsExpanded(!isExpanded)
+            }}
+          >
+            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </Button>
         </div>
       </div>
 
-      <CardContent className="p-6 space-y-6">
+      {isExpanded && (
+        <CardContent className="p-6 space-y-6">
         {/* Pre-Submission Automated Smoke Test Suite */}
         <div className="p-4 bg-[#10201d] text-[#f7f7f2] border-2 border-[#10201d] shadow-[5px_5px_0_#10201d] space-y-3">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#2e4742] pb-3">
@@ -607,6 +626,7 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
           </div>
         </div>
       </CardContent>
+      )}
     </Card>
   )
 }

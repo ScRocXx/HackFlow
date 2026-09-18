@@ -84,23 +84,27 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
     return { evaluated, dispatched, error: stagesError?.message };
   }
 
-  // 2. Pre-load all notification logs into an in-memory set for instantaneous O(1) deduplication
-  const { data: allLogs } = await supabaseAdmin
-    .from('notification_logs')
-    .select('stage_id, interval_key, channel, recipient_email');
-
-  const logSet = new Set(
-    (allLogs || []).map(l => [l.stage_id, l.interval_key, l.channel, (l.recipient_email || '').toLowerCase()].join('_'))
-  );
-
-  // 3. BULK PRE-LOAD: Pre-fetch all participants, deliverables, and profiles in bulk (Eliminates N+1 loop queries)
+  // 2. BULK PRE-LOAD: Pre-fetch all participants, deliverables, and notification logs for active stages only
   const eventIds = Array.from(new Set(stages.map(s => s.event_id)));
   const stageIds = stages.map(s => s.id);
 
-  const [participantsRes, deliverablesRes] = await Promise.all([
+  if (stageIds.length === 0) {
+    return { evaluated: 0, dispatched: 0 };
+  }
+
+  const [logsRes, participantsRes, deliverablesRes] = await Promise.all([
+    supabaseAdmin
+      .from('notification_logs')
+      .select('stage_id, interval_key, channel, recipient_email')
+      .in('stage_id', stageIds),
     supabaseAdmin.from('event_participants').select('event_id, user_id').in('event_id', eventIds),
     supabaseAdmin.from('stage_deliverables').select('stage_id, title, is_done, sort_order').in('stage_id', stageIds),
   ]);
+
+  const allLogs = logsRes.data || [];
+  const logSet = new Set(
+    allLogs.map(l => [l.stage_id, l.interval_key, l.channel, (l.recipient_email || '').toLowerCase()].join('_'))
+  );
 
   // Group participants by eventId
   const participantsByEvent = new Map<string, Set<string>>();

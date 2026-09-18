@@ -150,7 +150,7 @@ export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): s
           <tr>
             <td align="center" style="padding-bottom: 12px;">
               <a href="${safeEventUrl}" style="background-color: #e53927; color: #ffffff; padding: 15px 32px; text-decoration: none; font-family: 'SF Mono', Consolas, Monaco, monospace; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; display: block; border: 2px solid #ffffff; box-shadow: 4px 4px 0 #000000;">
-                OPEN WAR-ROOM / WORKSPACE &rarr;
+                OPEN EVENT WORKSPACE &rarr;
               </a>
             </td>
           </tr>
@@ -167,9 +167,9 @@ export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): s
       </div>
     </div>
 
-    <!-- Telemetry Footer -->
+    <!-- Notification Footer -->
     <div style="background-color: #0a1412; border-top: 1px solid #233934; padding: 16px 24px; text-align: center; font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 10px; color: #5c746f; letter-spacing: 1px;">
-      HACKFLOW SQUAD TELEMETRY // REAL-TIME DISPATCH ENGINE // BREVO VERIFIED
+      HACKFLOW // SQUAD DEADLINE NOTIFICATION ENGINE
     </div>
 
   </div>
@@ -217,7 +217,7 @@ export function renderTeamInviteHtml(props: TeamInviteEmailProps): string {
       </p>
       <div style="text-align: center; margin: 32px 0 20px;">
         <a href="${safeInviteUrl}" style="background-color: #e53927; color: #ffffff; padding: 14px 28px; text-decoration: none; font-family: 'SF Mono', Consolas, monospace; font-weight: bold; font-size: 14px; display: inline-block; border: 2px solid #ffffff; box-shadow: 3px 3px 0 #000000; text-transform: uppercase;">
-          Enter War-Room & Accept &rarr;
+          Join Squad Workspace &rarr;
         </a>
       </div>
     </div>

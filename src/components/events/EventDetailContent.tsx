@@ -2,13 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Globe, ExternalLink, Calendar, Users, Trophy, FileText, Database, Link2, Plus, Trash2, Loader2, Sparkles, UserPlus, Shield, Edit3, AlertTriangle, UploadCloud, Package } from 'lucide-react'
+import { MapPin, Globe, ExternalLink, Calendar, Users, Trophy, FileText, Database, Link2, Plus, Trash2, Loader2, Sparkles, UserPlus, Shield, Edit3, AlertTriangle, UploadCloud } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/use-toast'
-import { downloadOfflinePitchPackage } from '@/lib/export/offline-packager'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { StatusPills } from '@/components/events/StatusPills'
 import { StageTimeline } from '@/components/events/StageTimeline'
@@ -64,38 +63,7 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
   const [addingResource, setAddingResource] = useState(false)
   const [uploadingDoc, setUploadingDoc] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [isPackagingOffline, setIsPackagingOffline] = useState(false)
   const { toast } = useToast()
-
-  const handleExportOfflineKit = async () => {
-    setIsPackagingOffline(true)
-    try {
-      await downloadOfflinePitchPackage({
-        event,
-        stages: event.stages,
-        deliverables: event.current_stage_deliverables,
-        problemStatements: event.problem_statements,
-        resources: event.resources,
-        participants: (event.event_participants || []).map((p: any) => ({
-          full_name: p.profile?.full_name,
-          email: p.profile?.email,
-          role: p.role,
-        })),
-      })
-      toast({
-        title: 'Offline Kit Downloaded!',
-        description: 'Generated complete pitch, manifest, and checklist .zip archive.',
-      })
-    } catch (err: any) {
-      toast({
-        title: 'Export Failed',
-        description: err?.message || 'Could not package offline kit.',
-        variant: 'destructive',
-      })
-    } finally {
-      setIsPackagingOffline(false)
-    }
-  }
 
   const handleDeleteEvent = async () => {
     setIsDeletingEvent(true)
@@ -280,20 +248,6 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
               <StatusPills eventId={event.id} currentStatus={event.status || 'registered'} />
             </div>
             <div className="w-full sm:w-auto flex flex-wrap md:justify-end items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={isPackagingOffline}
-                onClick={handleExportOfflineKit}
-                className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#8bb2de] hover:bg-[#a9c9f0] text-[#10201d] shadow-[2px_2px_0_#10201d]"
-              >
-                {isPackagingOffline ? (
-                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                ) : (
-                  <Package className="w-3.5 h-3.5 mr-1.5" />
-                )}
-                Offline Kit (.zip)
-              </Button>
               <Button
                 variant="outline"
                 size="sm"
@@ -690,7 +644,9 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
                 ) : (
                   <div className="max-h-60 overflow-y-auto space-y-2">
                     {friends.map((f) => {
-                      const friendUserId = f.sender_id === event.created_by ? f.receiver_id : (f.receiver_id === event.created_by ? f.sender_id : (f.friend_profile?.id || ''))
+                      const friendUserId = (f.friend_profile?.id && f.friend_profile.id !== 'unknown') 
+                        ? f.friend_profile.id 
+                        : (f.sender_id === event.created_by ? f.receiver_id : f.sender_id)
                       const friendName = f.friend_profile?.full_name || f.receiver_email
                       const friendEmail = f.friend_profile?.email || f.receiver_email
 

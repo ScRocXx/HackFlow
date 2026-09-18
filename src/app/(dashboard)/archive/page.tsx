@@ -21,7 +21,7 @@ export default async function ArchivePage() {
 
   // Concluded or archived events
   const concludedEvents = events.filter((e: any) => 
-    ['winner', 'runner_up', 'participated', 'archived', 'submitted'].includes(e.status)
+    ['winner', 'runner_up', 'participated', 'archived', 'submitted', 'finalist', 'under_review'].includes(e.status)
   )
 
   return (
@@ -91,7 +91,7 @@ export default async function ArchivePage() {
                     )}
                     {!isWinner && !isRunnerUp && (
                       <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 border-2 border-[#10201d] bg-[#e4e5da] text-[#10201d]">
-                        {ev.status}
+                        {ev.status === 'finalist' ? '🎖️ Finalist' : ev.status === 'under_review' ? '⏳ Under Review' : ev.status}
                       </span>
                     )}
                   </div>

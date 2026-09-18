@@ -24,7 +24,7 @@ export default function SignupPage() {
     setLoading(true);
     setError(null);
     
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -37,6 +37,8 @@ export default function SignupPage() {
     if (error) {
       setError(error.message);
       setLoading(false);
+    } else if (data?.session) {
+      window.location.href = '/dashboard';
     } else {
       setSuccess(true);
       setLoading(false);
