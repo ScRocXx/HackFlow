@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { sanitizeInternalLink } from '@/lib/utils/url';
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
@@ -15,7 +16,7 @@ export async function createInAppNotification(params: {
     user_id: params.userId,
     title: params.title,
     body: params.body,
-    link: params.link,
+    link: sanitizeInternalLink(params.link),
     read: false,
   });
 
@@ -35,7 +36,7 @@ export async function createBatchInAppNotifications(notifications: Array<{
     user_id: n.userId,
     title: n.title,
     body: n.body,
-    link: n.link,
+    link: sanitizeInternalLink(n.link),
     read: false,
   }));
   const { error } = await supabaseAdmin.from('notifications').insert(rows);

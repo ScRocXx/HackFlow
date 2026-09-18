@@ -11,7 +11,7 @@ import { getAppUrl, isLocalhost } from './url';
 export function getServerBaseUrl(request?: Request): string {
   const isProd = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
 
-  const isValidHost = (h: string | null | undefined): boolean => {
+  const isValidHost = (h: string | null | undefined): h is string => {
     if (!h) return false;
     if (isProd && isLocalhost(h)) return false;
     return true;
@@ -29,9 +29,22 @@ export function getServerBaseUrl(request?: Request): string {
       if (isValidHost(host)) {
         return `${proto}://${host}`.replace(/\/+$/, '');
       }
-      const origin = new URL(request.url).origin;
+      const origin = request.headers.get('origin');
       if (isValidHost(origin)) {
         return origin.replace(/\/+$/, '');
+      }
+      const referer = request.headers.get('referer');
+      if (referer) {
+        try {
+          const refOrigin = new URL(referer).origin;
+          if (isValidHost(refOrigin)) {
+            return refOrigin.replace(/\/+$/, '');
+          }
+        } catch {}
+      }
+      const reqOrigin = new URL(request.url).origin;
+      if (isValidHost(reqOrigin)) {
+        return reqOrigin.replace(/\/+$/, '');
       }
     } catch {}
   }
@@ -48,10 +61,23 @@ export function getServerBaseUrl(request?: Request): string {
     if (isValidHost(host)) {
       return `${proto}://${host}`.replace(/\/+$/, '');
     }
+    const origin = reqHeaders.get('origin');
+    if (isValidHost(origin)) {
+      return origin.replace(/\/+$/, '');
+    }
+    const referer = reqHeaders.get('referer');
+    if (referer) {
+      try {
+        const refOrigin = new URL(referer).origin;
+        if (isValidHost(refOrigin)) {
+          return refOrigin.replace(/\/+$/, '');
+        }
+      } catch {}
+    }
   } catch {
     // headers() might not be available in non-request contexts
   }
 
-  // 3. Fallback to getAppUrl (environment variables, Vercel system domains, localhost)
+  // 3. Fallback to getAppUrl (environment variables, Vercel system domains, or PRODUCTION_APP_URL)
   return getAppUrl();
 }

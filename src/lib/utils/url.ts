@@ -58,6 +58,8 @@ export function sanitizeInternalLink(link?: string | null): string {
   }
 }
 
+export const PRODUCTION_APP_URL = 'https://hackflow-wine.vercel.app';
+
 /**
  * Returns the base application URL based on client origin, environment variables,
  * or Vercel production deployment URLs.
@@ -93,6 +95,12 @@ export function getAppUrl(): string {
     return `https://${process.env.VERCEL_URL}`.replace(/\/+$/, '');
   }
 
+  // In production, always fallback to canonical production URL (never localhost)
+  if (isProd) {
+    return PRODUCTION_APP_URL;
+  }
+
   // Local development fallback
   return 'http://localhost:3000';
 }
+
