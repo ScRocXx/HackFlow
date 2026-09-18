@@ -3,8 +3,9 @@ import { createClient } from '@/lib/supabase/server';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 import path from 'path';
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB limit
+const MAX_FILE_SIZE = Math.floor(4.5 * 1024 * 1024); // 4.5MB Vercel serverless request body limit
 const BUCKET_NAME = 'hackflow_uploads';
+let isBucketVerified = false;
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: 'File exceeds the 50MB limit' }, { status: 400 });
+      return NextResponse.json({ error: 'File exceeds the 4.5MB serverless upload limit' }, { status: 400 });
     }
 
     const originalName = file.name || 'presentation_deck.pdf';
@@ -56,11 +57,14 @@ export async function POST(req: NextRequest) {
 
     const adminClient = createServiceClient(supabaseUrl, serviceRoleKey);
 
-    // Ensure bucket exists with public access
-    await adminClient.storage.createBucket(BUCKET_NAME, {
-      public: true,
-      fileSizeLimit: MAX_FILE_SIZE,
-    }).catch(() => {});
+    // Ensure bucket exists with public access (checked at most once per lambda lifecycle)
+    if (!isBucketVerified) {
+      await adminClient.storage.createBucket(BUCKET_NAME, {
+        public: true,
+        fileSizeLimit: MAX_FILE_SIZE,
+      }).catch(() => {});
+      isBucketVerified = true;
+    }
 
     const { error: uploadError } = await adminClient.storage
       .from(BUCKET_NAME)

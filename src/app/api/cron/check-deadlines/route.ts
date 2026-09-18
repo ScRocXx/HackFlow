@@ -8,15 +8,10 @@ export const dynamic = 'force-dynamic';
 // Authorization: Bearer <CRON_SECRET>
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization');
-  const isDev = process.env.NODE_ENV === 'development';
   const cronSecret = process.env.CRON_SECRET;
 
-  const isAuthorized =
-    isDev ||
-    !cronSecret ||
-    authHeader === `Bearer ${cronSecret}`;
-
-  if (!isAuthorized) {
+  // STRICT FAIL-CLOSED: Refuse execution if CRON_SECRET is missing or authorization token does not match
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json(
       { error: 'Unauthorized. Provide valid Authorization: Bearer <token> header.' },
       { status: 401 }
