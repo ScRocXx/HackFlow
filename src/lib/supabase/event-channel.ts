@@ -32,6 +32,7 @@ export function useEventRoom(eventId: string, handlers: EventRoomHandlers) {
           event: '*',
           schema: 'public',
           table: 'stage_deliverables',
+          filter: `event_id=eq.${eventId}`,
         },
         (payload) => {
           handlersRef.current.onDeliverableChange?.(payload)

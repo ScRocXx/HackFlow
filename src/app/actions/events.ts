@@ -78,13 +78,20 @@ export async function createEvent(data: CreateEventInput) {
     // Universal source platform support (preserves any competition host/domain)
     const sourcePlatform = (data.source_platform || 'independent').toLowerCase().trim();
 
-    // Check if an event with this source_url already exists
+    // Check if an event with this source_url already exists for this squad or creator (multi-tenant safe)
     if (data.source_url?.trim()) {
-      const { data: existingEvent } = await supabase
+      let dedupQuery = supabase
         .from('events')
         .select('id, title')
-        .eq('source_url', data.source_url.trim())
-        .maybeSingle();
+        .eq('source_url', data.source_url.trim());
+
+      if (data.squad_id) {
+        dedupQuery = dedupQuery.eq('squad_id', data.squad_id);
+      } else {
+        dedupQuery = dedupQuery.eq('created_by', user.id).is('squad_id', null);
+      }
+
+      const { data: existingEvent } = await dedupQuery.maybeSingle();
 
       if (existingEvent?.id) {
         revalidatePath('/dashboard');
@@ -781,7 +788,17 @@ export async function getUserEvents() {
 
     const { data: events, error: eventsError } = await supabase
       .from('events')
-      .select('*')
+      .select(`
+        *,
+        stages:event_stages!event_stages_event_id_fkey(
+          id, round_number, title, stage_type, deadline, 
+          window_start, window_end, actionable_deadline, raw_date_snippet, is_completed,
+          stage_deliverables(id, is_done)
+        ),
+        resources:event_resources(id, title, url, resource_type),
+        squad:squads(id, name),
+        participants:event_participants(id, user_id, role)
+      `)
       .or(orClauses.join(','))
       .order('created_at', { ascending: false });
 
@@ -792,48 +809,22 @@ export async function getUserEvents() {
 
     if (events.length === 0) return { success: true, data: [] };
 
-    const eventIds = events.map(e => e.id);
-    const activeStageIds = events.map(e => e.active_stage_id).filter(Boolean) as string[];
-    const squadIds = Array.from(new Set(events.map(e => e.squad_id).filter(Boolean))) as string[];
-
-    // 3. Parallel Batch 2: Fetch stages, participants, deliverables, resources, and squads concurrently
-    const [
-      { data: allStages },
-      { data: allParticipants },
-      delivRes,
-      { data: allResources },
-      squadsRes
-    ] = await Promise.all([
-      supabase.from('event_stages').select('*').in('event_id', eventIds).order('round_number', { ascending: true }),
-      supabase.from('event_participants').select('event_id, id').in('event_id', eventIds),
-      activeStageIds.length > 0
-        ? supabase.from('stage_deliverables').select('stage_id, is_done').in('stage_id', activeStageIds)
-        : Promise.resolve({ data: [] }),
-      supabase.from('event_resources').select('*').in('event_id', eventIds).order('created_at', { ascending: true }),
-      squadIds.length > 0
-        ? supabase.from('squads').select('id, name').in('id', squadIds)
-        : Promise.resolve({ data: [] })
-    ]);
-
-    const allDeliverables = delivRes?.data || [];
-    const squadMap = new Map((squadsRes?.data || []).map((s: any) => [s.id, s.name]));
-
-    // 8. Enrich each event
-    const enrichedEvents = events.map(event => {
-      const stagesForEvent = allStages?.filter(s => s.event_id === event.id) || [];
-      const resourcesForEvent = allResources?.filter(r => r.event_id === event.id) || [];
+    // Enrich each event directly from embedded relational data
+    const enrichedEvents = events.map((event: any) => {
+      const stagesForEvent = ((event.stages || []) as any[]).sort((a: any, b: any) => a.round_number - b.round_number);
+      const resourcesForEvent = event.resources || [];
       
-      // Determine active stage: matching active_stage_id or first non-completed stage or first stage
-      let activeStage = stagesForEvent.find(s => s.id === event.active_stage_id);
+      // Determine active stage: matching active_stage_id (validated!) or first non-completed stage or first stage
+      let activeStage = stagesForEvent.find((s: any) => s.id === event.active_stage_id);
       if (!activeStage && stagesForEvent.length > 0) {
-        activeStage = stagesForEvent.find(s => !s.is_completed) || stagesForEvent[0];
+        activeStage = stagesForEvent.find((s: any) => !s.is_completed) || stagesForEvent[0];
       }
 
       // Calculate deliverables progress for active stage
       let deliverable_progress = { done: 0, total: 0 };
       if (activeStage) {
-        const stageDelivs = allDeliverables.filter(d => d.stage_id === activeStage.id);
-        const doneCount = stageDelivs.filter(d => d.is_done).length;
+        const stageDelivs = (activeStage as any).stage_deliverables || [];
+        const doneCount = stageDelivs.filter((d: any) => d.is_done).length;
         deliverable_progress = {
           done: doneCount,
           total: stageDelivs.length
@@ -841,8 +832,8 @@ export async function getUserEvents() {
       }
 
       // Team count from event_participants
-      const teamCount = allParticipants?.filter(p => p.event_id === event.id).length || 1;
-      const squadName = event.squad_id ? (squadMap.get(event.squad_id) || null) : null;
+      const teamCount = (event.participants || []).length || 1;
+      const squadName = event.squad?.name || null;
 
       return {
         ...event,
