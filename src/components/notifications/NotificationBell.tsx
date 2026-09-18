@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
+import { sanitizeInternalLink } from '@/lib/utils/url';
 
 export function NotificationBell({ userId }: { userId: string }) {
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -134,7 +135,12 @@ export function NotificationBell({ userId }: { userId: string }) {
     }
     
     if (notification.link) {
-      router.push(notification.link);
+      const targetLink = sanitizeInternalLink(notification.link);
+      if (targetLink.startsWith('/')) {
+        router.push(targetLink);
+      } else {
+        window.open(targetLink, '_blank', 'noopener,noreferrer');
+      }
     }
   };
 

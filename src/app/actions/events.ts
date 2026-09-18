@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { getDefaultDeliverables } from '@/lib/deliverables/templates';
 import { createInAppNotification, createBatchInAppNotifications } from '@/lib/notifications/in-app';
 import { sendTeamInviteEmail } from '@/lib/notifications/send-email';
+import { getServerBaseUrl } from '@/lib/utils/url-server';
+import { ensureExternalUrl } from '@/lib/utils/url';
 
 export type CreateEventInput = {
   title: string;
@@ -138,7 +140,7 @@ export async function createEvent(data: CreateEventInput) {
     const eventPayload = {
       title: data.title.trim(),
       organizer: data.organizer || '',
-      source_url: data.source_url?.trim() || null,
+      source_url: data.source_url?.trim() ? ensureExternalUrl(data.source_url) : null,
       source_platform: sourcePlatform,
       mode: data.mode || 'online',
       location: data.location || '',
@@ -181,7 +183,7 @@ export async function createEvent(data: CreateEventInput) {
       .filter(r => r.title?.trim() && r.url?.trim())
       .map(r => ({
         title: r.title.trim(),
-        url: r.url.trim(),
+        url: ensureExternalUrl(r.url),
         resource_type: r.resource_type || 'other',
       }));
 
@@ -889,7 +891,7 @@ export async function addEventResource(eventId: string, resource: {
       .insert({
         event_id: eventId,
         title: resource.title.trim(),
-        url: resource.url.trim(),
+        url: ensureExternalUrl(resource.url),
         resource_type: (resource.resource_type as any) || 'other',
         is_official: resource.is_official !== undefined ? resource.is_official : false,
       })
@@ -989,7 +991,7 @@ export async function updateEventMeetUrl(eventId: string, meetUrl: string) {
 
     const { error } = await supabase
       .from('events')
-      .update({ meet_url: meetUrl.trim() || null })
+      .update({ meet_url: meetUrl?.trim() ? ensureExternalUrl(meetUrl) : null })
       .eq('id', eventId);
 
     if (error) return { success: false, error: error.message };
@@ -1024,9 +1026,9 @@ export async function updatePostSubmissionDetails(eventId: string, details: {
     if (details.result_date !== undefined) updatePayload.result_date = details.result_date || null;
     if (details.prize_details !== undefined) updatePayload.prize_details = details.prize_details;
     if (details.retro_notes !== undefined) updatePayload.retro_notes = details.retro_notes;
-    if (details.demo_url !== undefined) updatePayload.demo_url = details.demo_url;
-    if (details.github_repo_url !== undefined) updatePayload.github_repo_url = details.github_repo_url;
-    if (details.pitch_deck_url !== undefined) updatePayload.pitch_deck_url = details.pitch_deck_url;
+    if (details.demo_url !== undefined) updatePayload.demo_url = details.demo_url?.trim() ? ensureExternalUrl(details.demo_url) : null;
+    if (details.github_repo_url !== undefined) updatePayload.github_repo_url = details.github_repo_url?.trim() ? ensureExternalUrl(details.github_repo_url) : null;
+    if (details.pitch_deck_url !== undefined) updatePayload.pitch_deck_url = details.pitch_deck_url?.trim() ? ensureExternalUrl(details.pitch_deck_url) : null;
     if (details.status) updatePayload.status = details.status;
 
     const { error } = await supabase
@@ -1252,7 +1254,7 @@ export async function addEventParticipant(eventId: string, userId: string, role:
         const { data: adderProfile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
         const adderName = adderProfile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'A teammate';
         const eventTitle = event?.title || 'Hackathon';
-        const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const appBaseUrl = getServerBaseUrl();
         const eventUrl = `${appBaseUrl}/events/${eventId}`;
 
         await createInAppNotification({

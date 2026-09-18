@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { evaluateAndDispatchNotifications } from '@/lib/notifications/engine';
+import { getServerBaseUrl } from '@/lib/utils/url-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +24,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    const result = await evaluateAndDispatchNotifications();
+    const baseUrl = getServerBaseUrl(request);
+    const result = await evaluateAndDispatchNotifications({ baseUrl });
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),

@@ -5,6 +5,7 @@ import { FileText, UploadCloud, Link as LinkIcon, ExternalLink, X, Loader2, Chec
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import { ensureExternalUrl } from '@/lib/utils/url'
 
 interface PdfUploadProps {
   value: string
@@ -205,7 +206,7 @@ export function PdfUpload({
 
               <div className="flex items-center gap-2 shrink-0">
                 <a
-                  href={value}
+                  href={ensureExternalUrl(value)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-mono text-xs font-bold px-2.5 py-1.5 border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[2px_2px_0_#10201d] inline-flex items-center gap-1 transition-all"
@@ -292,7 +293,7 @@ export function PdfUpload({
             />
             {value && (
               <a
-                href={value}
+                href={ensureExternalUrl(value)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-mono text-xs font-bold px-3 py-2 border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[2px_2px_0_#10201d] inline-flex items-center gap-1 shrink-0"

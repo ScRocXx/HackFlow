@@ -12,6 +12,7 @@ import { createEvent } from '@/app/actions/events'
 import { getMySquads } from '@/app/actions/squads'
 import type { Squad } from '@/lib/supabase/types'
 import { useRouter } from 'next/navigation'
+import { ensureExternalUrl } from '@/lib/utils/url'
 
 interface URLParseDialogProps {
   open: boolean
@@ -1123,7 +1124,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                           </span>
                         </div>
                         <a 
-                          href={res.url} 
+                          href={ensureExternalUrl(res.url)} 
                           target="_blank" 
                           rel="noopener noreferrer" 
                           className="font-mono text-xs text-[#2e4742] hover:text-[#e53927] hover:underline flex items-center gap-1 truncate mt-0.5"

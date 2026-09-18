@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { Friendship, Profile } from '@/lib/supabase/types'
 import { sendEmail } from '@/lib/notifications/send-email'
+import { getServerBaseUrl } from '@/lib/utils/url-server'
 import React from 'react'
 
 export async function sendFriendRequest(receiverEmail: string) {
@@ -102,7 +103,7 @@ export async function sendFriendRequest(receiverEmail: string) {
 
     // Fire off transactional email invite
     try {
-      const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const appBaseUrl = getServerBaseUrl();
       await sendEmail({
         to: cleanEmail,
         subject: `${senderName} invited you to collaborate on HackFlow`,

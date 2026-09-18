@@ -3,6 +3,7 @@ import { getUserEvents } from '@/app/actions/events'
 import { Trophy, Award, ExternalLink, ArrowRight, Calendar, Star, FileText } from 'lucide-react'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
+import { ensureExternalUrl } from '@/lib/utils/url'
 
 function GithubIcon({ className = "w-3 h-3" }: { className?: string }) {
   return (
@@ -115,7 +116,7 @@ export default async function ArchivePage() {
                     <div className="flex flex-wrap gap-2 pt-2 border-t border-[#10201d]/20">
                       {ev.github_repo_url && (
                         <a
-                          href={ev.github_repo_url}
+                          href={ensureExternalUrl(ev.github_repo_url)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="font-mono text-[11px] font-bold text-[#10201d] hover:text-[#e53927] flex items-center gap-1 underline"
@@ -125,7 +126,7 @@ export default async function ArchivePage() {
                       )}
                       {ev.pitch_deck_url && (
                         <a
-                          href={ev.pitch_deck_url}
+                          href={ensureExternalUrl(ev.pitch_deck_url)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="font-mono text-[11px] font-bold text-[#10201d] hover:text-[#e53927] flex items-center gap-1 underline"
@@ -135,7 +136,7 @@ export default async function ArchivePage() {
                       )}
                       {ev.demo_url && (
                         <a
-                          href={ev.demo_url}
+                          href={ensureExternalUrl(ev.demo_url)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="font-mono text-[11px] font-bold text-[#10201d] hover:text-[#e53927] flex items-center gap-1 underline"

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { ensureExternalUrl } from '@/lib/utils/url';
 import type { TeamVaultProfile, TeamVaultAsset } from '@/lib/supabase/types';
 
 export async function getVaultProfiles(squadId?: string | null) {
@@ -80,10 +81,10 @@ export async function upsertVaultProfile(profileData: {
         phone: profileData.phone?.trim() || null,
         college: profileData.college?.trim() || null,
         roll_number: profileData.roll_number?.trim() || null,
-        github_url: profileData.github_url?.trim() || null,
-        linkedin_url: profileData.linkedin_url?.trim() || null,
-        portfolio_url: profileData.portfolio_url?.trim() || null,
-        resume_url: profileData.resume_url?.trim() || null,
+        github_url: profileData.github_url?.trim() ? ensureExternalUrl(profileData.github_url) : null,
+        linkedin_url: profileData.linkedin_url?.trim() ? ensureExternalUrl(profileData.linkedin_url) : null,
+        portfolio_url: profileData.portfolio_url?.trim() ? ensureExternalUrl(profileData.portfolio_url) : null,
+        resume_url: profileData.resume_url?.trim() ? ensureExternalUrl(profileData.resume_url) : null,
       }, { onConflict: 'user_id' })
       .select('*')
       .single();
@@ -167,7 +168,7 @@ export async function createVaultAsset(assetData: {
       .insert({
         title: assetData.title.trim(),
         asset_type: assetData.asset_type,
-        url: assetData.url.trim(),
+        url: ensureExternalUrl(assetData.url),
         description: assetData.description?.trim() || null,
         tags: assetData.tags || [],
         created_by: user.id,

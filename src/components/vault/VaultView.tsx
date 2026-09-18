@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { PdfUpload } from '@/components/ui/pdf-upload'
 import { upsertVaultProfile, createVaultAsset, deleteVaultAsset, getVaultProfiles, getVaultAssets } from '@/app/actions/vault'
 import type { TeamVaultProfile, TeamVaultAsset, Squad } from '@/lib/supabase/types'
+import { ensureExternalUrl } from '@/lib/utils/url'
 import { cn } from '@/lib/utils'
 
 function GithubIcon({ className = "w-3.5 h-3.5" }: { className?: string }) {
@@ -548,7 +549,7 @@ export function VaultView({
                   <div className="pt-4 mt-4 border-t-2 border-[#10201d] flex items-center justify-between">
                     {(asset.url.toLowerCase().endsWith('.pdf') || asset.url.toLowerCase().includes('hackflow_uploads') || asset.url.toLowerCase().includes('/uploads/')) ? (
                       <a
-                        href={asset.url}
+                        href={ensureExternalUrl(asset.url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-mono text-xs font-bold text-[#10201d] hover:text-[#e53927] flex items-center gap-1.5 group underline"
@@ -557,7 +558,7 @@ export function VaultView({
                       </a>
                     ) : (
                       <a
-                        href={asset.url}
+                        href={ensureExternalUrl(asset.url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-mono text-xs font-bold text-[#10201d] hover:text-[#e53927] flex items-center gap-1.5 group underline"
@@ -646,7 +647,7 @@ export function VaultView({
 
                   <div className="pt-4 mt-4 border-t-2 border-[#10201d] flex items-center justify-between">
                     <a
-                      href={asset.url}
+                      href={ensureExternalUrl(asset.url)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="font-mono text-xs font-bold text-[#10201d] hover:text-[#e53927] flex items-center gap-1.5 group underline"

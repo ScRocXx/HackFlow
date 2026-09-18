@@ -1,4 +1,6 @@
 
+import { ensureExternalUrl } from '@/lib/utils/url';
+
 export interface DeliverableItem {
   title: string;
   is_done: boolean;
@@ -29,6 +31,8 @@ export interface DeadlineReminderEmailProps {
  * Highlights pending-first deliverables ([!]), hard cutoffs, constraints, and dual CTAs.
  */
 export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): string {
+  const safeEventUrl = ensureExternalUrl(props.eventUrl);
+  const safeMeetUrl = props.meetUrl ? ensureExternalUrl(props.meetUrl) : null;
   const isEmergency = props.intervalKey === '6h' || props.intervalKey === '24h';
   const accentColor = props.intervalKey === '6h' ? '#e53927' : props.intervalKey === '24h' ? '#f97316' : props.intervalKey === '3d' ? '#f5b726' : '#52b788';
   const blockBg = isEmergency ? '#230a08' : '#142622';
@@ -145,15 +149,15 @@ export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): s
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
           <tr>
             <td align="center" style="padding-bottom: 12px;">
-              <a href="${props.eventUrl}" style="background-color: #e53927; color: #ffffff; padding: 15px 32px; text-decoration: none; font-family: 'SF Mono', Consolas, Monaco, monospace; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; display: block; border: 2px solid #ffffff; box-shadow: 4px 4px 0 #000000;">
+              <a href="${safeEventUrl}" style="background-color: #e53927; color: #ffffff; padding: 15px 32px; text-decoration: none; font-family: 'SF Mono', Consolas, Monaco, monospace; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; display: block; border: 2px solid #ffffff; box-shadow: 4px 4px 0 #000000;">
                 OPEN WAR-ROOM / WORKSPACE &rarr;
               </a>
             </td>
           </tr>
-          ${props.meetUrl ? `
+          ${safeMeetUrl ? `
             <tr>
               <td align="center">
-                <a href="${props.meetUrl}" style="background-color: #1c3631; color: #8bb2de; padding: 12px 28px; text-decoration: none; font-family: 'SF Mono', Consolas, Monaco, monospace; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; display: block; border: 1px solid #3d5f58;">
+                <a href="${safeMeetUrl}" style="background-color: #1c3631; color: #8bb2de; padding: 12px 28px; text-decoration: none; font-family: 'SF Mono', Consolas, Monaco, monospace; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; display: block; border: 1px solid #3d5f58;">
                   🎙️ JOIN SQUAD MEET / HUDDLE &rarr;
                 </a>
               </td>
@@ -190,6 +194,7 @@ export interface TeamInviteEmailProps {
 }
 
 export function renderTeamInviteHtml(props: TeamInviteEmailProps): string {
+  const safeInviteUrl = ensureExternalUrl(props.inviteUrl);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -211,7 +216,7 @@ export function renderTeamInviteHtml(props: TeamInviteEmailProps): string {
         Coordinate round deliverables, sync sprint checklists, monitor live cutoffs, and manage your team vault together.
       </p>
       <div style="text-align: center; margin: 32px 0 20px;">
-        <a href="${props.inviteUrl}" style="background-color: #e53927; color: #ffffff; padding: 14px 28px; text-decoration: none; font-family: 'SF Mono', Consolas, monospace; font-weight: bold; font-size: 14px; display: inline-block; border: 2px solid #ffffff; box-shadow: 3px 3px 0 #000000; text-transform: uppercase;">
+        <a href="${safeInviteUrl}" style="background-color: #e53927; color: #ffffff; padding: 14px 28px; text-decoration: none; font-family: 'SF Mono', Consolas, monospace; font-weight: bold; font-size: 14px; display: inline-block; border: 2px solid #ffffff; box-shadow: 3px 3px 0 #000000; text-transform: uppercase;">
           Enter War-Room & Accept &rarr;
         </a>
       </div>
@@ -232,6 +237,7 @@ export interface StageCompletedEmailProps {
 }
 
 export function renderStageCompletedHtml(props: StageCompletedEmailProps): string {
+  const safeEventUrl = ensureExternalUrl(props.eventUrl);
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -255,7 +261,7 @@ export function renderStageCompletedHtml(props: StageCompletedEmailProps): strin
         </div>
       ` : ''}
       <div style="text-align: center; margin: 32px 0 20px;">
-        <a href="${props.eventUrl}" style="background-color: #10201d; color: #ffffff; padding: 14px 28px; text-decoration: none; font-family: 'SF Mono', Consolas, monospace; font-weight: bold; font-size: 14px; display: inline-block; border: 2px solid #52b788;">
+        <a href="${safeEventUrl}" style="background-color: #10201d; color: #ffffff; padding: 14px 28px; text-decoration: none; font-family: 'SF Mono', Consolas, monospace; font-weight: bold; font-size: 14px; display: inline-block; border: 2px solid #52b788;">
           Open Next Round &rarr;
         </a>
       </div>

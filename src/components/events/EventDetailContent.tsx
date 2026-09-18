@@ -22,6 +22,7 @@ import { MeetCompanionBar } from '@/components/events/MeetCompanionBar'
 import { IdeaSandbox } from '@/components/events/IdeaSandbox'
 import { PostSubmissionConsole } from '@/components/events/PostSubmissionConsole'
 import type { EventResource, Friendship } from '@/lib/supabase/types'
+import { ensureExternalUrl } from '@/lib/utils/url'
 import { format } from 'date-fns'
 
 interface EventDetailContentProps {
@@ -144,7 +145,7 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
     try {
       const res = await addEventResource(event.id, {
         title: newTitle.trim(),
-        url: newUrl.trim(),
+        url: ensureExternalUrl(newUrl.trim()),
         resource_type: newType,
         is_official: false,
       })
@@ -431,7 +432,7 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
                           )}
                         </div>
                         <a
-                          href={res.url}
+                          href={ensureExternalUrl(res.url)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="font-mono text-xs text-[#2e4742] hover:text-[#e53927] hover:underline flex items-center gap-1 mt-1 truncate group"
@@ -444,7 +445,7 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
 
                     <div className="flex items-center gap-2 shrink-0">
                       <a
-                        href={res.url}
+                        href={ensureExternalUrl(res.url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="hidden sm:inline-flex items-center gap-1 font-mono text-xs font-bold text-[#10201d] hover:bg-[#e97b77] hover:text-white px-2.5 py-1.5 border-2 border-[#10201d] bg-[#f2f2eb] shadow-[2px_2px_0_#10201d] transition-all"
@@ -567,7 +568,7 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
               
               {event.source_url && (
                 <a 
-                  href={event.source_url} 
+                  href={ensureExternalUrl(event.source_url)} 
                   target="_blank" 
                   rel="noreferrer" 
                   className="flex items-center text-xs font-mono font-bold text-[#10201d] hover:text-[#e53927] p-2.5 border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d] transition-transform hover:translate-x-0.5 hover:translate-y-0.5"

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { useToast } from '@/components/ui/use-toast'
 import { updateEventMeetUrl } from '@/app/actions/events'
+import { ensureExternalUrl } from '@/lib/utils/url'
 
 interface MeetCompanionBarProps {
   eventId: string
@@ -24,10 +25,11 @@ export function MeetCompanionBar({ eventId, meetUrl }: MeetCompanionBarProps) {
     e.preventDefault()
     setIsSaving(true)
     try {
-      const res = await updateEventMeetUrl(eventId, inputUrl)
+      const sanitized = ensureExternalUrl(inputUrl)
+      const res = await updateEventMeetUrl(eventId, sanitized)
       if (!res.success) throw new Error(res.error || 'Failed to update Google Meet URL')
 
-      setCurrentMeetUrl(inputUrl.trim())
+      setCurrentMeetUrl(sanitized)
       toast({
         title: 'Team Meet Link Updated',
         description: 'Teammates can now 1-click join the sprint meeting.',
@@ -48,7 +50,7 @@ export function MeetCompanionBar({ eventId, meetUrl }: MeetCompanionBarProps) {
     <div className="flex items-center gap-2">
       {currentMeetUrl ? (
         <a
-          href={currentMeetUrl}
+          href={ensureExternalUrl(currentMeetUrl)}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider px-3.5 py-2 border-2 border-[#10201d] bg-[#8bb2de] hover:bg-[#a6c8ee] text-[#10201d] shadow-[3px_3px_0_#2e4742] transition-transform hover:translate-x-0.5 hover:translate-y-0.5"

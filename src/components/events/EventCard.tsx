@@ -18,6 +18,7 @@ import {
 import { StatusPills } from '@/components/events/StatusPills'
 import { CountdownTimer } from '@/components/events/CountdownTimer'
 import { EditEventDialog } from '@/components/events/EditEventDialog'
+import { ensureExternalUrl } from '@/lib/utils/url'
 import { 
   Dialog, 
   DialogContent, 
@@ -273,7 +274,7 @@ export function EventCard({ event }: EventCardProps) {
             {event.resources.slice(0, 3).map((res) => (
               <a
                 key={res.id}
-                href={res.url}
+                href={ensureExternalUrl(res.url)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 border border-[#10201d] bg-[#f7f7f2] hover:bg-[#8bb2de] text-[#10201d] transition-colors max-w-[180px]"

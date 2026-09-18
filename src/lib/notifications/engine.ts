@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 import { sendDeadlineEmail } from './send-email';
 import { createInAppNotification } from './in-app';
 import { sendDiscordDeadlineAlert } from './discord';
+import { getServerBaseUrl } from '@/lib/utils/url-server';
+import { ensureExternalUrl } from '@/lib/utils/url';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder';
 
@@ -65,14 +67,14 @@ export function getIntervalMessage(intervalKey: string, stageName: string, event
   }
 }
 
-export async function evaluateAndDispatchNotifications() {
+export async function evaluateAndDispatchNotifications(options?: { baseUrl?: string }) {
   let evaluated = 0;
   let dispatched = 0;
 
   // 1. Query pending event stages (Safeguard: strictly ignore TBA stages with null deadlines)
   const { data: stages, error: stagesError } = await supabaseAdmin
     .from('event_stages')
-    .select('id, title, stage_type, evaluation_format, deadline, event_id, events!event_stages_event_id_fkey(id, title, created_by, team_size_min, team_size_max)')
+    .select('id, title, stage_type, evaluation_format, deadline, event_id, events!event_stages_event_id_fkey(id, title, created_by, team_size_min, team_size_max, meet_url)')
     .eq('is_completed', false)
     .not('deadline', 'is', null)
     .gt('deadline', new Date().toISOString());
@@ -205,8 +207,9 @@ export async function evaluateAndDispatchNotifications() {
 
     for (const intervalKey of triggeredIntervals) {
       const message = getIntervalMessage(intervalKey, stage.title, eventTitle);
-      const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const appBaseUrl = options?.baseUrl || getServerBaseUrl();
       const eventUrl = `${appBaseUrl}/events/${eventId}`;
+      const meetUrl = (eventData as any)?.meet_url ? ensureExternalUrl((eventData as any).meet_url) : undefined;
 
       for (const recipient of recipients) {
         const email = recipient.email;
@@ -229,6 +232,7 @@ export async function evaluateAndDispatchNotifications() {
               timezone: 'IST',
               deliverables,
               constraints,
+              meetUrl,
             });
 
             await supabaseAdmin
@@ -256,7 +260,7 @@ export async function evaluateAndDispatchNotifications() {
               userId: recipient.id,
               title: message.subject,
               body: message.body,
-              link: eventUrl
+              link: `/events/${eventId}`
             });
 
             await supabaseAdmin
