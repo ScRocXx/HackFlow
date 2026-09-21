@@ -1,4 +1,3 @@
-
 import { ensureExternalUrl } from '@/lib/utils/url';
 
 export interface DeliverableItem {
@@ -27,15 +26,13 @@ export interface DeadlineReminderEmailProps {
 
 /**
  * Renders the High-Urgency Action-First Emergency Heads-Up Display (HUD) HTML email.
- * Dark brutalist palette: #10201d background, #f7f7f2 text, #e53927 urgency accents.
- * Highlights pending-first deliverables ([!]), hard cutoffs, constraints, and dual CTAs.
+ * Styled with HackFlow signature palette matching the notification icon:
+ * #f7f7f2 warm cream background, #10201d brutalist ink borders, #e53927 / #2e4742 accents.
  */
 export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): string {
   const safeEventUrl = ensureExternalUrl(props.eventUrl);
   const safeMeetUrl = props.meetUrl ? ensureExternalUrl(props.meetUrl) : null;
-  const isEmergency = props.intervalKey === '6h' || props.intervalKey === '24h';
-  const accentColor = props.intervalKey === '6h' ? '#e53927' : props.intervalKey === '24h' ? '#f97316' : props.intervalKey === '3d' ? '#f5b726' : '#52b788';
-  const blockBg = isEmergency ? '#230a08' : '#142622';
+  const accentColor = props.intervalKey === '6h' ? '#e53927' : props.intervalKey === '24h' ? '#f97316' : props.intervalKey === '3d' ? '#f5b726' : '#2e4742';
 
   // Sort deliverables: pending items FIRST ([!]), completed items last ([✓])
   let deliverablesHtml = '';
@@ -47,18 +44,18 @@ export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): s
     deliverablesHtml = `
       <div style="margin: 24px 0;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-          <span style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 11px; font-weight: 800; text-transform: uppercase; color: #8bb2de; letter-spacing: 1px;">
+          <span style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 11px; font-weight: 800; text-transform: uppercase; color: #2e4742; letter-spacing: 1px;">
             Action Deliverables (${pendingCount} Pending / ${doneCount} Complete)
           </span>
         </div>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: separate; border-spacing: 0 6px;">
           ${sorted.slice(0, 8).map(d => `
             <tr>
-              <td style="padding: 10px 14px; background-color: ${d.is_done ? '#0d1816' : '#1c0f0e'}; border: 1px solid ${d.is_done ? '#233934' : '#e53927'}; font-family: 'SF Mono', Consolas, Monaco, monospace;">
-                <span style="color: ${d.is_done ? '#52b788' : '#e53927'}; font-weight: 900; font-size: 12px; margin-right: 8px;">
+              <td style="padding: 10px 14px; background-color: ${d.is_done ? '#eaf4f0' : '#fef2f2'}; border: 1px solid ${d.is_done ? '#2e4742' : '#e53927'}; font-family: 'SF Mono', Consolas, Monaco, monospace;">
+                <span style="color: ${d.is_done ? '#1b4332' : '#e53927'}; font-weight: 900; font-size: 12px; margin-right: 8px;">
                   ${d.is_done ? '[✓] DONE' : '[!] PENDING'}
                 </span>
-                <span style="color: ${d.is_done ? '#718c86' : '#f7f7f2'}; font-size: 13px; font-weight: ${d.is_done ? 'normal' : 'bold'}; ${d.is_done ? 'text-decoration: line-through;' : ''}">
+                <span style="color: ${d.is_done ? '#57726d' : '#10201d'}; font-size: 13px; font-weight: ${d.is_done ? 'normal' : 'bold'}; ${d.is_done ? 'text-decoration: line-through;' : ''}">
                   ${escapeHtml(d.title)}
                 </span>
               </td>
@@ -66,7 +63,7 @@ export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): s
           `).join('')}
         </table>
         ${sorted.length > 8 ? `
-          <div style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 11px; color: #889893; margin-top: 6px; text-align: right;">
+          <div style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 11px; color: #57726d; margin-top: 6px; text-align: right;">
             + ${sorted.length - 8} more deliverables in workspace
           </div>
         ` : ''}
@@ -74,8 +71,8 @@ export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): s
     `;
   } else if (props.checklistProgress) {
     deliverablesHtml = `
-      <div style="background-color: #142622; padding: 14px 18px; border-left: 4px solid ${accentColor}; margin: 20px 0; font-family: 'SF Mono', Consolas, monospace; font-size: 13px; color: #f7f7f2;">
-        <span style="color: #8bb2de; font-weight: bold; text-transform: uppercase;">Checklist Status:</span> ${escapeHtml(props.checklistProgress)}
+      <div style="background-color: #ffffff; padding: 14px 18px; border-left: 4px solid ${accentColor}; border: 1px solid #10201d; margin: 20px 0; font-family: 'SF Mono', Consolas, monospace; font-size: 13px; color: #10201d;">
+        <span style="color: #2e4742; font-weight: bold; text-transform: uppercase;">Checklist Status:</span> ${escapeHtml(props.checklistProgress)}
       </div>
     `;
   }
@@ -84,14 +81,14 @@ export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): s
   let constraintsHtml = '';
   if (props.constraints && Object.values(props.constraints).some(Boolean)) {
     constraintsHtml = `
-      <div style="background-color: #0d1816; border: 1px dashed #3d5f58; padding: 14px 16px; margin: 20px 0;">
-        <div style="font-family: 'SF Mono', Consolas, monospace; font-size: 11px; font-weight: 800; color: #f5b726; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+      <div style="background-color: #ffffff; border: 2px dashed #10201d; padding: 14px 16px; margin: 20px 0;">
+        <div style="font-family: 'SF Mono', Consolas, monospace; font-size: 11px; font-weight: 800; color: #c02616; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
           ⚠ Stage Constraints & Limits
         </div>
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family: 'SF Mono', Consolas, monospace; font-size: 12px; color: #c4d4d0;">
-          ${props.constraints.format ? `<tr><td style="padding: 2px 0; width: 120px; color: #718c86;">Format:</td><td style="color: #f7f7f2; font-weight: bold;">${escapeHtml(props.constraints.format)}</td></tr>` : ''}
-          ${props.constraints.teamSize ? `<tr><td style="padding: 2px 0; color: #718c86;">Squad Size:</td><td style="color: #f7f7f2; font-weight: bold;">${escapeHtml(props.constraints.teamSize)}</td></tr>` : ''}
-          ${props.constraints.fileLimit ? `<tr><td style="padding: 2px 0; color: #718c86;">Size Limit:</td><td style="color: #f7f7f2; font-weight: bold;">${escapeHtml(props.constraints.fileLimit)}</td></tr>` : ''}
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family: 'SF Mono', Consolas, monospace; font-size: 12px; color: #10201d;">
+          ${props.constraints.format ? `<tr><td style="padding: 2px 0; width: 120px; color: #57726d;">Format:</td><td style="color: #10201d; font-weight: bold;">${escapeHtml(props.constraints.format)}</td></tr>` : ''}
+          ${props.constraints.teamSize ? `<tr><td style="padding: 2px 0; color: #57726d;">Squad Size:</td><td style="color: #10201d; font-weight: bold;">${escapeHtml(props.constraints.teamSize)}</td></tr>` : ''}
+          ${props.constraints.fileLimit ? `<tr><td style="padding: 2px 0; color: #57726d;">Size Limit:</td><td style="color: #10201d; font-weight: bold;">${escapeHtml(props.constraints.fileLimit)}</td></tr>` : ''}
         </table>
       </div>
     `;
@@ -104,37 +101,37 @@ export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): s
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(props.eventTitle)} - Urgent HUD</title>
 </head>
-<body style="background-color: #080f0e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 24px; color: #f7f7f2;">
-  <div style="background-color: #10201d; max-width: 600px; margin: 0 auto; border: 2px solid #3d5f58; box-shadow: 6px 6px 0px #040807; overflow: hidden;">
+<body style="background-color: #f2f2eb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 24px; color: #10201d;">
+  <div style="background-color: #f7f7f2; max-width: 600px; margin: 0 auto; border: 2px solid #10201d; box-shadow: 6px 6px 0px #10201d; overflow: hidden;">
     
     <!-- Top Emergency Bar -->
-    <div style="background-color: ${accentColor}; color: #ffffff; padding: 10px 16px; font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 11px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center;">
-      <span>🚨 EMERGENCY HEADS-UP DISPLAY</span>
-      <span style="background-color: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 2px;">INTERVAL: ${props.intervalKey.toUpperCase()}</span>
+    <div style="background-color: ${accentColor}; color: #ffffff; padding: 12px 18px; font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 11px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #10201d;">
+      <span>🚨 DEADLINE DISPATCH // HUD</span>
+      <span style="background-color: rgba(0,0,0,0.25); padding: 2px 8px; border-radius: 2px;">ROUND: ${props.intervalKey.toUpperCase()}</span>
     </div>
 
     <!-- Header Section -->
-    <div style="padding: 24px 28px 16px 28px; border-bottom: 2px solid #233934;">
-      <div style="font-family: 'SF Mono', Consolas, monospace; font-size: 12px; font-weight: 800; color: #8bb2de; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;">
+    <div style="padding: 24px 28px 16px 28px; border-bottom: 2px solid #10201d; background-color: #f7f7f2;">
+      <div style="font-family: 'SF Mono', Consolas, monospace; font-size: 12px; font-weight: 800; color: #2e4742; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px;">
         HackFlow Active Sprint
       </div>
-      <h1 style="margin: 0 0 6px 0; font-size: 24px; font-weight: 900; color: #f7f7f2; letter-spacing: -0.5px;">
+      <h1 style="margin: 0 0 6px 0; font-size: 24px; font-weight: 900; color: #10201d; letter-spacing: -0.5px;">
         ${escapeHtml(props.eventTitle)}
       </h1>
-      <div style="font-family: 'SF Mono', Consolas, monospace; font-size: 14px; font-weight: bold; color: #e97b77;">
+      <div style="font-family: 'SF Mono', Consolas, monospace; font-size: 14px; font-weight: bold; color: #e53927;">
         ${escapeHtml(props.stageName)}
       </div>
     </div>
 
-    <!-- Giant Countdown & Cutoff HUD -->
-    <div style="background-color: ${blockBg}; padding: 22px 28px; border-bottom: 2px solid ${accentColor}; text-align: center;">
-      <div style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 12px; font-weight: 800; text-transform: uppercase; color: ${accentColor}; letter-spacing: 2px; margin-bottom: 6px;">
+    <!-- Countdown & Cutoff HUD -->
+    <div style="background-color: #ffffff; padding: 22px 28px; border-bottom: 2px solid #10201d; text-align: center;">
+      <div style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 12px; font-weight: 800; text-transform: uppercase; color: #e53927; letter-spacing: 2px; margin-bottom: 6px;">
         Time to Hard Cutoff
       </div>
-      <div style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 32px; font-weight: 900; color: #ffffff; letter-spacing: 1px; margin: 4px 0 10px 0; text-shadow: 0 0 12px ${accentColor}88;">
+      <div style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 32px; font-weight: 900; color: #10201d; letter-spacing: 1px; margin: 4px 0 10px 0;">
         ⏳ ${escapeHtml(props.timeRemaining.toUpperCase())}
       </div>
-      <div style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 12px; font-weight: bold; color: #c4d4d0; background-color: rgba(0,0,0,0.4); padding: 6px 12px; display: inline-block; border: 1px solid rgba(255,255,255,0.1);">
+      <div style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 12px; font-weight: bold; color: #f7f7f2; background-color: #10201d; padding: 6px 14px; display: inline-block;">
         HARD CUTOFF: <strong style="color: #ffffff;">${escapeHtml(props.cutoffDate || 'CHECK WORKSPACE')}</strong> ${props.timezone ? `(${escapeHtml(props.timezone)})` : ''}
       </div>
     </div>
@@ -149,7 +146,7 @@ export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): s
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
           <tr>
             <td align="center" style="padding-bottom: 12px;">
-              <a href="${safeEventUrl}" style="background-color: #e53927; color: #ffffff; padding: 15px 32px; text-decoration: none; font-family: 'SF Mono', Consolas, Monaco, monospace; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; display: block; border: 2px solid #ffffff; box-shadow: 4px 4px 0 #000000;">
+              <a href="${safeEventUrl}" style="background-color: #e53927; color: #ffffff; padding: 15px 32px; text-decoration: none; font-family: 'SF Mono', Consolas, Monaco, monospace; font-weight: 900; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; display: block; border: 2px solid #10201d; box-shadow: 4px 4px 0 #10201d;">
                 OPEN EVENT WORKSPACE &rarr;
               </a>
             </td>
@@ -157,7 +154,7 @@ export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): s
           ${safeMeetUrl ? `
             <tr>
               <td align="center">
-                <a href="${safeMeetUrl}" style="background-color: #1c3631; color: #8bb2de; padding: 12px 28px; text-decoration: none; font-family: 'SF Mono', Consolas, Monaco, monospace; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; display: block; border: 1px solid #3d5f58;">
+                <a href="${safeMeetUrl}" style="background-color: #2e4742; color: #f7f7f2; padding: 12px 28px; text-decoration: none; font-family: 'SF Mono', Consolas, Monaco, monospace; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; display: block; border: 2px solid #10201d; box-shadow: 3px 3px 0 #10201d;">
                   🎙️ JOIN SQUAD MEET / HUDDLE &rarr;
                 </a>
               </td>
@@ -168,7 +165,7 @@ export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): s
     </div>
 
     <!-- Notification Footer -->
-    <div style="background-color: #0a1412; border-top: 1px solid #233934; padding: 16px 24px; text-align: center; font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 10px; color: #5c746f; letter-spacing: 1px;">
+    <div style="background-color: #2e4742; border-top: 2px solid #10201d; padding: 16px 24px; text-align: center; font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 10px; color: #f7f7f2; letter-spacing: 1px;">
       HACKFLOW // SQUAD DEADLINE NOTIFICATION ENGINE
     </div>
 
@@ -202,26 +199,26 @@ export function renderTeamInviteHtml(props: TeamInviteEmailProps): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>You've been invited to ${escapeHtml(props.eventTitle)}</title>
 </head>
-<body style="background-color: #080f0e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 24px; color: #f7f7f2;">
-  <div style="background-color: #10201d; max-width: 580px; margin: 0 auto; border: 2px solid #3d5f58; box-shadow: 6px 6px 0 #040807; overflow: hidden;">
-    <div style="background-color: #10201d; padding: 20px; text-align: center; border-bottom: 2px solid #233934;">
+<body style="background-color: #f2f2eb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 24px; color: #10201d;">
+  <div style="background-color: #f7f7f2; max-width: 580px; margin: 0 auto; border: 2px solid #10201d; box-shadow: 6px 6px 0 #10201d; overflow: hidden;">
+    <div style="background-color: #2e4742; padding: 20px; text-align: center; border-bottom: 2px solid #10201d;">
       <h1 style="color: #f7f7f2; margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">⚡ HackFlow</h1>
     </div>
     <div style="padding: 32px 28px;">
-      <h2 style="color: #f7f7f2; margin-top: 0; font-size: 20px; font-weight: 700;">You're Invited to Join a Hackathon Squad!</h2>
-      <p style="font-size: 15px; color: #c4d4d0; line-height: 1.6;">
-        <strong style="color: #ffffff;">${escapeHtml(props.inviterName)}</strong> has invited you to collaborate on <strong style="color: #ffffff;">${escapeHtml(props.eventTitle)}</strong> on HackFlow.
+      <h2 style="color: #10201d; margin-top: 0; font-size: 20px; font-weight: 800;">You're Invited to Join a Hackathon Squad!</h2>
+      <p style="font-size: 15px; color: #34433f; line-height: 1.6;">
+        <strong style="color: #10201d;">${escapeHtml(props.inviterName)}</strong> has invited you to collaborate on <strong style="color: #10201d;">${escapeHtml(props.eventTitle)}</strong> on HackFlow.
       </p>
-      <p style="font-size: 14px; color: #889893; line-height: 1.5;">
+      <p style="font-size: 14px; color: #57726d; line-height: 1.5;">
         Coordinate round deliverables, sync sprint checklists, monitor live cutoffs, and manage your team vault together.
       </p>
       <div style="text-align: center; margin: 32px 0 20px;">
-        <a href="${safeInviteUrl}" style="background-color: #e53927; color: #ffffff; padding: 14px 28px; text-decoration: none; font-family: 'SF Mono', Consolas, monospace; font-weight: bold; font-size: 14px; display: inline-block; border: 2px solid #ffffff; box-shadow: 3px 3px 0 #000000; text-transform: uppercase;">
+        <a href="${safeInviteUrl}" style="background-color: #e53927; color: #ffffff; padding: 14px 28px; text-decoration: none; font-family: 'SF Mono', Consolas, monospace; font-weight: bold; font-size: 14px; display: inline-block; border: 2px solid #10201d; box-shadow: 4px 4px 0 #10201d; text-transform: uppercase;">
           Join Squad Workspace &rarr;
         </a>
       </div>
     </div>
-    <div style="border-top: 1px solid #233934; padding: 16px; text-align: center; font-family: 'SF Mono', Consolas, monospace; font-size: 11px; color: #5c746f; background-color: #0a1412;">
+    <div style="border-top: 2px solid #10201d; padding: 16px; text-align: center; font-family: 'SF Mono', Consolas, monospace; font-size: 11px; color: #f7f7f2; background-color: #2e4742;">
       Sent automatically by HackFlow
     </div>
   </div>
@@ -245,28 +242,28 @@ export function renderStageCompletedHtml(props: StageCompletedEmailProps): strin
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(props.completedStage)} Completed - ${escapeHtml(props.eventTitle)}</title>
 </head>
-<body style="background-color: #080f0e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 24px; color: #f7f7f2;">
-  <div style="background-color: #10201d; max-width: 580px; margin: 0 auto; border: 2px solid #3d5f58; box-shadow: 6px 6px 0 #040807; overflow: hidden;">
-    <div style="background-color: #52b788; color: #10201d; padding: 12px 16px; font-family: 'SF Mono', Consolas, monospace; font-size: 12px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase;">
+<body style="background-color: #f2f2eb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 24px; color: #10201d;">
+  <div style="background-color: #f7f7f2; max-width: 580px; margin: 0 auto; border: 2px solid #10201d; box-shadow: 6px 6px 0 #10201d; overflow: hidden;">
+    <div style="background-color: #52b788; color: #10201d; padding: 14px 18px; font-family: 'SF Mono', Consolas, monospace; font-size: 12px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; border-bottom: 2px solid #10201d;">
       ✓ STAGE MILESTONE COMPLETED
     </div>
     <div style="padding: 32px 28px;">
-      <h2 style="color: #f7f7f2; margin-top: 0; font-size: 22px; font-weight: 800;">${escapeHtml(props.completedStage)} Locked & Submitted!</h2>
-      <p style="font-size: 15px; color: #c4d4d0; line-height: 1.6;">
-        Outstanding work! Your squad completed all deliverables for this round in <strong style="color: #ffffff;">${escapeHtml(props.eventTitle)}</strong>.
+      <h2 style="color: #10201d; margin-top: 0; font-size: 22px; font-weight: 800;">${escapeHtml(props.completedStage)} Locked & Submitted!</h2>
+      <p style="font-size: 15px; color: #34433f; line-height: 1.6;">
+        Outstanding work! Your squad completed all deliverables for this round in <strong style="color: #10201d;">${escapeHtml(props.eventTitle)}</strong>.
       </p>
       ${props.nextStage ? `
-        <div style="background-color: #142622; border-left: 4px solid #8bb2de; padding: 12px 16px; margin: 20px 0; font-family: 'SF Mono', Consolas, monospace; font-size: 13px;">
-          <span style="color: #8bb2de; font-weight: bold; text-transform: uppercase;">Next Milestone:</span> ${escapeHtml(props.nextStage)}
+        <div style="background-color: #ffffff; border: 1px solid #10201d; border-left: 4px solid #2e4742; padding: 12px 16px; margin: 20px 0; font-family: 'SF Mono', Consolas, monospace; font-size: 13px;">
+          <span style="color: #2e4742; font-weight: bold; text-transform: uppercase;">Next Milestone:</span> ${escapeHtml(props.nextStage)}
         </div>
       ` : ''}
       <div style="text-align: center; margin: 32px 0 20px;">
-        <a href="${safeEventUrl}" style="background-color: #10201d; color: #ffffff; padding: 14px 28px; text-decoration: none; font-family: 'SF Mono', Consolas, monospace; font-weight: bold; font-size: 14px; display: inline-block; border: 2px solid #52b788;">
+        <a href="${safeEventUrl}" style="background-color: #2e4742; color: #f7f7f2; padding: 14px 28px; text-decoration: none; font-family: 'SF Mono', Consolas, monospace; font-weight: bold; font-size: 14px; display: inline-block; border: 2px solid #10201d; box-shadow: 4px 4px 0 #10201d;">
           Open Next Round &rarr;
         </a>
       </div>
     </div>
-    <div style="border-top: 1px solid #233934; padding: 16px; text-align: center; font-family: 'SF Mono', Consolas, monospace; font-size: 11px; color: #5c746f; background-color: #0a1412;">
+    <div style="border-top: 2px solid #10201d; padding: 16px; text-align: center; font-family: 'SF Mono', Consolas, monospace; font-size: 11px; color: #f7f7f2; background-color: #2e4742;">
       Sent automatically by HackFlow
     </div>
   </div>

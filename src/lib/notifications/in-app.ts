@@ -1,10 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
 import { sanitizeInternalLink } from '@/lib/utils/url';
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
-);
+const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://llyzvbwmktztyyrpcydp.supabase.co').trim();
+const serviceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').trim();
+
+const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+  auth: { persistSession: false, autoRefreshToken: false }
+});
 
 export async function createInAppNotification(params: {
   userId: string;

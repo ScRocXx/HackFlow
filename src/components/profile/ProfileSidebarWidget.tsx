@@ -8,7 +8,6 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -173,13 +172,6 @@ export function ProfileSidebarWidget({ user }: UserProfileSidebarWidgetProps) {
           </div>
           <ChevronUp className={cn("h-3.5 w-3.5 text-[#8bb2de] shrink-0 transition-transform", isMenuOpen && "rotate-180")} />
         </button>
-
-        {/* Realtime Notification Bell embedded on left */}
-        {user?.id && (
-          <div className="shrink-0">
-            <NotificationBell userId={user.id} />
-          </div>
-        )}
       </div>
 
       {/* Profile Popup Menu */}

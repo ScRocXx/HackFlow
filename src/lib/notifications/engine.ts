@@ -4,14 +4,18 @@ import { createInAppNotification } from './in-app';
 import { sendDiscordDeadlineAlert } from './discord';
 import { getServerBaseUrl } from '@/lib/utils/url-server';
 import { ensureExternalUrl } from '@/lib/utils/url';
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder';
 
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-  console.warn('[NotificationEngine] SUPABASE_SERVICE_ROLE_KEY is not defined. Using anon key which may be blocked by Row-Level Security (RLS).');
+function getSupabaseAdmin() {
+  const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://llyzvbwmktztyyrpcydp.supabase.co').trim();
+  const serviceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').trim();
+
+  return createClient(supabaseUrl, serviceKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+  });
 }
-
-const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
 
 export function getTriggeredIntervals(deadline: Date): string[] {
   const now = new Date();
@@ -70,8 +74,9 @@ export function getIntervalMessage(intervalKey: string, stageName: string, event
 export async function evaluateAndDispatchNotifications(options?: { baseUrl?: string }) {
   let evaluated = 0;
   let dispatched = 0;
+  const supabaseAdmin = getSupabaseAdmin();
 
-  // 1. Query pending event stages (Safeguard: strictly ignore TBA stages with null deadlines)
+  // 1. Query pending event stages (strictly ignore TBA stages with null deadlines)
   const { data: stages, error: stagesError } = await supabaseAdmin
     .from('event_stages')
     .select('id, title, stage_type, evaluation_format, deadline, event_id, events!event_stages_event_id_fkey(id, title, created_by, team_size_min, team_size_max, meet_url)')
@@ -84,7 +89,6 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
     return { evaluated, dispatched, error: stagesError?.message };
   }
 
-  // 2. BULK PRE-LOAD: Pre-fetch all participants, deliverables, and notification logs for active stages only
   const eventIds = Array.from(new Set(stages.map(s => s.event_id)));
   const stageIds = stages.map(s => s.id);
 
@@ -92,18 +96,33 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
     return { evaluated: 0, dispatched: 0 };
   }
 
-  const [logsRes, participantsRes, deliverablesRes] = await Promise.all([
+  // 2. BULK PRE-LOAD: Pre-fetch all participants, deliverables, and notification logs for active stages
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const [logsRes, participantsRes, deliverablesRes, recentInAppRes] = await Promise.all([
     supabaseAdmin
       .from('notification_logs')
       .select('stage_id, interval_key, channel, recipient_email')
       .in('stage_id', stageIds),
     supabaseAdmin.from('event_participants').select('event_id, user_id').in('event_id', eventIds),
     supabaseAdmin.from('stage_deliverables').select('stage_id, title, is_done, sort_order').in('stage_id', stageIds),
+    supabaseAdmin.from('notifications').select('user_id, title, link').gte('created_at', sevenDaysAgo),
   ]);
+
+  // FAIL-CLOSED SAFEGUARD: If notification_logs cannot be queried, abort to prevent sending duplicate notifications!
+  if (logsRes.error) {
+    console.error('[NotificationEngine] CRITICAL: Failed to query notification_logs, aborting to prevent duplicate spam:', logsRes.error);
+    return { evaluated, dispatched: 0, error: logsRes.error.message };
+  }
 
   const allLogs = logsRes.data || [];
   const logSet = new Set(
-    allLogs.map(l => [l.stage_id, l.interval_key, l.channel, (l.recipient_email || '').toLowerCase()].join('_'))
+    allLogs.map(l => [l.stage_id, l.interval_key, l.channel, (l.recipient_email || '').toLowerCase().trim()].join('_'))
+  );
+
+  // Secondary in-app deduplication cache
+  const existingInAppSet = new Set(
+    (recentInAppRes.data || []).map(n => [n.user_id, n.title, n.link].join('_'))
   );
 
   // Group participants by eventId
@@ -138,7 +157,11 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
   const profilesById = new Map<string, { id: string; email: string; full_name: string }>();
   (profilesData || []).forEach(p => {
     if (p.id && p.email) {
-      profilesById.set(p.id, p);
+      profilesById.set(p.id, {
+        id: p.id,
+        email: p.email.trim(),
+        full_name: p.full_name || 'Hacker',
+      });
     }
   });
 
@@ -156,7 +179,7 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
       });
     });
 
-  // 4. In-memory stage evaluation loop (Zero database calls per stage iteration)
+  // 3. In-memory stage evaluation loop
   for (const stage of stages) {
     if (!stage.deadline) continue;
     evaluated++;
@@ -216,16 +239,32 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
       const meetUrl = (eventData as any)?.meet_url ? ensureExternalUrl((eventData as any).meet_url) : undefined;
 
       for (const recipient of recipients) {
-        const email = recipient.email;
-        const emailKey = [stage.id, intervalKey, 'email', email.toLowerCase()].join('_');
-        const inAppKey = [stage.id, intervalKey, 'in_app', email.toLowerCase()].join('_');
+        const normalizedEmail = recipient.email.toLowerCase().trim();
+        const emailKey = [stage.id, intervalKey, 'email', normalizedEmail].join('_');
+        const inAppKey = [stage.id, intervalKey, 'in_app', normalizedEmail].join('_');
+        const inAppDedupeKey = [recipient.id, message.subject, `/events/${eventId}`].join('_');
 
-        // --- Channel A: Email ---
+        // --- Channel A: Email (Guaranteed Deduplication) ---
         if (!logSet.has(emailKey)) {
+          logSet.add(emailKey); // Immediately mark in memory to prevent duplicate loops
+
+          // Pre-record in notification_logs to prevent concurrent or repeated execution
+          const { error: logErr } = await supabaseAdmin
+            .from('notification_logs')
+            .upsert({
+              stage_id: stage.id,
+              interval_key: intervalKey,
+              channel: 'email',
+              recipient_email: normalizedEmail,
+            }, { onConflict: 'stage_id,interval_key,channel,recipient_email' });
+
+          if (logErr) {
+            console.error('[NotificationEngine] Warning logging email notification:', logErr);
+          }
+
           try {
-            logSet.add(emailKey);
             const emailResult = await sendDeadlineEmail({
-              to: email,
+              to: normalizedEmail,
               eventTitle,
               stageName: stage.title,
               timeRemaining: intervalKey,
@@ -239,27 +278,20 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
               meetUrl,
             });
 
-            await supabaseAdmin
-              .from('notification_logs')
-              .insert({
-                stage_id: stage.id,
-                interval_key: intervalKey,
-                channel: 'email',
-                recipient_email: email
-              });
-
             if (emailResult?.success) {
               dispatched++;
             }
           } catch (emailErr) {
-            console.error(`[NotificationEngine] Failed to dispatch email to ${email}:`, emailErr);
+            console.error(`[NotificationEngine] Failed to dispatch email to ${normalizedEmail}:`, emailErr);
           }
         }
 
-        // --- Channel B: In-App ---
-        if (!logSet.has(inAppKey)) {
+        // --- Channel B: In-App (Dual-Layer Deduplication: logSet + notifications table) ---
+        if (!logSet.has(inAppKey) && !existingInAppSet.has(inAppDedupeKey)) {
+          logSet.add(inAppKey);
+          existingInAppSet.add(inAppDedupeKey);
+
           try {
-            logSet.add(inAppKey);
             await createInAppNotification({
               userId: recipient.id,
               title: message.subject,
@@ -267,14 +299,18 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
               link: `/events/${eventId}`
             });
 
-            await supabaseAdmin
+            const { error: inAppLogErr } = await supabaseAdmin
               .from('notification_logs')
-              .insert({
+              .upsert({
                 stage_id: stage.id,
                 interval_key: intervalKey,
                 channel: 'in_app',
-                recipient_email: email
-              });
+                recipient_email: normalizedEmail,
+              }, { onConflict: 'stage_id,interval_key,channel,recipient_email' });
+
+            if (inAppLogErr) {
+              console.error('[NotificationEngine] Warning logging in-app notification:', inAppLogErr);
+            }
 
             dispatched++;
           } catch (inAppErr) {
@@ -286,8 +322,8 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
       // --- Channel C: Discord Squad Webhook ---
       const discordKey = [stage.id, intervalKey, 'discord'].join('_');
       if (!logSet.has(discordKey) && process.env.DISCORD_WEBHOOK_URL) {
+        logSet.add(discordKey);
         try {
-          logSet.add(discordKey);
           await sendDiscordDeadlineAlert({
             eventTitle,
             stageName: stage.title,
