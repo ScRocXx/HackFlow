@@ -26,6 +26,8 @@ export async function GET(request: Request) {
       processed: result.evaluated,
       timestamp: new Date().toISOString(),
       serviceRoleKeyConfigured: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+      keyPrefix: process.env.SUPABASE_SERVICE_ROLE_KEY ? process.env.SUPABASE_SERVICE_ROLE_KEY.substring(0, 12) : 'none',
+      keyLength: process.env.SUPABASE_SERVICE_ROLE_KEY ? process.env.SUPABASE_SERVICE_ROLE_KEY.length : 0,
       ...result,
     });
   } catch (error) {
