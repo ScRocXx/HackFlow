@@ -843,3 +843,37 @@ BEGIN
 END;
 $$;
 
+-- 9. Squad Sprint Scratchpad Table (Shared sprint pinboard for staging, credentials, and notes)
+CREATE TABLE IF NOT EXISTS public.squad_scratchpads (
+  squad_id uuid PRIMARY KEY REFERENCES public.squads(id) ON DELETE CASCADE,
+  meet_url text,
+  chat_channel_url text,
+  staging_url text,
+  test_credentials text,
+  notes text,
+  updated_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+  updated_at timestamptz DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_squad_scratchpads_squad_id ON public.squad_scratchpads(squad_id);
+
+ALTER TABLE public.squad_scratchpads ENABLE ROW LEVEL SECURITY;
+
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'squad_scratchpads_select' AND tablename = 'squad_scratchpads') THEN
+    CREATE POLICY "squad_scratchpads_select" ON public.squad_scratchpads
+      FOR SELECT USING (public.is_squad_member(squad_id, auth.uid()));
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'squad_scratchpads_insert' AND tablename = 'squad_scratchpads') THEN
+    CREATE POLICY "squad_scratchpads_insert" ON public.squad_scratchpads
+      FOR INSERT WITH CHECK (public.is_squad_member(squad_id, auth.uid()));
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'squad_scratchpads_update' AND tablename = 'squad_scratchpads') THEN
+    CREATE POLICY "squad_scratchpads_update" ON public.squad_scratchpads
+      FOR UPDATE USING (public.is_squad_member(squad_id, auth.uid()));
+  END IF;
+END $$;
+

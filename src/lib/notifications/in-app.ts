@@ -86,3 +86,22 @@ export async function getUserNotifications(userId: string, limit = 20) {
 
   return data;
 }
+
+export async function hasRecentNudge(targetUserId: string, squadId: string, minutes = 15): Promise<boolean> {
+  try {
+    const cutoff = new Date(Date.now() - minutes * 60 * 1000).toISOString();
+    const { data, error } = await supabaseAdmin
+      .from('notifications')
+      .select('id')
+      .eq('user_id', targetUserId)
+      .like('link', `%squad=${squadId}%`)
+      .gte('created_at', cutoff)
+      .limit(1);
+
+    if (error || !data) return false;
+    return data.length > 0;
+  } catch (err) {
+    console.error('hasRecentNudge error:', err);
+    return false;
+  }
+}

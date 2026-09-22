@@ -141,7 +141,23 @@ export interface TeamVaultProfile {
   linkedin_url: string | null
   portfolio_url: string | null
   resume_url: string | null
-  created_at: string
+  created_at?: string
+  has_vault_profile?: boolean
+  is_complete?: boolean
+  role?: 'leader' | 'member'
+  avatar_url?: string | null
+}
+
+export interface SquadScratchpad {
+  squad_id: string
+  meet_url?: string | null
+  chat_channel_url?: string | null
+  staging_url?: string | null
+  test_credentials?: string | null
+  notes?: string | null
+  updated_by?: string | null
+  updated_at?: string
+  editor_profile?: Profile
 }
 
 export interface TeamVaultAsset {
@@ -279,6 +295,11 @@ export interface Database {
         Row: Notification
         Insert: Omit<Notification, 'id' | 'created_at'> & { id?: string, created_at?: string }
         Update: Partial<Omit<Notification, 'id' | 'user_id'>>
+      },
+      squad_scratchpads: {
+        Row: SquadScratchpad
+        Insert: Omit<SquadScratchpad, 'updated_at' | 'editor_profile'> & { updated_at?: string }
+        Update: Partial<Omit<SquadScratchpad, 'squad_id'>>
       }
     }
     Views: {

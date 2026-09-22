@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { 
   Copy, Check, Plus, ExternalLink, Trash2, Loader2, 
   FileText, Code, Palette, User, Globe, Phone, Mail, GraduationCap,
-  ShieldCheck, ArrowRight, Shield, Users
+  ShieldCheck, ArrowRight, Shield, Users, Pin, Bell, Edit3, AlertTriangle
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,10 +13,18 @@ import { Card, CardContent } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { PdfUpload } from '@/components/ui/pdf-upload'
-import { upsertVaultProfile, createVaultAsset, deleteVaultAsset, getVaultProfiles, getVaultAssets } from '@/app/actions/vault'
-import type { TeamVaultProfile, TeamVaultAsset, Squad } from '@/lib/supabase/types'
+import { 
+  upsertVaultProfile, 
+  createVaultAsset, 
+  deleteVaultAsset, 
+  getVaultProfiles, 
+  getVaultAssets, 
+  nudgeTeammateProfile 
+} from '@/app/actions/vault'
+import type { TeamVaultProfile, TeamVaultAsset, Squad, SquadScratchpad as SquadScratchpadType } from '@/lib/supabase/types'
 import { ensureExternalUrl } from '@/lib/utils/url'
 import { cn } from '@/lib/utils'
+import { SquadScratchpad } from './SquadScratchpad'
 
 function GithubIcon({ className = "w-3.5 h-3.5" }: { className?: string }) {
   return (
@@ -29,8 +37,10 @@ function GithubIcon({ className = "w-3.5 h-3.5" }: { className?: string }) {
 interface VaultViewProps {
   initialProfiles: TeamVaultProfile[]
   initialAssets: TeamVaultAsset[]
+  initialScratchpad?: SquadScratchpadType | null
   squads?: Squad[]
   initialSquadId?: string | null
+  initialAction?: string | null
   currentUserId?: string
   currentUserEmail?: string
 }
@@ -38,34 +48,47 @@ interface VaultViewProps {
 export function VaultView({
   initialProfiles = [],
   initialAssets = [],
+  initialScratchpad = null,
   squads = [],
   initialSquadId = null,
+  initialAction = null,
   currentUserId,
   currentUserEmail
 }: VaultViewProps) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<'profiles' | 'decks' | 'boilerplates'>('profiles')
+  const searchParams = useSearchParams()
+  const [activeTab, setActiveTab] = useState<'profiles' | 'scratchpad' | 'decks' | 'boilerplates'>('profiles')
   const [selectedSquadId, setSelectedSquadId] = useState<string | null>(initialSquadId)
   const [profiles, setProfiles] = useState<TeamVaultProfile[]>(initialProfiles)
   const [assets, setAssets] = useState<TeamVaultAsset[]>(initialAssets)
   const [loadingData, setLoadingData] = useState(false)
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [nudgingUserId, setNudgingUserId] = useState<string | null>(null)
 
-  const handleSquadChange = async (squadId: string | null) => {
-    setSelectedSquadId(squadId)
-    setLoadingData(true)
-    try {
-      router.replace(squadId ? `/vault?squad=${squadId}` : '/vault')
-      const [pRes, aRes] = await Promise.all([
-        getVaultProfiles(squadId),
-        getVaultAssets(undefined, squadId),
-      ])
-      if (pRes.success) setProfiles(pRes.data || [])
-      if (aRes.success) setAssets(aRes.data || [])
-    } finally {
-      setLoadingData(false)
-    }
-  }
+  // Edit Registration Profile Modal State
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false)
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [profileForm, setProfileForm] = useState<{
+    full_name: string
+    email: string
+    phone: string
+    college: string
+    roll_number: string
+    github_url: string
+    linkedin_url: string
+    portfolio_url: string
+    resume_url: string
+  }>({
+    full_name: '',
+    email: currentUserEmail || '',
+    phone: '',
+    college: '',
+    roll_number: '',
+    github_url: '',
+    linkedin_url: '',
+    portfolio_url: '',
+    resume_url: '',
+  })
 
   // Asset Modal State
   const [isAssetModalOpen, setIsAssetModalOpen] = useState(false)
@@ -86,6 +109,24 @@ export function VaultView({
 
   const { toast } = useToast()
 
+  const currentSquad = squads.find((s) => s.id === selectedSquadId)
+
+  const handleSquadChange = async (squadId: string | null) => {
+    setSelectedSquadId(squadId)
+    setLoadingData(true)
+    try {
+      router.replace(squadId ? `/vault?squad=${squadId}` : '/vault')
+      const [pRes, aRes] = await Promise.all([
+        getVaultProfiles(squadId),
+        getVaultAssets(undefined, squadId),
+      ])
+      if (pRes.success) setProfiles(pRes.data || [])
+      if (aRes.success) setAssets(aRes.data || [])
+    } finally {
+      setLoadingData(false)
+    }
+  }
+
   // 1-Click Copy with 1500ms check feedback
   const handleCopy = (fieldKey: string, value: string, label: string) => {
     if (!value) return
@@ -102,12 +143,19 @@ export function VaultView({
   }
 
   const copySquadUnstopFormat = () => {
-    if (profiles.length === 0) return
-    const currentSquad = squads.find(s => s.id === selectedSquadId)
+    const validProfiles = profiles.filter((p) => p.has_vault_profile !== false)
+    if (validProfiles.length === 0) {
+      toast({
+        title: 'No Completed Profiles',
+        description: 'Teammates need to fill their registration profiles first.',
+        variant: 'destructive',
+      })
+      return
+    }
+
     const squadName = currentSquad?.name || 'Squad'
-    
-    let text = `=== SQUAD REGISTRATION (UNSTOP FORMAT) ===\nTeam Name: ${squadName}\nTeam Size: ${profiles.length}\n\n`
-    profiles.forEach((p, idx) => {
+    let text = `=== SQUAD REGISTRATION (UNSTOP FORMAT) ===\nTeam Name: ${squadName}\nTeam Size: ${validProfiles.length}\n\n`
+    validProfiles.forEach((p, idx) => {
       text += `Member ${idx + 1} (${idx === 0 ? 'Leader' : 'Teammate'}):\n`
       text += `Name: ${p.full_name || 'N/A'}\n`
       text += `Email: ${p.email || 'N/A'}\n`
@@ -122,17 +170,24 @@ export function VaultView({
     navigator.clipboard.writeText(text.trim())
     toast({
       title: 'Unstop Squad Roster Copied!',
-      description: `Copied details for ${profiles.length} member(s) formatted for Unstop registration.`,
+      description: `Copied details for ${validProfiles.length} member(s) formatted for Unstop registration.`,
     })
   }
 
   const copySquadDevfolioFormat = () => {
-    if (profiles.length === 0) return
-    const currentSquad = squads.find(s => s.id === selectedSquadId)
-    const squadName = currentSquad?.name || 'HackFlow Team'
+    const validProfiles = profiles.filter((p) => p.has_vault_profile !== false)
+    if (validProfiles.length === 0) {
+      toast({
+        title: 'No Completed Profiles',
+        description: 'Teammates need to fill their registration profiles first.',
+        variant: 'destructive',
+      })
+      return
+    }
 
+    const squadName = currentSquad?.name || 'HackFlow Team'
     let text = `=== SQUAD REGISTRATION (DEVFOLIO FORMAT) ===\nTeam: ${squadName}\n\n`
-    profiles.forEach((p, idx) => {
+    validProfiles.forEach((p, idx) => {
       text += `[Member ${idx + 1}${idx === 0 ? ' - Lead' : ''}]\n`
       text += `Full Name: ${p.full_name || ''}\n`
       text += `Email: ${p.email || ''}\n`
@@ -144,14 +199,16 @@ export function VaultView({
     navigator.clipboard.writeText(text.trim())
     toast({
       title: 'Devfolio Squad Roster Copied!',
-      description: `Copied details for ${profiles.length} member(s) formatted for Devfolio registration.`,
+      description: `Copied details for ${validProfiles.length} member(s) formatted for Devfolio registration.`,
     })
   }
 
   const copySquadTsvFormat = () => {
-    if (profiles.length === 0) return
+    const validProfiles = profiles.filter((p) => p.has_vault_profile !== false)
+    if (validProfiles.length === 0) return
+
     const header = ['Name', 'Email', 'Phone', 'College', 'Roll No', 'GitHub', 'LinkedIn', 'Portfolio', 'Resume'].join('\t')
-    const rows = profiles.map(p => [
+    const rows = validProfiles.map((p) => [
       p.full_name || '',
       p.email || '',
       p.phone || '',
@@ -166,10 +223,114 @@ export function VaultView({
     navigator.clipboard.writeText(tsv)
     toast({
       title: 'TSV / Sheets Format Copied!',
-      description: `Copied table for ${profiles.length} member(s) — paste directly into Google Sheets or Excel!`,
+      description: `Copied table for ${validProfiles.length} member(s) — paste directly into Google Sheets or Excel!`,
     })
   }
 
+  // Open Edit Profile Modal
+  const handleOpenEditProfile = () => {
+    const myProfile = profiles.find((p) => p.user_id === currentUserId)
+    setProfileForm({
+      full_name: myProfile?.full_name || '',
+      email: myProfile?.email || currentUserEmail || '',
+      phone: myProfile?.phone || '',
+      college: myProfile?.college || '',
+      roll_number: myProfile?.roll_number || '',
+      github_url: myProfile?.github_url || '',
+      linkedin_url: myProfile?.linkedin_url || '',
+      portfolio_url: myProfile?.portfolio_url || '',
+      resume_url: myProfile?.resume_url || '',
+    })
+    setIsProfileModalOpen(true)
+  }
+
+  // Deep-link Auto-open: If navigated via nudge notification (?action=edit-profile), auto-open modal immediately
+  useEffect(() => {
+    const action = searchParams.get('action') || initialAction
+    if (action === 'edit-profile') {
+      handleOpenEditProfile()
+    }
+  }, [searchParams, initialAction])
+
+  // Save Registration Profile
+  const handleSaveProfile = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!profileForm.full_name.trim() || !profileForm.email.trim()) {
+      toast({
+        title: 'Name & Email Required',
+        description: 'Please enter at least your full name and email.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    setSavingProfile(true)
+    try {
+      const res = await upsertVaultProfile({
+        full_name: profileForm.full_name.trim(),
+        email: profileForm.email.trim(),
+        phone: profileForm.phone?.trim() || undefined,
+        college: profileForm.college?.trim() || undefined,
+        roll_number: profileForm.roll_number?.trim() || undefined,
+        github_url: profileForm.github_url?.trim() || undefined,
+        linkedin_url: profileForm.linkedin_url?.trim() || undefined,
+        portfolio_url: profileForm.portfolio_url?.trim() || undefined,
+        resume_url: profileForm.resume_url?.trim() || undefined,
+      })
+
+      if (!res.success) {
+        throw new Error(res.error || 'Failed to save profile')
+      }
+
+      toast({
+        title: 'Registration Profile Saved!',
+        description: 'Your details are updated in the Vault and ready for 1-click registration.',
+      })
+
+      setIsProfileModalOpen(false)
+      const pRes = await getVaultProfiles(selectedSquadId)
+      if (pRes.success) setProfiles(pRes.data || [])
+    } catch (err: any) {
+      toast({
+        title: 'Could Not Save Details',
+        description: err.message,
+        variant: 'destructive',
+      })
+    } finally {
+      setSavingProfile(false)
+    }
+  }
+
+  // Nudge Teammate
+  const handleNudge = async (targetUserId: string, targetName: string) => {
+    if (!selectedSquadId) return
+    setNudgingUserId(targetUserId)
+    try {
+      const res = await nudgeTeammateProfile(selectedSquadId, targetUserId)
+      if (res.success) {
+        toast({
+          title: '📢 Nudge Sent!',
+          description: `Notified ${targetName} to complete their registration profile in the Vault.`,
+        })
+      } else {
+        toast({
+          title: 'Could not send nudge',
+          description: res.error,
+          variant: 'destructive',
+        })
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Nudge Failed',
+        description: err.message,
+        variant: 'destructive',
+      })
+    } finally {
+      setNudgingUserId(null)
+    }
+  }
+
+  // Asset Handlers
   const handleSaveAsset = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!assetForm.title.trim() || !assetForm.url.trim()) {
@@ -185,7 +346,7 @@ export function VaultView({
     try {
       const tagsArray = assetForm.tags
         .split(',')
-        .map(t => t.trim())
+        .map((t) => t.trim())
         .filter(Boolean)
 
       const res = await createVaultAsset({
@@ -201,10 +362,10 @@ export function VaultView({
 
       toast({
         title: 'Asset Added to Vault',
-        description: `${assetForm.title} is now available to your squad.`,
+        description: `${assetForm.title} is now available in your Vault.`,
       })
 
-      setAssets(prev => [res.data as TeamVaultAsset, ...prev])
+      setAssets((prev) => [res.data as TeamVaultAsset, ...prev])
       setIsAssetModalOpen(false)
       setAssetForm({
         title: '',
@@ -229,15 +390,15 @@ export function VaultView({
       const res = await deleteVaultAsset(assetId)
       if (!res.success) throw new Error(res.error)
 
-      setAssets(prev => prev.filter(a => a.id !== assetId))
+      setAssets((prev) => prev.filter((a) => a.id !== assetId))
       toast({ title: 'Asset Removed' })
     } catch (err: any) {
       toast({ title: 'Delete Failed', description: err.message, variant: 'destructive' })
     }
   }
 
-  const deckAssets = assets.filter(a => a.asset_type === 'pitch_deck' || a.asset_type === 'figma_kit' || a.asset_type === 'diagram')
-  const boilerplateAssets = assets.filter(a => a.asset_type === 'boilerplate' || a.asset_type === 'other')
+  const deckAssets = assets.filter((a) => a.asset_type === 'pitch_deck' || a.asset_type === 'figma_kit' || a.asset_type === 'diagram')
+  const boilerplateAssets = assets.filter((a) => a.asset_type === 'boilerplate' || a.asset_type === 'other')
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -250,14 +411,16 @@ export function VaultView({
             <span className="w-2.5 h-2.5 bg-[#f5b726] inline-block" />
             <span className="w-2.5 h-2.5 bg-[#e97b77] inline-block" />
             <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#f6c4c1] ml-2">
-              Shared Squad Clipboard
+              {selectedSquadId ? `Shared Squad Vault: ${currentSquad?.name || 'Squad'}` : 'Personal Registration Vault'}
             </span>
           </div>
           <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-[#f7f7f2]">
-            Squad Asset Vault
+            {selectedSquadId ? `${currentSquad?.name || 'Squad'} Vault` : 'Personal Vault'}
           </h1>
           <p className="font-mono text-xs text-[#8bb2de] mt-1">
-            Copy team details for registration forms in one click. Keep shared slide decks, Figma files, and starter repos in one place.
+            {selectedSquadId 
+              ? '1-click team registration clipboard, real-time squad chat, shared slide decks, and starter repos.'
+              : 'Save your personal registration details once. When you join a Squad, teammates can 1-click copy your details.'}
           </p>
         </div>
 
@@ -302,8 +465,25 @@ export function VaultView({
               : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da]"
           )}
         >
-          Quick-Fill Team Profiles ({profiles.length})
+          {selectedSquadId ? `Quick-Fill Team Profiles (${profiles.length})` : 'My Registration Profile'}
         </button>
+
+        <button
+          onClick={() => setActiveTab('scratchpad')}
+          className={cn(
+            "font-mono text-xs font-bold uppercase tracking-wider px-4 py-2 border-2 border-[#10201d] transition-all flex items-center gap-1.5",
+            activeTab === 'scratchpad'
+              ? "bg-[#f5b726] text-[#10201d] shadow-[3px_3px_0_#8a5d13]"
+              : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da]"
+          )}
+        >
+          <Pin className="w-3.5 h-3.5" />
+          <span>Sprint Scratchpad</span>
+          {selectedSquadId && (
+            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block ml-0.5" />
+          )}
+        </button>
+
         <button
           onClick={() => setActiveTab('decks')}
           className={cn(
@@ -315,6 +495,7 @@ export function VaultView({
         >
           Pitch & Deck Kit ({deckAssets.length})
         </button>
+
         <button
           onClick={() => setActiveTab('boilerplates')}
           className={cn(
@@ -331,103 +512,203 @@ export function VaultView({
       {/* Tab 1: Quick-Fill Team Profiles */}
       {activeTab === 'profiles' && (
         <div className="space-y-6">
-          <div className="p-4 border-2 border-[#10201d] bg-[#f2f2eb] shadow-[4px_4px_0_#10201d] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-[#2e4742]" />
-              <span className="font-mono text-xs text-[#10201d] font-bold">
-                1-Click Registration Clipboard: Click any field to copy instantly into Unstop / Devfolio forms.
-              </span>
+          {/* Vault Mode Banner */}
+          {!selectedSquadId ? (
+            // Personal Vault Mode
+            <div className="p-4 border-2 border-[#10201d] bg-[#f2f2eb] shadow-[4px_4px_0_#10201d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <ShieldCheck className="w-5 h-5 text-[#2e4742] shrink-0" />
+                <div>
+                  <span className="font-mono text-xs text-[#10201d] font-bold block">
+                    Personal Registration Details
+                  </span>
+                  <span className="font-mono text-[11px] text-[#34433f]">
+                    Saved securely. When you create or join a Squad, your squadmates can copy your details with 1 click on hackathon registration forms.
+                  </span>
+                </div>
+              </div>
+              <Button
+                onClick={handleOpenEditProfile}
+                className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[2px_2px_0_#671912] shrink-0"
+              >
+                <Edit3 className="w-3.5 h-3.5 mr-1.5" />
+                Edit My Registration Details
+              </Button>
             </div>
-            <span className="font-mono text-[11px] text-[#34433f] hidden sm:inline">
-              Copies value & shows check confirmation
-            </span>
-          </div>
+          ) : (
+            // Squad Vault Mode
+            <>
+              <div className="p-4 border-2 border-[#10201d] bg-[#f2f2eb] shadow-[4px_4px_0_#10201d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <ShieldCheck className="w-5 h-5 text-[#2e4742] shrink-0" />
+                  <div>
+                    <span className="font-mono text-xs text-[#10201d] font-bold block">
+                      1-Click Registration Clipboard: Click any field to copy instantly into Unstop / Devfolio forms.
+                    </span>
+                    <span className="font-mono text-[11px] text-[#34433f]">
+                      Keep teammate profiles complete so anyone in the squad can register the whole team in seconds.
+                    </span>
+                  </div>
+                </div>
+                <Button
+                  onClick={handleOpenEditProfile}
+                  className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#8bb2de] hover:bg-[#b0cced] text-[#10201d] shadow-[2px_2px_0_#10201d] shrink-0"
+                >
+                  <Edit3 className="w-3.5 h-3.5 mr-1.5" />
+                  Edit My Details
+                </Button>
+              </div>
 
-          {/* 1-Click Squad Registration Bridge Bar */}
-          <div className="p-3 bg-[#10201d] text-[#f7f7f2] border-2 border-[#10201d] shadow-[4px_4px_0_#10201d] flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-[#f5b726]" />
-              <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#f7f7f2]">
-                1-Click Squad Registration Bridge:
-              </span>
-            </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Button
-                type="button"
-                size="sm"
-                disabled={profiles.length === 0}
-                onClick={copySquadUnstopFormat}
-                className="h-7 text-xs font-mono font-bold bg-[#8bb2de] text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-[#b0cced]"
-              >
-                <Copy className="h-3 w-3 mr-1" />
-                Copy Unstop Format
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                disabled={profiles.length === 0}
-                onClick={copySquadDevfolioFormat}
-                className="h-7 text-xs font-mono font-bold bg-[#f5b726] text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-[#ffcf66]"
-              >
-                <Copy className="h-3 w-3 mr-1" />
-                Copy Devfolio Format
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                disabled={profiles.length === 0}
-                onClick={copySquadTsvFormat}
-                className="h-7 text-xs font-mono font-bold bg-white text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-slate-100"
-              >
-                <Copy className="h-3 w-3 mr-1" />
-                Copy Sheets / TSV
-              </Button>
-            </div>
-          </div>
+              {/* 1-Click Squad Registration Bridge Bar (Squad Mode Only!) */}
+              <div className="p-3 bg-[#10201d] text-[#f7f7f2] border-2 border-[#10201d] shadow-[4px_4px_0_#10201d] flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-[#f5b726]" />
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#f7f7f2]">
+                    1-Click Squad Registration Bridge:
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={profiles.length === 0}
+                    onClick={copySquadUnstopFormat}
+                    className="h-7 text-xs font-mono font-bold bg-[#8bb2de] text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-[#b0cced]"
+                  >
+                    <Copy className="h-3 w-3 mr-1" />
+                    Copy Unstop Format
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={profiles.length === 0}
+                    onClick={copySquadDevfolioFormat}
+                    className="h-7 text-xs font-mono font-bold bg-[#f5b726] text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-[#ffcf66]"
+                  >
+                    <Copy className="h-3 w-3 mr-1" />
+                    Copy Devfolio Format
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={profiles.length === 0}
+                    onClick={copySquadTsvFormat}
+                    className="h-7 text-xs font-mono font-bold bg-white text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-slate-100"
+                  >
+                    <Copy className="h-3 w-3 mr-1" />
+                    Copy Sheets / TSV
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
 
+          {/* Member Profiles Grid */}
           {profiles.length === 0 ? (
             <div className="p-12 border-2 border-dashed border-[#10201d] text-center bg-[#f7f7f2]">
               <User className="h-10 w-10 text-[#34433f] mx-auto opacity-40 mb-3" />
-              <h3 className="font-display text-2xl font-bold text-[#10201d]">No Squad Profiles in Vault</h3>
+              <h3 className="font-display text-2xl font-bold text-[#10201d]">No Profiles in Vault</h3>
               <p className="font-mono text-xs text-[#34433f] mt-2 max-w-md mx-auto">
-                No squad member profiles registered yet. You can add your registration details anytime from your profile menu in the bottom-left sidebar.
+                No registration profiles found. Click below to add your registration details.
               </p>
+              <Button
+                onClick={handleOpenEditProfile}
+                className="mt-4 font-mono text-xs font-bold border-2 border-[#10201d] bg-[#e97b77] text-[#10201d] shadow-[2px_2px_0_#671912]"
+              >
+                + Add Registration Details
+              </Button>
             </div>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {profiles.map((p) => {
+                const isMe = p.user_id === currentUserId
+                const isPending = !p.has_vault_profile || !p.is_complete
+
                 const fields = [
-                  { key: `${p.id}-name`, label: 'Full Name', value: p.full_name },
-                  { key: `${p.id}-email`, label: 'Email', value: p.email },
-                  { key: `${p.id}-phone`, label: 'Phone', value: p.phone },
-                  { key: `${p.id}-college`, label: 'College / Institute', value: p.college },
-                  { key: `${p.id}-roll`, label: 'Roll / ID No', value: p.roll_number },
-                  { key: `${p.id}-github`, label: 'GitHub', value: p.github_url },
-                  { key: `${p.id}-linkedin`, label: 'LinkedIn', value: p.linkedin_url },
-                  { key: `${p.id}-portfolio`, label: 'Portfolio', value: p.portfolio_url },
-                  { key: `${p.id}-resume`, label: 'Resume PDF Link', value: p.resume_url },
+                  { key: `${p.user_id}-name`, label: 'Full Name', value: p.full_name },
+                  { key: `${p.user_id}-email`, label: 'Email', value: p.email },
+                  { key: `${p.user_id}-phone`, label: 'Phone', value: p.phone },
+                  { key: `${p.user_id}-college`, label: 'College / Institute', value: p.college },
+                  { key: `${p.user_id}-roll`, label: 'Roll / ID No', value: p.roll_number },
+                  { key: `${p.user_id}-github`, label: 'GitHub', value: p.github_url },
+                  { key: `${p.user_id}-linkedin`, label: 'LinkedIn', value: p.linkedin_url },
+                  { key: `${p.user_id}-portfolio`, label: 'Portfolio', value: p.portfolio_url },
+                  { key: `${p.user_id}-resume`, label: 'Resume PDF Link', value: p.resume_url },
                 ]
 
                 return (
-                  <Card key={p.id} className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[6px_6px_0_#671912]">
+                  <Card key={p.user_id} className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[6px_6px_0_#671912]">
                     <div className="p-4 bg-[#2e4742] text-[#f7f7f2] border-b-2 border-[#10201d] flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] font-mono text-sm font-extrabold flex items-center justify-center shadow-[2px_2px_0_#10201d]">
-                          {p.full_name.charAt(0).toUpperCase()}
+                          {p.full_name ? p.full_name.charAt(0).toUpperCase() : 'U'}
                         </div>
                         <div>
-                          <h3 className="font-display text-xl font-bold text-[#f7f7f2] leading-none">{p.full_name}</h3>
-                          <p className="font-mono text-[11px] text-[#8bb2de] mt-1">{p.college || 'Squad Member'}</p>
+                          <h3 className="font-display text-xl font-bold text-[#f7f7f2] leading-none">
+                            {p.full_name || 'Hacker'}
+                          </h3>
+                          <p className="font-mono text-[11px] text-[#8bb2de] mt-1">
+                            {p.college || (p.role === 'leader' ? 'Squad Leader' : 'Squad Member')}
+                          </p>
                         </div>
                       </div>
-                      {p.user_id === currentUserId && (
-                        <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 border-2 border-[#10201d] bg-[#e97b77] text-[#10201d] shadow-[1px_1px_0_#10201d]">
-                          You
-                        </span>
-                      )}
+
+                      <div className="flex items-center gap-1.5">
+                        {p.role === 'leader' && (
+                          <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[1px_1px_0_#10201d]">
+                            Leader
+                          </span>
+                        )}
+                        {isMe && (
+                          <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 border-2 border-[#10201d] bg-[#e97b77] text-[#10201d] shadow-[1px_1px_0_#10201d]">
+                            You
+                          </span>
+                        )}
+                        {isPending && (
+                          <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 border-2 border-[#10201d] bg-[#f6c4c1] text-[#10201d] shadow-[1px_1px_0_#10201d] flex items-center gap-1">
+                            <AlertTriangle className="w-3 h-3 text-[#e53927]" /> Details Pending
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    <CardContent className="p-4 space-y-2.5">
+                    <CardContent className="p-4 space-y-3">
+                      {/* If details are missing, show nudge or edit banner */}
+                      {isPending && (
+                        <div className="p-2.5 border-2 border-[#10201d] bg-[#fff8e7] flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-[2px_2px_0_#10201d]">
+                          <div className="flex items-center gap-1.5 text-[#8a5d13]">
+                            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                            <span className="font-mono text-[11px] font-bold">
+                              {isMe ? 'Your registration details are incomplete!' : 'Teammate details not yet added'}
+                            </span>
+                          </div>
+                          {isMe ? (
+                            <Button
+                              size="sm"
+                              onClick={handleOpenEditProfile}
+                              className="h-6 text-[10px] font-mono font-bold bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] border border-[#10201d] shrink-0"
+                            >
+                              <Edit3 className="w-3 h-3 mr-1" />
+                              Complete Profile
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              disabled={nudgingUserId === p.user_id}
+                              onClick={() => handleNudge(p.user_id, p.full_name)}
+                              className="h-6 text-[10px] font-mono font-bold bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] border border-[#10201d] shrink-0 shadow-[1px_1px_0_#10201d]"
+                            >
+                              {nudgingUserId === p.user_id ? (
+                                <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                              ) : (
+                                <Bell className="w-3 h-3 mr-1" />
+                              )}
+                              <span>Ask for Details</span>
+                            </Button>
+                          )}
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {fields.map((f) => {
                           const hasVal = Boolean(f.value)
@@ -466,6 +747,20 @@ export function VaultView({
                           )
                         })}
                       </div>
+
+                      {/* Edit button at bottom of own card */}
+                      {isMe && !isPending && (
+                        <div className="pt-2 flex justify-end">
+                          <button
+                            type="button"
+                            onClick={handleOpenEditProfile}
+                            className="font-mono text-xs font-bold text-[#10201d] hover:text-[#e53927] flex items-center gap-1 underline"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                            <span>Edit My Details</span>
+                          </button>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 )
@@ -475,7 +770,41 @@ export function VaultView({
         </div>
       )}
 
-      {/* Tab 2: Reusable Pitch & Deck Kit */}
+      {/* Tab 2: Squad Sprint Scratchpad & Pinboard */}
+      {activeTab === 'scratchpad' && (
+        <div>
+          {selectedSquadId ? (
+            <SquadScratchpad 
+              squadId={selectedSquadId}
+              squadName={currentSquad?.name || 'Squad'}
+              initialScratchpad={initialScratchpad}
+              currentUserId={currentUserId}
+            />
+          ) : (
+            <div className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[6px_6px_0_#671912] p-8 text-center space-y-4">
+              <Pin className="w-12 h-12 text-[#34433f] mx-auto opacity-40" />
+              <h3 className="font-display text-2xl font-bold text-[#10201d]">
+                Sprint Scratchpad Scoped to Squads
+              </h3>
+              <p className="font-mono text-xs text-[#57726d] max-w-md mx-auto">
+                You are currently in your Personal Vault. Select a Squad from the dropdown above to share live meeting rooms, Discord/WhatsApp channels, staging environments, and test credentials with your team.
+              </p>
+              {squads.length > 0 && (
+                <div className="pt-2 flex justify-center gap-2">
+                  <Button
+                    onClick={() => handleSquadChange(squads[0].id)}
+                    className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[3px_3px_0_#8a5d13]"
+                  >
+                    Switch to {squads[0].name}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab 3: Reusable Pitch & Deck Kit */}
       {activeTab === 'decks' && (
         <div className="space-y-4">
           <div className="p-4 border-2 border-[#10201d] bg-[#f2f2eb] shadow-[4px_4px_0_#10201d] flex items-center justify-between">
@@ -581,7 +910,7 @@ export function VaultView({
         </div>
       )}
 
-      {/* Tab 3: Boilerplate Hub */}
+      {/* Tab 4: Boilerplate Hub */}
       {activeTab === 'boilerplates' && (
         <div className="space-y-4">
           <div className="p-4 border-2 border-[#10201d] bg-[#f2f2eb] shadow-[4px_4px_0_#10201d] flex items-center justify-between">
@@ -668,6 +997,136 @@ export function VaultView({
           )}
         </div>
       )}
+
+      {/* Edit Registration Details Modal */}
+      <Dialog open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen}>
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto border-2 border-[#10201d] bg-[#f7f7f2] shadow-[8px_8px_0_#671912] p-6">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl font-bold text-[#10201d]">
+              Squad Registration Profile
+            </DialogTitle>
+            <DialogDescription className="font-mono text-xs text-[#34433f]">
+              Saved once in your Vault. Squad members can 1-click copy your phone, roll number, and resume link on Unstop or Devfolio forms.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveProfile} className="space-y-4 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">Full Name *</label>
+                <Input
+                  value={profileForm.full_name}
+                  onChange={(e) => setProfileForm({ ...profileForm, full_name: e.target.value })}
+                  placeholder="Your Full Name"
+                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">Email *</label>
+                <Input
+                  type="email"
+                  value={profileForm.email}
+                  onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
+                  placeholder="your.email@example.com"
+                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">Phone Number</label>
+                <Input
+                  value={profileForm.phone}
+                  onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
+                  placeholder="+91 9876543210"
+                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">College / Institute</label>
+                <Input
+                  value={profileForm.college}
+                  onChange={(e) => setProfileForm({ ...profileForm, college: e.target.value })}
+                  placeholder="e.g. IIT Bombay / BITS Pilani"
+                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">Roll Number / Student ID</label>
+                <Input
+                  value={profileForm.roll_number}
+                  onChange={(e) => setProfileForm({ ...profileForm, roll_number: e.target.value })}
+                  placeholder="e.g. 21BCE0912"
+                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">GitHub Profile</label>
+                <Input
+                  value={profileForm.github_url}
+                  onChange={(e) => setProfileForm({ ...profileForm, github_url: e.target.value })}
+                  placeholder="https://github.com/username"
+                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">LinkedIn Profile</label>
+                <Input
+                  value={profileForm.linkedin_url}
+                  onChange={(e) => setProfileForm({ ...profileForm, linkedin_url: e.target.value })}
+                  placeholder="https://linkedin.com/in/username"
+                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">Portfolio URL</label>
+                <Input
+                  value={profileForm.portfolio_url}
+                  onChange={(e) => setProfileForm({ ...profileForm, portfolio_url: e.target.value })}
+                  placeholder="https://myportfolio.dev"
+                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="font-mono text-xs font-bold uppercase text-[#10201d] block">Resume Link (PDF Link or Google Drive)</label>
+              <Input
+                value={profileForm.resume_url}
+                onChange={(e) => setProfileForm({ ...profileForm, resume_url: e.target.value })}
+                placeholder="https://drive.google.com/file/d/..."
+                className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t-2 border-[#10201d]">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsProfileModalOpen(false)}
+                className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f7f7f2]"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={savingProfile}
+                className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[3px_3px_0_#671912]"
+              >
+                {savingProfile ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                {savingProfile ? 'Saving Details...' : 'Save Profile'}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Add Asset Modal */}
       <Dialog open={isAssetModalOpen} onOpenChange={setIsAssetModalOpen}>
