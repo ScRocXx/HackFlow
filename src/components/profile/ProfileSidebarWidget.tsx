@@ -149,28 +149,28 @@ export function ProfileSidebarWidget({ user }: UserProfileSidebarWidgetProps) {
   return (
     <div className="border-t-2 border-[#10201d] p-3 bg-[#10201d]/60 relative">
       {/* Profile Bar */}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center w-full">
         {/* Profile Details Trigger */}
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="flex items-center gap-2.5 overflow-hidden min-w-0 flex-1 text-left p-1.5 hover:bg-[#3d5f58] transition-colors border-2 border-transparent hover:border-[#10201d] bg-[#10201d]/30"
+          className="w-full flex items-center gap-2.5 overflow-hidden min-w-0 text-left p-2 bg-[#f7f7f2] hover:bg-[#e97b77] text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] transition-all active:translate-x-[1px] active:translate-y-[1px]"
           title="Open Profile Menu"
         >
-          <Avatar className="h-8 w-8 border-2 border-[#10201d] shrink-0 bg-[#f7f7f2]">
+          <Avatar className="h-8 w-8 border-2 border-[#10201d] shrink-0 bg-[#ffffff]">
             <AvatarImage src={user?.avatar_url || ''} />
-            <AvatarFallback className="bg-[#8bb2de] text-[#10201d] font-mono text-xs font-bold">
+            <AvatarFallback className="bg-[#8bb2de] text-[#10201d] font-mono text-xs font-black">
               {userInitials}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col min-w-0 flex-1">
-            <span className="truncate text-xs font-bold text-[#f7f7f2] font-mono">
+            <span className="truncate text-xs font-bold text-[#10201d] font-mono tracking-tight">
               {user?.full_name || 'Hacker'}
             </span>
-            <span className="truncate text-[9px] font-mono text-[#8bb2de]">
+            <span className="truncate text-[10px] font-mono text-[#57726d] font-medium">
               {user?.email}
             </span>
           </div>
-          <ChevronUp className={cn("h-3.5 w-3.5 text-[#8bb2de] shrink-0 transition-transform", isMenuOpen && "rotate-180")} />
+          <ChevronUp className={cn("h-4 w-4 text-[#10201d] shrink-0 transition-transform", isMenuOpen && "rotate-180")} />
         </button>
       </div>
 
