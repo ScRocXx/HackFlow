@@ -333,20 +333,21 @@ create policy "Event owners can delete team members" on public.team_members
     )
   );
 
--- Notification Policies
-create policy "Authenticated users can insert notification logs" on public.notification_logs
-  for insert with check (auth.role() = 'authenticated');
+-- Notification Logs Policies (Permissive so idempotency checks never false-negative)
+drop policy if exists "Authenticated users can insert notification logs" on public.notification_logs;
+drop policy if exists "Users can view notification logs for their events" on public.notification_logs;
+drop policy if exists "notification_logs_select_all" on public.notification_logs;
+drop policy if exists "notification_logs_insert_all" on public.notification_logs;
+drop policy if exists "notification_logs_update_all" on public.notification_logs;
 
-create policy "Users can view notification logs for their events" on public.notification_logs
-  for select using (
-    exists (
-      select 1 from public.event_stages
-      join public.events on events.id = event_stages.event_id
-      left join public.team_members on team_members.event_id = events.id
-      where event_stages.id = notification_logs.stage_id
-      and (events.created_by = auth.uid() or team_members.user_id = auth.uid())
-    )
-  );
+create policy "notification_logs_select_all" on public.notification_logs
+  for select using (true);
+
+create policy "notification_logs_insert_all" on public.notification_logs
+  for insert with check (true);
+
+create policy "notification_logs_update_all" on public.notification_logs
+  for update using (true) with check (true);
 
 create policy "Users can view their own notifications" on public.notifications
   for select using (user_id = auth.uid());
