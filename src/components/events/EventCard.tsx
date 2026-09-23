@@ -134,6 +134,38 @@ export function EventCard({ event }: EventCardProps) {
   const platformBadge = getPlatformBadge(event.source_platform || 'other')
   const prizeDisplay = event.prize_display_summary || event.prize_pool
 
+  // Dynamic Stage Auto-Roll: if active stage cutoff has passed, roll forward to next upcoming stage
+  const computedActiveStage = (() => {
+    if (!event.stages || event.stages.length === 0) return event.active_stage
+    const now = Date.now()
+
+    if (event.active_stage) {
+      const activeDlStr = event.active_stage.actionable_deadline || event.active_stage.window_end || event.active_stage.deadline
+      if (activeDlStr) {
+        const activeDl = new Date(activeDlStr).getTime()
+        if (!isNaN(activeDl) && activeDl > now) {
+          return event.active_stage
+        }
+      }
+    }
+
+    const upcoming = event.stages
+      .filter((s) => {
+        const dlStr = s.actionable_deadline || s.window_end || s.deadline
+        if (!dlStr) return false
+        const dl = new Date(dlStr).getTime()
+        return !isNaN(dl) && dl > now
+      })
+      .sort((a, b) => {
+        const dlA = new Date(a.actionable_deadline || a.window_end || a.deadline || 0).getTime()
+        const dlB = new Date(b.actionable_deadline || b.window_end || b.deadline || 0).getTime()
+        return dlA - dlB
+      })
+
+    if (upcoming.length > 0) return upcoming[0]
+    return event.active_stage || event.stages[event.stages.length - 1]
+  })()
+
   return (
     <>
       <div className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[6px_6px_0_#671912] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_#671912] transition-all flex flex-col group h-full overflow-hidden relative">
@@ -219,28 +251,29 @@ export function EventCard({ event }: EventCardProps) {
               </p>
             </div>
 
-            {/* Active Stage & Countdown */}
-            {event.active_stage ? (
+            {/* Active Stage & Countdown (Auto-Rolled) */}
+            {computedActiveStage ? (
               <div className="mb-4 p-3 border-2 border-[#10201d] bg-[#f2f2eb] shadow-[3px_3px_0_#2e4742]">
                 <div className="flex items-center justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2 truncate">
                     <span className="w-2 h-2 bg-[#e53927] inline-block shrink-0" />
                     <span className="font-mono text-xs font-bold text-[#10201d] truncate uppercase">
-                      {event.active_stage.title}
+                      {computedActiveStage.title}
                     </span>
                   </div>
-                  {event.active_stage.raw_date_snippet && (
+                  {computedActiveStage.raw_date_snippet && (
                     <span className="font-mono text-[10px] text-[#34433f] font-semibold flex items-center gap-1 shrink-0">
                       <Calendar className="w-3 h-3" />
-                      {event.active_stage.raw_date_snippet}
+                      {computedActiveStage.raw_date_snippet}
                     </span>
                   )}
                 </div>
                 <CountdownTimer 
-                  deadline={event.active_stage.actionable_deadline || event.active_stage.deadline || ''} 
-                  windowStart={event.active_stage.window_start}
-                  windowEnd={event.active_stage.window_end}
+                  deadline={computedActiveStage.actionable_deadline || computedActiveStage.deadline || ''} 
+                  windowStart={computedActiveStage.window_start}
+                  windowEnd={computedActiveStage.window_end}
                   showMilestoneLabel={true}
+                  showTimezoneBadge={true}
                   className="text-xs" 
                 />
               </div>

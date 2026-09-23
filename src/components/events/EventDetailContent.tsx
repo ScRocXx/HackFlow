@@ -20,6 +20,7 @@ import { getFriendsList } from '@/app/actions/friends'
 import { MeetCompanionBar } from '@/components/events/MeetCompanionBar'
 import { IdeaSandbox } from '@/components/events/IdeaSandbox'
 import { PostSubmissionConsole } from '@/components/events/PostSubmissionConsole'
+import { downloadIcsFile, getGoogleCalendarUrl } from '@/lib/calendar/calendar-sync'
 import type { EventResource, Friendship } from '@/lib/supabase/types'
 import { ensureExternalUrl } from '@/lib/utils/url'
 import { format } from 'date-fns'
@@ -39,9 +40,41 @@ const RESOURCE_TYPES = [
 
 export function EventDetailContent({ event }: EventDetailContentProps) {
   const router = useRouter()
-  const activeStage = event.stages?.find((s: any) => s.id === event.active_stage_id) || 
-                      event.stages?.find((s: any) => !s.is_completed) || 
-                      event.stages?.[0]
+
+  // Dynamic Stage Auto-Roll: Advance highlight to earliest upcoming stage when current stage passes
+  const activeStage = (() => {
+    if (!event.stages || event.stages.length === 0) return null
+    const now = Date.now()
+
+    const designated = event.stages.find((s: any) => s.id === event.active_stage_id)
+    if (designated && !designated.is_completed) {
+      const dlStr = designated.actionable_deadline || designated.window_end || designated.deadline
+      if (dlStr) {
+        const dl = new Date(dlStr).getTime()
+        if (!isNaN(dl) && dl > now) {
+          return designated
+        }
+      }
+    }
+
+    const upcoming = event.stages
+      .filter((s: any) => {
+        if (s.is_completed) return false
+        const dlStr = s.actionable_deadline || s.window_end || s.deadline
+        if (!dlStr) return true
+        const dl = new Date(dlStr).getTime()
+        return !isNaN(dl) && dl > now
+      })
+      .sort((a: any, b: any) => {
+        const dlA = new Date(a.actionable_deadline || a.window_end || a.deadline || 0).getTime()
+        const dlB = new Date(b.actionable_deadline || b.window_end || b.deadline || 0).getTime()
+        return dlA - dlB
+      })
+
+    if (upcoming.length > 0) return upcoming[0]
+    return event.stages.find((s: any) => !s.is_completed) || event.stages[0]
+  })()
+
   const [isCompleting, setIsCompleting] = useState(false)
   
   // Edit & Delete dialog states
@@ -96,6 +129,54 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
     } finally {
       setIsCompleting(false)
     }
+  }
+
+  const handleDownloadIcs = () => {
+    if (!activeStage) return
+    const dlStr = activeStage.actionable_deadline || activeStage.window_end || activeStage.deadline
+    if (!dlStr) {
+      toast({
+        title: 'No Deadline Specified',
+        description: 'Cannot generate calendar alarm without a scheduled cutoff date.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    const dl = new Date(dlStr)
+    const kickoff = activeStage.window_start ? new Date(activeStage.window_start) : null
+
+    downloadIcsFile({
+      title: `${event.title} - ${activeStage.title} Cutoff`,
+      description: `Submission deadline for ${event.title} (${activeStage.title}).\nAction required: Complete and submit deliverables before freeze.`,
+      deadline: dl,
+      kickoffDate: kickoff,
+      eventUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+      meetUrl: event.meet_url,
+    })
+
+    toast({
+      title: 'Phone Alarms Ready (.ics)',
+      description: 'Downloaded calendar file with -24h and -2h native buzzer alarms.',
+    })
+  }
+
+  const getGoogleCalLink = () => {
+    if (!activeStage) return '#'
+    const dlStr = activeStage.actionable_deadline || activeStage.window_end || activeStage.deadline
+    if (!dlStr) return '#'
+
+    const dl = new Date(dlStr)
+    const kickoff = activeStage.window_start ? new Date(activeStage.window_start) : null
+
+    return getGoogleCalendarUrl({
+      title: `${event.title} - ${activeStage.title} Cutoff`,
+      description: `Submission deadline for ${event.title} (${activeStage.title}).\nAction required: Complete and submit deliverables before portal cutoff.`,
+      deadline: dl,
+      kickoffDate: kickoff,
+      eventUrl: typeof window !== 'undefined' ? window.location.href : undefined,
+      meetUrl: event.meet_url,
+    })
   }
 
   const handleAddResource = async (e: React.FormEvent) => {
@@ -301,13 +382,38 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
                     </div>
                     <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#f7f7f2] tracking-tight">{activeStage.title}</h2>
                   </div>
-                  <div className="text-left sm:text-right">
+                  <div className="text-left sm:text-right flex flex-col sm:items-end">
                     <CountdownTimer 
                       deadline={activeStage.actionable_deadline || activeStage.deadline} 
                       windowStart={activeStage.window_start}
                       windowEnd={activeStage.window_end}
                       showMilestoneLabel={Boolean(activeStage.actionable_deadline || activeStage.deadline || activeStage.window_start)}
+                      showTimezoneBadge={true}
                     />
+
+                    {/* Calendar Sync Weapon: Google Calendar + Phone .ics Alarm */}
+                    <div className="flex items-center justify-start sm:justify-end gap-1.5 mt-2 flex-wrap">
+                      <a
+                        href={getGoogleCalLink()}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-mono text-[10px] font-bold px-2 py-1 border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[2px_2px_0_#10201d] inline-flex items-center gap-1 transition-all"
+                        title="Add cutoff to Google Calendar"
+                      >
+                        <Calendar className="w-3 h-3" />
+                        + G-Calendar
+                      </a>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={handleDownloadIcs}
+                        className="font-mono text-[10px] font-bold border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#10201d] h-7 px-2"
+                        title="Download .ics alarm with -24h and -2h phone notifications"
+                      >
+                        ⚡ Phone Alarm (.ics)
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>

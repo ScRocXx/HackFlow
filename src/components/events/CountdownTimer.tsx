@@ -10,6 +10,7 @@ interface CountdownTimerProps {
   windowEnd?: string | null
   className?: string
   showMilestoneLabel?: boolean
+  showTimezoneBadge?: boolean
   onMilestoneChange?: (milestone: 'kickoff' | 'submission' | 'passed') => void
 }
 
@@ -19,6 +20,7 @@ export function CountdownTimer({
   windowEnd, 
   className,
   showMilestoneLabel = false,
+  showTimezoneBadge = false,
   onMilestoneChange
 }: CountdownTimerProps) {
   // Safeguard 3: If deadline, windowStart, and windowEnd are all null/empty, immediately return the brutalist "📅 Dates TBA" badge without running any timer calculations
@@ -154,6 +156,22 @@ export function CountdownTimer({
           <span className="text-[9px] uppercase tracking-wider opacity-80">s</span>
         </div>
       </div>
+
+      {showTimezoneBadge && targetDate && (
+        <span className="font-mono text-[9px] text-[#34433f] font-semibold flex items-center gap-1 mt-0.5">
+          <span className="px-1.5 py-0.5 border border-[#10201d]/30 bg-[#f7f7f2] font-bold text-[#10201d]">
+            {new Intl.DateTimeFormat('en-US', {
+              hour: 'numeric',
+              minute: 'numeric',
+              hour12: true,
+              timeZoneName: 'short',
+            }).format(targetDate)}
+          </span>
+          <span className="opacity-75">
+            ({new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(targetDate)})
+          </span>
+        </span>
+      )}
     </div>
   )
 }
