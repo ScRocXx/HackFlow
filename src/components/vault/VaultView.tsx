@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import { 
   Copy, Check, Plus, ExternalLink, Trash2, Loader2, 
   FileText, Code, Palette, User, Globe, Phone, Mail, GraduationCap,
@@ -58,7 +59,9 @@ export function VaultView({
   const router = useRouter()
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<'profiles' | 'scratchpad' | 'decks' | 'boilerplates'>('profiles')
-  const [selectedSquadId, setSelectedSquadId] = useState<string | null>(initialSquadId)
+  const [selectedSquadId, setSelectedSquadId] = useState<string | null>(
+    initialSquadId || (squads.length > 0 ? squads[0].id : null)
+  )
   const [profiles, setProfiles] = useState<TeamVaultProfile[]>(initialProfiles)
   const [assets, setAssets] = useState<TeamVaultAsset[]>(initialAssets)
   const [loadingData, setLoadingData] = useState(false)
@@ -109,13 +112,13 @@ export function VaultView({
 
   const { toast } = useToast()
 
-  const currentSquad = squads.find((s) => s.id === selectedSquadId)
+  const currentSquad = squads.find((s) => s.id === selectedSquadId) || squads[0]
 
-  const handleSquadChange = async (squadId: string | null) => {
+  const handleSquadChange = async (squadId: string) => {
     setSelectedSquadId(squadId)
     setLoadingData(true)
     try {
-      router.replace(squadId ? `/vault?squad=${squadId}` : '/vault')
+      router.replace(`/vault?squad=${squadId}`)
       const [pRes, aRes] = await Promise.all([
         getVaultProfiles(squadId),
         getVaultAssets(undefined, squadId),
@@ -288,7 +291,7 @@ export function VaultView({
       })
 
       setIsProfileModalOpen(false)
-      const pRes = await getVaultProfiles(selectedSquadId)
+      const pRes = await getVaultProfiles(selectedSquadId || squads[0]?.id)
       if (pRes.success) setProfiles(pRes.data || [])
     } catch (err: any) {
       toast({
@@ -355,7 +358,7 @@ export function VaultView({
         url: assetForm.url,
         description: assetForm.description,
         tags: tagsArray,
-        squad_id: selectedSquadId,
+        squad_id: selectedSquadId || squads[0]?.id,
       })
 
       if (!res.success) throw new Error(res.error || 'Failed to add asset')
@@ -400,6 +403,41 @@ export function VaultView({
   const deckAssets = assets.filter((a) => a.asset_type === 'pitch_deck' || a.asset_type === 'figma_kit' || a.asset_type === 'diagram')
   const boilerplateAssets = assets.filter((a) => a.asset_type === 'boilerplate' || a.asset_type === 'other')
 
+  if (squads.length === 0) {
+    return (
+      <div className="max-w-2xl mx-auto py-16 px-4">
+        <div className="border-4 border-[#10201d] bg-[#f7f7f2] shadow-[8px_8px_0_#671912] p-8 sm:p-12 text-center space-y-6">
+          <div className="w-16 h-16 mx-auto border-2 border-[#10201d] bg-[#f5b726] flex items-center justify-center shadow-[4px_4px_0_#10201d]">
+            <Users className="w-8 h-8 text-[#10201d]" />
+          </div>
+
+          <div className="space-y-2">
+            <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#e53927] bg-[#f6c4c1] px-2.5 py-1 border border-[#10201d] inline-block shadow-[1px_1px_0_#10201d]">
+              Strictly Squad-Scoped
+            </span>
+            <h1 className="font-display text-3xl sm:text-4xl font-extrabold text-[#10201d]">
+              No Squad Found
+            </h1>
+            <p className="font-mono text-xs text-[#34433f] max-w-md mx-auto leading-relaxed">
+              The Vault is exclusively squad-scoped. Create or join a squad to access 1-click team registration rosters, shared environment keyrings, sprint scratchpads, and slide decks.
+            </p>
+          </div>
+
+          <div className="pt-2 flex justify-center">
+            <Link
+              href="/friends"
+              className="inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider px-6 py-3 border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[4px_4px_0_#8a5d13] transition-all hover:translate-x-[1px] hover:translate-y-[1px]"
+            >
+              <Users className="w-4 h-4" />
+              <span>Create or Join a Squad</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Vault Header Banner */}
@@ -411,34 +449,31 @@ export function VaultView({
             <span className="w-2.5 h-2.5 bg-[#f5b726] inline-block" />
             <span className="w-2.5 h-2.5 bg-[#e97b77] inline-block" />
             <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#f6c4c1] ml-2">
-              {selectedSquadId ? `Shared Squad Vault: ${currentSquad?.name || 'Squad'}` : 'Personal Registration Vault'}
+              Squad Vault: {currentSquad?.name || 'Squad'}
             </span>
           </div>
           <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-[#f7f7f2]">
-            {selectedSquadId ? `${currentSquad?.name || 'Squad'} Vault` : 'Personal Vault'}
+            {currentSquad?.name || 'Squad'} Vault
           </h1>
           <p className="font-mono text-xs text-[#8bb2de] mt-1">
-            {selectedSquadId 
-              ? '1-click team registration clipboard, real-time squad chat, shared slide decks, and starter repos.'
-              : 'Save your personal registration details once. When you join a Squad, teammates can 1-click copy your details.'}
+            1-click team registration clipboard, sprint scratchpad & keyring, shared slide decks, and starter repos.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
           {/* Squad Selector Dropdown */}
           <div className="flex items-center gap-2 bg-[#2e4742] p-1.5 border-2 border-[#10201d] shadow-[3px_3px_0_#10201d]">
-            <Shield className="h-4 w-4 text-[#f5b726]" />
-            <span className="font-mono text-xs font-bold text-[#f2f2eb] uppercase hidden sm:inline">Scope:</span>
+            <Users className="h-4 w-4 text-[#f5b726]" />
+            <span className="font-mono text-xs font-bold text-[#f2f2eb] uppercase hidden sm:inline">Squad:</span>
             <select
-              value={selectedSquadId || ''}
-              onChange={(e) => handleSquadChange(e.target.value ? e.target.value : null)}
+              value={selectedSquadId || squads[0]?.id || ''}
+              onChange={(e) => handleSquadChange(e.target.value)}
               disabled={loadingData}
               className="bg-white text-[#10201d] font-mono text-xs font-bold py-1 px-2 border-2 border-[#10201d] focus:outline-none cursor-pointer"
             >
-              <option value="">🛡️ Personal Vault (Only Me)</option>
               {squads.map((sq) => (
                 <option key={sq.id} value={sq.id}>
-                  👥 Squad: {sq.name}
+                  👥 {sq.name}
                 </option>
               ))}
             </select>
@@ -465,7 +500,7 @@ export function VaultView({
               : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da]"
           )}
         >
-          {selectedSquadId ? `Quick-Fill Team Profiles (${profiles.length})` : 'My Registration Profile'}
+          Quick-Fill Team Profiles ({profiles.length})
         </button>
 
         <button
@@ -478,10 +513,8 @@ export function VaultView({
           )}
         >
           <Pin className="w-3.5 h-3.5" />
-          <span>Sprint Scratchpad</span>
-          {selectedSquadId && (
-            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block ml-0.5" />
-          )}
+          <span>Sprint Scratchpad & Keyring</span>
+          <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block ml-0.5" />
         </button>
 
         <button
@@ -512,96 +545,68 @@ export function VaultView({
       {/* Tab 1: Quick-Fill Team Profiles */}
       {activeTab === 'profiles' && (
         <div className="space-y-6">
-          {/* Vault Mode Banner */}
-          {!selectedSquadId ? (
-            // Personal Vault Mode
-            <div className="p-4 border-2 border-[#10201d] bg-[#f2f2eb] shadow-[4px_4px_0_#10201d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <ShieldCheck className="w-5 h-5 text-[#2e4742] shrink-0" />
-                <div>
-                  <span className="font-mono text-xs text-[#10201d] font-bold block">
-                    Personal Registration Details
-                  </span>
-                  <span className="font-mono text-[11px] text-[#34433f]">
-                    Saved securely. When you create or join a Squad, your squadmates can copy your details with 1 click on hackathon registration forms.
-                  </span>
-                </div>
+          <div className="p-4 border-2 border-[#10201d] bg-[#f2f2eb] shadow-[4px_4px_0_#10201d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <ShieldCheck className="w-5 h-5 text-[#2e4742] shrink-0" />
+              <div>
+                <span className="font-mono text-xs text-[#10201d] font-bold block">
+                  1-Click Registration Clipboard: Click any field to copy instantly into Unstop / Devfolio forms.
+                </span>
+                <span className="font-mono text-[11px] text-[#34433f]">
+                  Keep teammate profiles complete so anyone in the squad can register the whole team in seconds.
+                </span>
               </div>
+            </div>
+            <Button
+              onClick={handleOpenEditProfile}
+              className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#8bb2de] hover:bg-[#b0cced] text-[#10201d] shadow-[2px_2px_0_#10201d] shrink-0"
+            >
+              <Edit3 className="w-3.5 h-3.5 mr-1.5" />
+              Edit My Details
+            </Button>
+          </div>
+
+          {/* 1-Click Squad Registration Bridge Bar permanently visible on the Roster tab */}
+          <div className="p-3 bg-[#10201d] text-[#f7f7f2] border-2 border-[#10201d] shadow-[4px_4px_0_#10201d] flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4 text-[#f5b726]" />
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#f7f7f2]">
+                1-Click Squad Registration Bridge:
+              </span>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
               <Button
-                onClick={handleOpenEditProfile}
-                className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[2px_2px_0_#671912] shrink-0"
+                type="button"
+                size="sm"
+                disabled={profiles.length === 0}
+                onClick={copySquadUnstopFormat}
+                className="h-7 text-xs font-mono font-bold bg-[#8bb2de] text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-[#b0cced]"
               >
-                <Edit3 className="w-3.5 h-3.5 mr-1.5" />
-                Edit My Registration Details
+                <Copy className="h-3 w-3 mr-1" />
+                Copy Unstop Format
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={profiles.length === 0}
+                onClick={copySquadDevfolioFormat}
+                className="h-7 text-xs font-mono font-bold bg-[#f5b726] text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-[#ffcf66]"
+              >
+                <Copy className="h-3 w-3 mr-1" />
+                Copy Devfolio Format
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={profiles.length === 0}
+                onClick={copySquadTsvFormat}
+                className="h-7 text-xs font-mono font-bold bg-white text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-slate-100"
+              >
+                <Copy className="h-3 w-3 mr-1" />
+                Copy Sheets / TSV
               </Button>
             </div>
-          ) : (
-            // Squad Vault Mode
-            <>
-              <div className="p-4 border-2 border-[#10201d] bg-[#f2f2eb] shadow-[4px_4px_0_#10201d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <ShieldCheck className="w-5 h-5 text-[#2e4742] shrink-0" />
-                  <div>
-                    <span className="font-mono text-xs text-[#10201d] font-bold block">
-                      1-Click Registration Clipboard: Click any field to copy instantly into Unstop / Devfolio forms.
-                    </span>
-                    <span className="font-mono text-[11px] text-[#34433f]">
-                      Keep teammate profiles complete so anyone in the squad can register the whole team in seconds.
-                    </span>
-                  </div>
-                </div>
-                <Button
-                  onClick={handleOpenEditProfile}
-                  className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#8bb2de] hover:bg-[#b0cced] text-[#10201d] shadow-[2px_2px_0_#10201d] shrink-0"
-                >
-                  <Edit3 className="w-3.5 h-3.5 mr-1.5" />
-                  Edit My Details
-                </Button>
-              </div>
-
-              {/* 1-Click Squad Registration Bridge Bar (Squad Mode Only!) */}
-              <div className="p-3 bg-[#10201d] text-[#f7f7f2] border-2 border-[#10201d] shadow-[4px_4px_0_#10201d] flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-[#f5b726]" />
-                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#f7f7f2]">
-                    1-Click Squad Registration Bridge:
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={profiles.length === 0}
-                    onClick={copySquadUnstopFormat}
-                    className="h-7 text-xs font-mono font-bold bg-[#8bb2de] text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-[#b0cced]"
-                  >
-                    <Copy className="h-3 w-3 mr-1" />
-                    Copy Unstop Format
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={profiles.length === 0}
-                    onClick={copySquadDevfolioFormat}
-                    className="h-7 text-xs font-mono font-bold bg-[#f5b726] text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-[#ffcf66]"
-                  >
-                    <Copy className="h-3 w-3 mr-1" />
-                    Copy Devfolio Format
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={profiles.length === 0}
-                    onClick={copySquadTsvFormat}
-                    className="h-7 text-xs font-mono font-bold bg-white text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-slate-100"
-                  >
-                    <Copy className="h-3 w-3 mr-1" />
-                    Copy Sheets / TSV
-                  </Button>
-                </div>
-              </div>
-            </>
-          )}
+          </div>
 
           {/* Member Profiles Grid */}
           {profiles.length === 0 ? (
@@ -689,7 +694,7 @@ export function VaultView({
                               className="h-6 text-[10px] font-mono font-bold bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] border border-[#10201d] shrink-0"
                             >
                               <Edit3 className="w-3 h-3 mr-1" />
-                              Complete Profile
+                              Edit My Details
                             </Button>
                           ) : (
                             <Button
@@ -700,10 +705,8 @@ export function VaultView({
                             >
                               {nudgingUserId === p.user_id ? (
                                 <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                              ) : (
-                                <Bell className="w-3 h-3 mr-1" />
-                              )}
-                              <span>Ask for Details</span>
+                              ) : null}
+                              <span>📢 Nudge</span>
                             </Button>
                           )}
                         </div>
@@ -773,34 +776,12 @@ export function VaultView({
       {/* Tab 2: Squad Sprint Scratchpad & Pinboard */}
       {activeTab === 'scratchpad' && (
         <div>
-          {selectedSquadId ? (
-            <SquadScratchpad 
-              squadId={selectedSquadId}
-              squadName={currentSquad?.name || 'Squad'}
-              initialScratchpad={initialScratchpad}
-              currentUserId={currentUserId}
-            />
-          ) : (
-            <div className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[6px_6px_0_#671912] p-8 text-center space-y-4">
-              <Pin className="w-12 h-12 text-[#34433f] mx-auto opacity-40" />
-              <h3 className="font-display text-2xl font-bold text-[#10201d]">
-                Sprint Scratchpad Scoped to Squads
-              </h3>
-              <p className="font-mono text-xs text-[#57726d] max-w-md mx-auto">
-                You are currently in your Personal Vault. Select a Squad from the dropdown above to share live meeting rooms, Discord/WhatsApp channels, staging environments, and test credentials with your team.
-              </p>
-              {squads.length > 0 && (
-                <div className="pt-2 flex justify-center gap-2">
-                  <Button
-                    onClick={() => handleSquadChange(squads[0].id)}
-                    className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[3px_3px_0_#8a5d13]"
-                  >
-                    Switch to {squads[0].name}
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
+          <SquadScratchpad 
+            squadId={selectedSquadId || squads[0].id}
+            squadName={currentSquad?.name || squads[0]?.name || 'Squad'}
+            initialScratchpad={initialScratchpad}
+            currentUserId={currentUserId}
+          />
         </div>
       )}
 

@@ -12,79 +12,48 @@ export async function getVaultProfiles(squadId?: string | null) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized', data: [] };
 
-    if (squadId) {
-      // 1. Fetch all members belonging to this squad
-      const { data: squadMembers, error: smErr } = await supabase
-        .from('squad_members')
-        .select('user_id, role')
-        .eq('squad_id', squadId);
+    if (!squadId) {
+      return { success: false, error: 'Squad ID is required', data: [] };
+    }
 
-      if (smErr || !squadMembers || squadMembers.length === 0) {
-        return { success: true, data: [] };
-      }
+    // 1. Fetch all members belonging to this squad
+    const { data: squadMembers, error: smErr } = await supabase
+      .from('squad_members')
+      .select('user_id, role')
+      .eq('squad_id', squadId);
 
-      const memberIds = squadMembers.map((m) => m.user_id);
+    if (smErr || !squadMembers || squadMembers.length === 0) {
+      return { success: true, data: [] };
+    }
 
-      // 2. Fetch profiles and team_vault_profiles in parallel
-      const [profilesRes, vaultProfilesRes] = await Promise.all([
-        supabase.from('profiles').select('*').in('id', memberIds),
-        supabase.from('team_vault_profiles').select('*').in('user_id', memberIds),
-      ]);
+    const memberIds = squadMembers.map((m) => m.user_id);
 
-      const profileMap = new Map<string, Profile>();
-      profilesRes.data?.forEach((p) => profileMap.set(p.id, p));
+    // 2. Fetch profiles and team_vault_profiles in parallel
+    const [profilesRes, vaultProfilesRes] = await Promise.all([
+      supabase.from('profiles').select('*').in('id', memberIds),
+      supabase.from('team_vault_profiles').select('*').in('user_id', memberIds),
+    ]);
 
-      const vaultMap = new Map<string, TeamVaultProfile>();
-      vaultProfilesRes.data?.forEach((vp) => vaultMap.set(vp.user_id, vp));
+    const profileMap = new Map<string, Profile>();
+    profilesRes.data?.forEach((p) => profileMap.set(p.id, p));
 
-      // 3. Merge so members without vault profiles are visibly flagged as pending
-      const merged: TeamVaultProfile[] = squadMembers.map((sm) => {
-        const vp = vaultMap.get(sm.user_id);
-        const p = profileMap.get(sm.user_id);
+    const vaultMap = new Map<string, TeamVaultProfile>();
+    vaultProfilesRes.data?.forEach((vp) => vaultMap.set(vp.user_id, vp));
 
-        const isComplete = Boolean(
-          vp && (vp.phone || vp.college || vp.roll_number || vp.resume_url || vp.github_url)
-        );
+    // 3. Merge so members without vault profiles are visibly flagged as pending
+    const merged: TeamVaultProfile[] = squadMembers.map((sm) => {
+      const vp = vaultMap.get(sm.user_id);
+      const p = profileMap.get(sm.user_id);
 
-        return {
-          id: vp?.id || sm.user_id,
-          user_id: sm.user_id,
-          full_name: vp?.full_name || p?.full_name || 'Squad Member',
-          email: vp?.email || p?.email || '',
-          phone: vp?.phone || null,
-          college: vp?.college || null,
-          roll_number: vp?.roll_number || null,
-          github_url: vp?.github_url || null,
-          linkedin_url: vp?.linkedin_url || null,
-          portfolio_url: vp?.portfolio_url || null,
-          resume_url: vp?.resume_url || null,
-          created_at: vp?.created_at,
-          has_vault_profile: Boolean(vp),
-          is_complete: isComplete,
-          role: sm.role as 'leader' | 'member',
-          avatar_url: p?.avatar_url || null,
-        };
-      });
-
-      return { success: true, data: merged };
-    } else {
-      // Personal Vault: show only current user's profile card
-      const [vaultRes, profileRes] = await Promise.all([
-        supabase.from('team_vault_profiles').select('*').eq('user_id', user.id).maybeSingle(),
-        supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
-      ]);
-
-      const vp = vaultRes.data;
-      const p = profileRes.data;
       const isComplete = Boolean(
         vp && (vp.phone || vp.college || vp.roll_number || vp.resume_url || vp.github_url)
       );
 
-      const personal: TeamVaultProfile = {
-        id: vp?.id || user.id,
-        user_id: user.id,
-        full_name: vp?.full_name || p?.full_name || user.email?.split('@')[0] || 'Hacker',
-        email: vp?.email || p?.email || user.email || '',
+      return {
+        id: vp?.id || sm.user_id,
+        user_id: sm.user_id,
+        full_name: vp?.full_name || p?.full_name || 'Squad Member',
+        email: vp?.email || p?.email || '',
         phone: vp?.phone || null,
         college: vp?.college || null,
         roll_number: vp?.roll_number || null,
@@ -95,12 +64,12 @@ export async function getVaultProfiles(squadId?: string | null) {
         created_at: vp?.created_at,
         has_vault_profile: Boolean(vp),
         is_complete: isComplete,
-        role: 'leader',
+        role: sm.role as 'leader' | 'member',
         avatar_url: p?.avatar_url || null,
       };
+    });
 
-      return { success: true, data: [personal] };
-    }
+    return { success: true, data: merged };
   } catch (err: any) {
     return { success: false, error: err.message, data: [] };
   }
@@ -174,14 +143,11 @@ export async function getVaultAssets(assetType?: string, squadId?: string | null
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized', data: [] };
 
-    let query = supabase.from('team_vault_assets').select('*');
-
-    if (squadId) {
-      query = query.eq('squad_id', squadId);
-    } else {
-      // Personal vault: only assets with squad_id IS NULL created by current user
-      query = query.is('squad_id', null).eq('created_by', user.id);
+    if (!squadId) {
+      return { success: false, error: 'Squad ID is required', data: [] };
     }
+
+    let query = supabase.from('team_vault_assets').select('*').eq('squad_id', squadId);
 
     if (assetType && assetType !== 'all') {
       query = query.eq('asset_type', assetType);
@@ -213,6 +179,10 @@ export async function createVaultAsset(assetData: {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { success: false, error: 'Unauthorized' };
 
+    if (!assetData.squad_id) {
+      return { success: false, error: 'Squad ID is required' };
+    }
+
     if (!assetData.title?.trim() || !assetData.url?.trim()) {
       return { success: false, error: 'Title and URL are required' };
     }
@@ -234,7 +204,7 @@ export async function createVaultAsset(assetData: {
         description: assetData.description?.trim() || null,
         tags: assetData.tags || [],
         created_by: user.id,
-        squad_id: assetData.squad_id || null,
+        squad_id: assetData.squad_id,
       })
       .select('*')
       .single();
