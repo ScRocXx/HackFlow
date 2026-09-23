@@ -7,9 +7,9 @@ import { ensureExternalUrl } from '@/lib/utils/url';
 
 function getSupabaseAdmin() {
   const supabaseUrl = (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://llyzvbwmktztyyrpcydp.supabase.co').trim();
-  const serviceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').trim();
+  const serviceKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
 
-  return createClient(supabaseUrl, serviceKey, {
+  return createClient(supabaseUrl, serviceKey || (process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '').trim(), {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
@@ -74,12 +74,24 @@ export function getIntervalMessage(intervalKey: string, stageName: string, event
 export async function evaluateAndDispatchNotifications(options?: { baseUrl?: string }) {
   let evaluated = 0;
   let dispatched = 0;
+
+  // STRICT FAIL-CLOSED: Refuse to run without service role key!
+  // Running with anon key causes Postgres RLS to hide logs, which causes repeated duplicate email bursts.
+  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    console.error('[NotificationEngine] CRITICAL FAIL-CLOSED: SUPABASE_SERVICE_ROLE_KEY is not configured in environment variables. Refusing to run to prevent duplicate email bursts.');
+    return {
+      evaluated: 0,
+      dispatched: 0,
+      error: 'SUPABASE_SERVICE_ROLE_KEY environment variable is required to execute notification engine safely.'
+    };
+  }
+
   const supabaseAdmin = getSupabaseAdmin();
 
   // 1. Query pending event stages (strictly ignore TBA stages with null deadlines)
   const { data: stages, error: stagesError } = await supabaseAdmin
     .from('event_stages')
-    .select('id, title, stage_type, evaluation_format, deadline, event_id, events!event_stages_event_id_fkey(id, title, created_by, team_size_min, team_size_max, meet_url)')
+    .select('id, title, stage_type, evaluation_format, deliverables_description, deadline, event_id, events!event_stages_event_id_fkey(id, title, created_by, team_size_min, team_size_max, meet_url)')
     .eq('is_completed', false)
     .not('deadline', 'is', null)
     .gt('deadline', new Date().toISOString());
@@ -244,23 +256,35 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
         const inAppKey = [stage.id, intervalKey, 'in_app', normalizedEmail].join('_');
         const inAppDedupeKey = [recipient.id, message.subject, `/events/${eventId}`].join('_');
 
-        // --- Channel A: Email (Guaranteed Deduplication) ---
+        // --- Channel A: Email (Atomic Guaranteed Idempotency) ---
         if (!logSet.has(emailKey)) {
-          logSet.add(emailKey); // Immediately mark in memory to prevent duplicate loops
+          logSet.add(emailKey); // Immediately mark in memory to prevent duplicate loops within same run
 
-          // Pre-record in notification_logs to prevent concurrent or repeated execution
-          const { error: logErr } = await supabaseAdmin
+          // ATOMIC INSERT LOCK: Insert record first.
+          // If a prior run or concurrent thread already created it, Postgres unique constraint rejects it with 23505.
+          const { data: insertLog, error: logErr } = await supabaseAdmin
             .from('notification_logs')
-            .upsert({
+            .insert({
               stage_id: stage.id,
               interval_key: intervalKey,
               channel: 'email',
               recipient_email: normalizedEmail,
-            }, { onConflict: 'stage_id,interval_key,channel,recipient_email' });
+            })
+            .select('id');
 
           if (logErr) {
-            console.error('[NotificationEngine] Warning logging email notification:', logErr);
+            // Postgres code 23505 = unique_violation (already sent & locked in a prior cron run)
+            if (logErr.code === '23505') {
+              console.log(`[NotificationEngine] Email already sent and locked for ${normalizedEmail} (stage: ${stage.id}, interval: ${intervalKey}). Skipping.`);
+              continue;
+            }
+
+            // STRICT FAIL-CLOSED: If DB write fails for ANY reason, NEVER send the email to avoid duplicate bursting!
+            console.error(`[NotificationEngine] CRITICAL: DB log insert failed for ${normalizedEmail} (${intervalKey}). Refusing to send email:`, logErr);
+            continue;
           }
+
+          const lockId = insertLog?.[0]?.id;
 
           try {
             const emailResult = await sendDeadlineEmail({
@@ -274,15 +298,25 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
               cutoffDate,
               timezone: 'IST',
               deliverables,
+              deliverablesDescription: stage.deliverables_description,
               constraints,
               meetUrl,
             });
 
             if (emailResult?.success) {
               dispatched++;
+            } else {
+              // Sending failed at provider level: remove lock so it can retry on next schedule
+              console.warn(`[NotificationEngine] Email provider rejected delivery to ${normalizedEmail}. Rolling back lock:`, emailResult?.error);
+              if (lockId) {
+                await supabaseAdmin.from('notification_logs').delete().eq('id', lockId);
+              }
             }
           } catch (emailErr) {
-            console.error(`[NotificationEngine] Failed to dispatch email to ${normalizedEmail}:`, emailErr);
+            console.error(`[NotificationEngine] Failed to dispatch email to ${normalizedEmail}. Rolling back lock:`, emailErr);
+            if (lockId) {
+              await supabaseAdmin.from('notification_logs').delete().eq('id', lockId);
+            }
           }
         }
 
@@ -291,6 +325,25 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
           logSet.add(inAppKey);
           existingInAppSet.add(inAppDedupeKey);
 
+          // Atomic insert lock for in-app notification
+          const { error: inAppLogErr } = await supabaseAdmin
+            .from('notification_logs')
+            .insert({
+              stage_id: stage.id,
+              interval_key: intervalKey,
+              channel: 'in_app',
+              recipient_email: normalizedEmail,
+            });
+
+          if (inAppLogErr) {
+            if (inAppLogErr.code === '23505') {
+              // Already logged in prior run
+              continue;
+            }
+            console.error('[NotificationEngine] In-app notification lock failed, skipping:', inAppLogErr);
+            continue;
+          }
+
           try {
             await createInAppNotification({
               userId: recipient.id,
@@ -298,20 +351,6 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
               body: message.body,
               link: `/events/${eventId}`
             });
-
-            const { error: inAppLogErr } = await supabaseAdmin
-              .from('notification_logs')
-              .upsert({
-                stage_id: stage.id,
-                interval_key: intervalKey,
-                channel: 'in_app',
-                recipient_email: normalizedEmail,
-              }, { onConflict: 'stage_id,interval_key,channel,recipient_email' });
-
-            if (inAppLogErr) {
-              console.error('[NotificationEngine] Warning logging in-app notification:', inAppLogErr);
-            }
-
             dispatched++;
           } catch (inAppErr) {
             console.error(`[NotificationEngine] Failed to create in-app notification for ${recipient.id}:`, inAppErr);

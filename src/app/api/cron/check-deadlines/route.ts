@@ -21,6 +21,16 @@ export async function GET(request: Request) {
   try {
     const baseUrl = getServerBaseUrl(request);
     const result = await evaluateAndDispatchNotifications({ baseUrl });
+
+    if (result.error) {
+      return NextResponse.json({
+        success: false,
+        error: result.error,
+        serviceRoleKeyConfigured: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+        timestamp: new Date().toISOString(),
+      }, { status: 400 });
+    }
+
     return NextResponse.json({
       success: true,
       processed: result.evaluated,

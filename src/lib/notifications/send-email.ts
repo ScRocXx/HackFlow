@@ -5,6 +5,7 @@ export interface SendEmailOptions {
   subject: string;
   html?: string;
   text?: string;
+  idempotencyKey?: string;
 }
 
 /**
@@ -48,6 +49,7 @@ export async function sendEmail(options: SendEmailOptions) {
           to: [{ email: options.to }],
           subject: options.subject,
           htmlContent: htmlContent || `<p>${options.subject}</p>`,
+          tags: options.idempotencyKey ? [options.idempotencyKey.slice(0, 50)] : undefined,
         }),
       });
 
