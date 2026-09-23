@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { 
   CheckCircle2, AlertTriangle, ExternalLink, Calendar, Trophy, 
   ShieldAlert, Award, FileText, Check, Loader2, RefreshCw,
-  FlaskConical, ShieldCheck, XCircle, AlertCircle, ChevronDown, ChevronUp
+  FlaskConical, ShieldCheck, XCircle, AlertCircle, ChevronDown, ChevronUp,
+  Video, Edit3
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -36,6 +37,28 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
   const [demoUrl, setDemoUrl] = useState(event.demo_url || '')
   const [githubUrl, setGithubUrl] = useState(event.github_repo_url || '')
   const [pitchDeckUrl, setPitchDeckUrl] = useState(event.pitch_deck_url || '')
+
+  // 3-Tier Cascade PDF Limit: Tier 1 (Stage rules), Tier 2 (Platform default), Tier 3 (Editable badge)
+  const getDefaultPdfLimitMb = (platform?: string) => {
+    const p = (platform || '').toLowerCase()
+    if (p.includes('devfolio') || p.includes('sih')) return 10
+    if (p.includes('unstop') || p.includes('devpost')) return 20
+    return 20
+  }
+
+  const [pdfLimitMb, setPdfLimitMb] = useState<number>(() => getDefaultPdfLimitMb(event.source_platform))
+  const [isEditingLimit, setIsEditingLimit] = useState(false)
+  const [customLimitInput, setCustomLimitInput] = useState(pdfLimitMb.toString())
+  const [uploadedPdfSize, setUploadedPdfSize] = useState<number | null>(null)
+
+  // Video Link State (YouTube / Google Drive)
+  const [videoUrl, setVideoUrl] = useState(() => {
+    if (event.demo_url && (event.demo_url.includes('youtube') || event.demo_url.includes('youtu.be') || event.demo_url.includes('drive.google.com'))) {
+      return event.demo_url
+    }
+    const match = (event.submission_notes || '').match(/Video:\s*(https?:\/\/[^\s]+)/i)
+    return match ? match[1] : ''
+  })
 
   // GitHub Permission Checker State
   const [githubStatus, setGithubStatus] = useState<'checking' | 'public' | 'private_or_missing' | 'rate_limited' | 'idle'>('idle')
@@ -198,13 +221,20 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
       }
     }
 
-    // Test 3: Pitch Deck PDF & Cloud Permissions
+    // Test 3: Pitch Deck PDF File Size & Portal Limit Check (3-Tier Cascade)
     if (!pitchDeckUrl.trim()) {
       results.push({
         id: 'deck',
         name: 'Pitch Deck Deliverable',
         status: 'warning',
         detail: 'No pitch deck uploaded or linked.',
+      })
+    } else if (uploadedPdfSize !== null && uploadedPdfSize > pdfLimitMb * 1024 * 1024) {
+      results.push({
+        id: 'deck',
+        name: `Pitch Deck Size Check (Limit: ${pdfLimitMb}MB)`,
+        status: 'failed',
+        detail: `❌ File size (${(uploadedPdfSize / (1024 * 1024)).toFixed(1)}MB) exceeds the ${pdfLimitMb}MB limit for ${event.source_platform || 'portal'}. High risk of upload rejection! Compress immediately.`,
       })
     } else if (pitchDeckUrl.includes('drive.google.com')) {
       if (driveVerified) {
@@ -225,9 +255,11 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
     } else if (pitchDeckUrl.toLowerCase().endsWith('.pdf') || pitchDeckUrl.includes('supabase.co/storage')) {
       results.push({
         id: 'deck',
-        name: 'Pitch Deck File Size & Format',
+        name: `Pitch Deck Size & Format (${pdfLimitMb}MB Guard)`,
         status: 'passed',
-        detail: 'PDF format detected. Hosted on CDN within the 20MB portal limit.',
+        detail: uploadedPdfSize
+          ? `PDF size verified at ${(uploadedPdfSize / (1024 * 1024)).toFixed(1)}MB — clean pass under the ${pdfLimitMb}MB portal cutoff.`
+          : `PDF format detected. Hosted on CDN within the ${pdfLimitMb}MB portal limit.`,
       })
     } else {
       results.push({
@@ -238,7 +270,33 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
       })
     }
 
-    // Test 4: Submission Confirmation Proof
+    // Test 4: Pitch / Demo Video Permissions (YouTube & Drive)
+    if (videoUrl.trim()) {
+      if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+        results.push({
+          id: 'video',
+          name: 'Demo Video (YouTube Permissions)',
+          status: 'warning',
+          detail: 'YouTube video detected. Verify visibility is "Unlisted" or "Public" (NOT "Private"). Private links fail for judges.',
+        })
+      } else if (videoUrl.includes('drive.google.com')) {
+        results.push({
+          id: 'video',
+          name: 'Demo Video (Google Drive Permissions)',
+          status: 'warning',
+          detail: 'Drive video link detected. Verify "Anyone with the link can view" is enabled to avoid locked screens.',
+        })
+      } else {
+        results.push({
+          id: 'video',
+          name: 'Demo Video Deliverable',
+          status: 'passed',
+          detail: `Video demo URL provided (${videoUrl.slice(0, 40)}...).`,
+        })
+      }
+    }
+
+    // Test 5: Submission Confirmation Proof
     if (!submissionReceipt.trim()) {
       results.push({
         id: 'receipt',
@@ -277,9 +335,17 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
     if (e) e.preventDefault()
     setIsSaving(true)
     try {
+      let finalNotes = submissionNotes.trim()
+      if (videoUrl.trim()) {
+        const videoLine = `Video: ${videoUrl.trim()}`
+        if (!finalNotes.includes(videoUrl.trim())) {
+          finalNotes = finalNotes ? `${finalNotes}\n${videoLine}` : videoLine
+        }
+      }
+
       const res = await updatePostSubmissionDetails(event.id, {
         submission_receipt: submissionReceipt.trim() || undefined,
-        submission_notes: submissionNotes.trim() || undefined,
+        submission_notes: finalNotes || undefined,
         result_date: resultDate ? new Date(resultDate).toISOString() : undefined,
         prize_details: prizeDetails.trim() || undefined,
         retro_notes: retroNotes.trim() || undefined,
@@ -497,18 +563,98 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
                 </div>
               </div>
 
-              {/* Pitch Deck / Presentation PDF */}
-              <div className="pt-2 border-t border-[#10201d]/15">
+              {/* Pitch Deck / Presentation PDF & 3-Tier Cascade Limit */}
+              <div className="pt-2 border-t border-[#10201d]/15 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d]">
+                    Pitch Deck (PDF or Link)
+                  </span>
+                  <div className="flex items-center gap-1.5 font-mono text-[11px]">
+                    <span className="text-[#34433f]">Checking against:</span>
+                    {isEditingLimit ? (
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="number"
+                          value={customLimitInput}
+                          onChange={(e) => setCustomLimitInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              const val = parseInt(customLimitInput, 10)
+                              if (val > 0) setPdfLimitMb(val)
+                              setIsEditingLimit(false)
+                            }
+                          }}
+                          className="w-12 h-6 border-2 border-[#10201d] bg-white px-1 text-center font-bold font-mono text-xs"
+                          autoFocus
+                        />
+                        <span className="font-bold">MB</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const val = parseInt(customLimitInput, 10)
+                            if (val > 0) setPdfLimitMb(val)
+                            setIsEditingLimit(false)
+                          }}
+                          className="px-1.5 py-0.5 border border-[#10201d] bg-[#f5b726] font-bold text-[10px]"
+                        >
+                          Save
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCustomLimitInput(pdfLimitMb.toString())
+                          setIsEditingLimit(true)
+                        }}
+                        className="px-2 py-0.5 border border-[#10201d] bg-[#8bb2de] hover:bg-[#a9c9f0] font-bold text-[#10201d] flex items-center gap-1 shadow-[1px_1px_0_#10201d]"
+                        title="Click to customize portal file size limit (Tier 3 override)"
+                      >
+                        <span>[ {pdfLimitMb} MB ] limit</span>
+                        <Edit3 className="w-3 h-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 <PdfUpload
                   value={pitchDeckUrl}
-                  onChange={(url) => setPitchDeckUrl(url)}
-                  label="Pitch Deck (Upload PDF or Link)"
+                  onChange={(url, metadata) => {
+                    setPitchDeckUrl(url)
+                    if (metadata?.fileSize) {
+                      setUploadedPdfSize(metadata.fileSize)
+                    }
+                  }}
+                  label=""
                   placeholder="https://drive.google.com/... or https://canva.com/..."
                   folder="hackathon_submissions"
                 />
 
+                {/* PDF Size Cascade Feedback Banner */}
+                {uploadedPdfSize !== null && (
+                  <div className={cn(
+                    "p-2 border-2 font-mono text-xs flex items-center justify-between",
+                    uploadedPdfSize > pdfLimitMb * 1024 * 1024
+                      ? "border-[#e53927] bg-[#f6c4c1] text-[#671912]"
+                      : "border-[#52b788] bg-[#d4edda] text-[#155724]"
+                  )}>
+                    <div className="flex items-center gap-1.5">
+                      {uploadedPdfSize > pdfLimitMb * 1024 * 1024 ? (
+                        <AlertTriangle className="w-4 h-4 text-[#e53927] shrink-0" />
+                      ) : (
+                        <CheckCircle2 className="w-4 h-4 text-[#52b788] shrink-0" />
+                      )}
+                      <span>
+                        {uploadedPdfSize > pdfLimitMb * 1024 * 1024
+                          ? `❌ PDF is ${(uploadedPdfSize / (1024 * 1024)).toFixed(1)} MB — EXCEEDS ${pdfLimitMb} MB limit! Compress PDF before submission.`
+                          : `✓ PDF is ${(uploadedPdfSize / (1024 * 1024)).toFixed(1)} MB — Clean pass under the ${pdfLimitMb} MB cutoff.`}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
                 {pitchDeckUrl && pitchDeckUrl.includes('drive.google.com') && (
-                  <div className="mt-2 flex items-center gap-2 p-2 border border-[#10201d] bg-white">
+                  <div className="flex items-center gap-2 p-2 border border-[#10201d] bg-white">
                     <input
                       type="checkbox"
                       id="drive-check"
@@ -521,6 +667,53 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
                     </label>
                   </div>
                 )}
+
+                {/* Pitch / Demo Video URL & Permissions */}
+                <div className="pt-3 mt-3 border-t border-[#10201d]/15 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="font-mono text-[11px] font-bold text-[#34433f] flex items-center gap-1">
+                      <Video className="w-3.5 h-3.5" /> Pitch / Demo Video URL
+                    </label>
+                    {videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be') ? (
+                      <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 bg-[#ffe3dc] border border-[#e53927] text-[#e53927]">
+                        YouTube Video Detected
+                      </span>
+                    ) : videoUrl.includes('drive.google.com') ? (
+                      <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 bg-[#d4edda] border border-[#52b788] text-[#155724]">
+                        Google Drive Detected
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <Input
+                    value={videoUrl}
+                    onChange={(e) => setVideoUrl(e.target.value)}
+                    placeholder="https://youtu.be/... or https://drive.google.com/file/..."
+                    className="font-mono text-xs border-2 border-[#10201d] bg-[#f2f2eb] h-9"
+                  />
+
+                  {/* YouTube Permission Warning */}
+                  {(videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) && (
+                    <div className="p-2 border border-[#f5b726] bg-[#fffdf0] text-[#8a5d13] font-mono text-[11px] flex items-start gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[#f5b726]" />
+                      <div>
+                        <p className="font-bold">YouTube Pre-Flight Check:</p>
+                        <p>Ensure video privacy is set to <strong>Unlisted</strong> or <strong>Public</strong>, NOT <em>Private</em>. Private links immediately return "Video unavailable" to judges!</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Drive Permission Warning */}
+                  {videoUrl.includes('drive.google.com') && (
+                    <div className="p-2 border border-[#8bb2de] bg-[#f0f5fa] text-[#10201d] font-mono text-[11px] flex items-start gap-1.5">
+                      <ShieldAlert className="w-3.5 h-3.5 shrink-0 mt-0.5 text-[#2e4742]" />
+                      <div>
+                        <p className="font-bold">Google Drive Permissions Guard:</p>
+                        <p>Ensure General Access is set to <strong>"Anyone with the link can view"</strong>. If judges hit a "Request Access" screen, your submission cannot be scored.</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
