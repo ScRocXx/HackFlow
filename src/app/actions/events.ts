@@ -7,6 +7,7 @@ import { createInAppNotification, createBatchInAppNotifications } from '@/lib/no
 import { sendTeamInviteEmail } from '@/lib/notifications/send-email';
 import { getServerBaseUrl } from '@/lib/utils/url-server';
 import { ensureExternalUrl } from '@/lib/utils/url';
+import type { MissionBrief } from '@/lib/supabase/types';
 
 export type CreateEventInput = {
   title: string;
@@ -46,6 +47,7 @@ export type CreateEventInput = {
     resource_type: string;
     is_official?: boolean;
   }[];
+  mission_brief?: MissionBrief | null;
 };
 
 export async function createEvent(data: CreateEventInput) {
@@ -164,6 +166,7 @@ export async function createEvent(data: CreateEventInput) {
       team_size_max: data.team_size_max || 4,
       squad_id: data.squad_id || null,
       status: 'registered',
+      mission_brief: data.mission_brief || null,
     };
 
     const stagesPayload = stagesData.map((stage, idx) => {

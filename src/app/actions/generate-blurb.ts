@@ -2,6 +2,7 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createClient } from '@/lib/supabase/server';
+import type { MissionBrief } from '@/lib/supabase/types';
 
 export interface GenerateBlurbInput {
   eventId: string;
@@ -13,6 +14,7 @@ export interface GenerateBlurbInput {
   pitchDeckBase64?: string | null; // Client-side guarded <= 7MB
   pitchDeckUrl?: string | null;
   maxWords?: number; // default 150
+  missionBrief?: MissionBrief | null;
 }
 
 export interface GeneratedBlurbResult {
@@ -114,6 +116,10 @@ MATERIALS:
 ${(input.solutionBullets || []).map((b, i) => `  ${i + 1}. ${b}`).join('\n') || '  (None provided)'}
 ${readmeText ? readmeText : '- GitHub Repo: No README available'}
 ${deckAnalyzed ? '- Presentation Deck: Attached above as multimodal PDF document' : '- Presentation Deck: None provided'}
+${input.missionBrief ? `- Hackathon Mission & Sponsor Context:
+  * Why It Exists (Sponsor Motive): ${input.missionBrief.why_it_exists || 'N/A'}
+  * Expected Build Target: ${input.missionBrief.what_to_build || 'N/A'}
+  * Tech Stack Rules: ${input.missionBrief.tech_stack_mandate?.is_stack_restricted ? `RESTRICTED STACK. Mandatory Tools: [${input.missionBrief.tech_stack_mandate.mandatory_tools?.join(', ') || 'None'}]. Bonus Sponsor Tools: [${input.missionBrief.tech_stack_mandate.bonus_sponsor_tools?.join(', ') || 'None'}]. Summary: ${input.missionBrief.tech_stack_mandate.allowed_stack_summary}` : `Open Stack: ${input.missionBrief.tech_stack_mandate?.allowed_stack_summary || 'Free Choice'}`}` : ''}
 
 STRICT REQUIREMENTS:
 1. Output MUST be valid JSON with strictly two fields: "elevator_pitch" and "architecture_summary".
@@ -121,10 +127,12 @@ STRICT REQUIREMENTS:
    - Maximum ${maxWords} words.
    - High-impact problem/solution overview.
    - Hook the judges immediately with the exact core user pain point and how the project uniquely solves it.
+   ${input.missionBrief?.why_it_exists ? `- SPONSOR MOTIVE GROUNDING: Directly align the narrative with why this hackathon was created: "${input.missionBrief.why_it_exists}". Show how this solution fulfills that vision.` : ''}
 3. "architecture_summary":
    - Maximum ${maxWords} words.
    - Concrete technical stack breakdown: Frontend, Backend, Database, AI/ML models, external APIs, and cloud deployment.
    - Avoid buzzword fluff; specify real technical libraries and components identified from the README/Deck/Bullets.
+   ${input.missionBrief?.tech_stack_mandate?.is_stack_restricted && input.missionBrief.tech_stack_mandate.mandatory_tools?.length ? `- MANDATORY TECH GROUNDING: Explicitly feature and integrate the required mandatory tools (${input.missionBrief.tech_stack_mandate.mandatory_tools.join(', ')})${input.missionBrief.tech_stack_mandate.bonus_sponsor_tools?.length ? ` and bonus sponsor tools (${input.missionBrief.tech_stack_mandate.bonus_sponsor_tools.join(', ')})` : ''} into the tech architecture breakdown.` : ''}
 4. DO NOT wrap with markdown code blocks. Output raw JSON only.
 
 Example JSON format:
