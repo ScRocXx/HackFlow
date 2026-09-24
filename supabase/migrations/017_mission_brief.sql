@@ -1,5 +1,5 @@
 -- ==============================================================================
--- 010_mission_brief.sql: 4-Part Mission Brief Upgrade
+-- 017_mission_brief.sql: 4-Part Mission Brief Upgrade
 -- ==============================================================================
 
 -- 1. Add mission_brief JSONB column to public.events

@@ -481,9 +481,25 @@ ALTER TABLE public.events
   ADD COLUMN IF NOT EXISTS demo_url text,
   ADD COLUMN IF NOT EXISTS github_repo_url text,
   ADD COLUMN IF NOT EXISTS pitch_deck_url text,
+  ADD COLUMN IF NOT EXISTS squad_id uuid REFERENCES public.squads(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS prize_cash_pool text,
+  ADD COLUMN IF NOT EXISTS prize_first_place text,
+  ADD COLUMN IF NOT EXISTS has_perks_or_credits boolean DEFAULT false,
+  ADD COLUMN IF NOT EXISTS raw_prize_text text,
+  ADD COLUMN IF NOT EXISTS prize_display_summary text,
   ADD COLUMN IF NOT EXISTS mission_brief jsonb DEFAULT NULL;
 
 CREATE INDEX IF NOT EXISTS idx_events_mission_brief ON public.events USING GIN (mission_brief);
+
+-- Operational boundaries for event stages
+ALTER TABLE public.event_stages
+  ADD COLUMN IF NOT EXISTS window_start timestamptz,
+  ADD COLUMN IF NOT EXISTS window_end timestamptz,
+  ADD COLUMN IF NOT EXISTS actionable_deadline timestamptz,
+  ADD COLUMN IF NOT EXISTS raw_date_snippet text;
+
+CREATE INDEX IF NOT EXISTS idx_event_stages_actionable_deadline ON public.event_stages(actionable_deadline);
+CREATE INDEX IF NOT EXISTS idx_event_stages_window_start ON public.event_stages(window_start);
 
 -- 3. Event Problem Statements Table (Idea Sandbox)
 CREATE TABLE IF NOT EXISTS public.event_problem_statements (
