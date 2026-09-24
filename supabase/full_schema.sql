@@ -480,7 +480,10 @@ ALTER TABLE public.events
   ADD COLUMN IF NOT EXISTS retro_notes text,
   ADD COLUMN IF NOT EXISTS demo_url text,
   ADD COLUMN IF NOT EXISTS github_repo_url text,
-  ADD COLUMN IF NOT EXISTS pitch_deck_url text;
+  ADD COLUMN IF NOT EXISTS pitch_deck_url text,
+  ADD COLUMN IF NOT EXISTS mission_brief jsonb DEFAULT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_events_mission_brief ON public.events USING GIN (mission_brief);
 
 -- 3. Event Problem Statements Table (Idea Sandbox)
 CREATE TABLE IF NOT EXISTS public.event_problem_statements (
@@ -687,7 +690,8 @@ BEGIN
     team_size_max,
     squad_id,
     status,
-    active_stage_id
+    active_stage_id,
+    mission_brief
   ) VALUES (
     p_creator_id,
     COALESCE(p_event->>'title', 'Untitled Event'),
@@ -709,7 +713,8 @@ BEGIN
     COALESCE((p_event->>'team_size_max')::INT, 4),
     NULLIF(p_event->>'squad_id', '')::UUID,
     COALESCE(p_event->>'status', 'registered'),
-    NULL
+    NULL,
+    p_event->'mission_brief'
   )
   RETURNING id INTO v_event_id;
 
