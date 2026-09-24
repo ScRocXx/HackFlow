@@ -80,6 +80,38 @@ export const ResourceSchema = z.object({
   }, z.enum(['problem_statement', 'rulebook', 'template', 'dataset', 'reference', 'other'])).default('other'),
 });
 
+export const TechStackMandateSchema = z.object({
+  is_stack_restricted: z.preprocess(v => Boolean(v), z.boolean()).default(false),
+  mandatory_tools: z.preprocess(v => Array.isArray(v) ? v : [], z.array(z.string())).default([]),
+  bonus_sponsor_tools: z.preprocess(v => Array.isArray(v) ? v : [], z.array(z.string())).default([]),
+  allowed_stack_summary: z.string().nullable().optional()
+    .transform(v => v || 'Any tech stack permitted (Free Choice)')
+    .default('Any tech stack permitted (Free Choice)'),
+});
+
+export const MissionBriefSchema = z.object({
+  hackathon_tier: z.preprocess((val) => {
+    const valid = ['regular_open', 'tech_mandate', 'domain_focused'];
+    return typeof val === 'string' && valid.includes(val) ? val : 'regular_open';
+  }, z.enum(['regular_open', 'tech_mandate', 'domain_focused'])).default('regular_open'),
+  what_to_build: z.string().nullable().optional()
+    .transform(v => v || 'Open-ended: Build any innovative solution')
+    .default('Open-ended: Build any innovative solution'),
+  why_it_exists: z.string().nullable().optional()
+    .transform(v => v || 'General tech fest / community hackathon')
+    .default('General tech fest / community hackathon'),
+  tech_stack_mandate: z.preprocess(v => v || {}, TechStackMandateSchema).default({
+    is_stack_restricted: false,
+    mandatory_tools: [],
+    bonus_sponsor_tools: [],
+    allowed_stack_summary: 'Any tech stack permitted (Free Choice)',
+  }),
+  submission_deliverables: z.preprocess(v => Array.isArray(v) ? v : [], z.array(z.string())).default([]),
+});
+
+export type ParsedTechStackMandate = z.infer<typeof TechStackMandateSchema>;
+export type ParsedMissionBrief = z.infer<typeof MissionBriefSchema>;
+
 export const ParsedHackathonSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   organizer: z.string().nullable().optional().transform(v => v || '').default(''),
@@ -111,6 +143,18 @@ export const ParsedHackathonSchema = z.object({
   }, z.number().int().default(4)),
   stages: z.array(StageSchema).min(1, 'At least one stage is required'),
   resources: z.preprocess(v => Array.isArray(v) ? v : [], z.array(ResourceSchema)).default([]),
+  mission_brief: z.preprocess(v => v || {}, MissionBriefSchema).default({
+    hackathon_tier: 'regular_open',
+    what_to_build: 'Open-ended: Build any innovative solution',
+    why_it_exists: 'General tech fest / community hackathon',
+    tech_stack_mandate: {
+      is_stack_restricted: false,
+      mandatory_tools: [],
+      bonus_sponsor_tools: [],
+      allowed_stack_summary: 'Any tech stack permitted (Free Choice)',
+    },
+    submission_deliverables: [],
+  }),
 }).transform((data) => {
   const displaySummary = data.prizes?.display_summary || data.prize_pool || '';
   return {
@@ -309,6 +353,18 @@ export function heuristicExtract(
     team_size_max: /individual only/i.test(markdown) ? 1 : 4,
     stages,
     resources,
+    mission_brief: {
+      hackathon_tier: 'regular_open' as const,
+      what_to_build: 'Open-ended: Build any innovative solution',
+      why_it_exists: 'General tech fest / community hackathon',
+      tech_stack_mandate: {
+        is_stack_restricted: false,
+        mandatory_tools: [],
+        bonus_sponsor_tools: [],
+        allowed_stack_summary: 'Any tech stack permitted (Free Choice)',
+      },
+      submission_deliverables: ['Working prototype', 'Project documentation'],
+    },
   };
 }
 
@@ -372,6 +428,12 @@ EXTRACTION RULES:
 5. Prizes: Distinguish hard cash pool from perks/credits.
 6. Resources: Extract direct links to problem statements, guidelines, or datasets.
 7. Exact Anchors: Set raw_date_snippet to the verbatim date text from the source.
+8. Mission Brief Classification:
+   - hackathon_tier: Set to 'tech_mandate' if participants MUST use specific sponsor tools, APIs, frameworks, or cloud platforms; set to 'domain_focused' if the challenge is restricted to a specific theme/industry/domain without tech stack mandates; set to 'regular_open' if open-ended or free choice. If no tools or domain are mandated, set tier to 'regular_open', why_it_exists to 'General tech fest / community hackathon', and allowed_stack_summary to 'Any tech stack permitted (Free Choice)'.
+   - what_to_build: Concrete expected MVP or deliverable (e.g. 'Build a real-time collaborative workspace'). If open-ended, use 'Open-ended: Build any innovative solution'.
+   - why_it_exists: Sponsor motive or competition objective (e.g. 'Sponsored by Google Cloud to foster Vertex AI adoption' or 'General tech fest / community hackathon').
+   - tech_stack_mandate: Set is_stack_restricted to true only if participants are strictly required to use specific tools. List required tools in mandatory_tools. List optional bonus tools in bonus_sponsor_tools. Provide a concise summary in allowed_stack_summary.
+   - submission_deliverables: List required submission items (e.g. ['Working prototype', 'GitHub repository', 'Demo video']).
 
 OUTPUT JSON SCHEMA:
 {
@@ -414,7 +476,19 @@ OUTPUT JSON SCHEMA:
       "url": "https://...",
       "resource_type": "problem_statement" | "rulebook" | "template" | "dataset" | "reference" | "other"
     }
-  ]
+  ],
+  "mission_brief": {
+    "hackathon_tier": "regular_open" | "tech_mandate" | "domain_focused",
+    "what_to_build": "string (concrete MVP expected)",
+    "why_it_exists": "string (sponsor motive or general fest)",
+    "tech_stack_mandate": {
+      "is_stack_restricted": boolean,
+      "mandatory_tools": ["string"],
+      "bonus_sponsor_tools": ["string"],
+      "allowed_stack_summary": "string"
+    },
+    "submission_deliverables": ["string"]
+  }
 }`;
 
   for (const modelName of modelCandidates) {

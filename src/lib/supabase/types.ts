@@ -14,6 +14,21 @@ export interface Profile {
   created_at: string
 }
 
+export interface TechStackMandate {
+  is_stack_restricted: boolean
+  mandatory_tools: string[]
+  bonus_sponsor_tools: string[]
+  allowed_stack_summary: string
+}
+
+export interface MissionBrief {
+  hackathon_tier: 'regular_open' | 'tech_mandate' | 'domain_focused'
+  what_to_build: string
+  why_it_exists: string
+  tech_stack_mandate: TechStackMandate
+  submission_deliverables: string[]
+}
+
 export interface Event {
   id: string
   created_by: string
@@ -46,6 +61,7 @@ export interface Event {
   has_perks_or_credits?: boolean | null
   raw_prize_text?: string | null
   prize_display_summary?: string | null
+  mission_brief?: MissionBrief | null
   created_at: string
   updated_at: string
 }
@@ -268,7 +284,7 @@ export interface Database {
       }
       events: {
         Row: Event
-        Insert: Omit<Event, 'id' | 'created_at' | 'updated_at'> & { id?: string, created_at?: string, updated_at?: string, squad_id?: string | null }
+        Insert: Omit<Event, 'id' | 'created_at' | 'updated_at'> & { id?: string, created_at?: string, updated_at?: string, squad_id?: string | null, mission_brief?: MissionBrief | Json | null }
         Update: Partial<Omit<Event, 'id' | 'created_by'>>
       }
       event_stages: {
