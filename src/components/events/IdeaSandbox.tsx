@@ -18,15 +18,16 @@ import {
 } from '@/app/actions/events'
 import { extractProblemStatementsFromPdf } from '@/app/actions/extract-pdf'
 import { generateSubmissionBlurb } from '@/app/actions/generate-blurb'
-import type { EventProblemStatement } from '@/lib/supabase/types'
+import type { EventProblemStatement, MissionBrief } from '@/lib/supabase/types'
 import { cn } from '@/lib/utils'
 
 interface IdeaSandboxProps {
   eventId: string
   problemStatements: EventProblemStatement[]
+  missionBrief?: MissionBrief | null
 }
 
-export function IdeaSandbox({ eventId, problemStatements = [] }: IdeaSandboxProps) {
+export function IdeaSandbox({ eventId, problemStatements = [], missionBrief }: IdeaSandboxProps) {
   const [statements, setStatements] = useState<EventProblemStatement[]>(problemStatements)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -125,6 +126,7 @@ export function IdeaSandbox({ eventId, problemStatements = [] }: IdeaSandboxProp
         githubRepoUrl: blurbGithubUrl || null,
         pitchDeckBase64: blurbDeckBase64 || null,
         maxWords: blurbMaxWords,
+        missionBrief: missionBrief || null,
       })
 
       if (!res.success) {
@@ -389,6 +391,37 @@ export function IdeaSandbox({ eventId, problemStatements = [] }: IdeaSandboxProp
           </Button>
         </div>
       </div>
+
+      {/* Sticky Amber Stack Restriction Reminder Badge */}
+      {missionBrief?.tech_stack_mandate?.is_stack_restricted && (
+        <div className="sticky top-0 z-20 bg-[#fef3cd] border-b-2 border-[#10201d] px-5 py-2.5 shadow-[0_2px_4px_rgba(0,0,0,0.08)] flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="font-mono text-xs font-bold text-[#8a5d13] uppercase tracking-wider flex items-center gap-1.5">
+              <AlertTriangle className="h-4 w-4 text-[#e53927] animate-pulse" />
+              Mandatory Stack Required:
+            </span>
+            {(missionBrief.tech_stack_mandate.mandatory_tools || []).map((tool, idx) => (
+              <span
+                key={idx}
+                className="font-mono text-xs font-bold px-2 py-0.5 border-2 border-[#e53927] bg-[#f6c4c1] text-[#671912] shadow-[1px_1px_0_#671912] flex items-center gap-1"
+              >
+                <span>⚡</span> {tool}
+              </span>
+            ))}
+            {(missionBrief.tech_stack_mandate.bonus_sponsor_tools || []).map((tool, idx) => (
+              <span
+                key={`bonus-${idx}`}
+                className="font-mono text-xs font-bold px-2 py-0.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[1px_1px_0_#10201d] flex items-center gap-1"
+              >
+                <span>⭐</span> {tool} (Bonus)
+              </span>
+            ))}
+          </div>
+          <span className="font-mono text-[10px] font-bold text-[#8a5d13] hidden md:inline-block">
+            {missionBrief.tech_stack_mandate.allowed_stack_summary}
+          </span>
+        </div>
+      )}
 
       <CardContent className="p-5 space-y-4">
         {/* Category Filter Pills */}
@@ -802,6 +835,19 @@ export function IdeaSandbox({ eventId, problemStatements = [] }: IdeaSandboxProp
                 </div>
               </div>
 
+              {/* Mission Brief Grounding Context Note */}
+              {missionBrief && (
+                <div className="p-2.5 bg-[#fef3cd] border-2 border-[#f5b726] text-[11px] font-mono text-[#8a5d13] flex items-start gap-2 shadow-[2px_2px_0_#8a5d13]">
+                  <span className="text-sm">🎯</span>
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-[#10201d]">Mission Brief Synergy Active:</p>
+                    <p className="text-[10px] text-[#34433f]">
+                      Pitch grounded in sponsor motive (<em>"{missionBrief.why_it_exists}"</em>) and architecture features mandatory tools ({missionBrief.tech_stack_mandate.is_stack_restricted ? missionBrief.tech_stack_mandate.mandatory_tools.join(', ') : 'open stack'}).
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Action Button */}
               <Button
                 type="button"
@@ -843,6 +889,16 @@ export function IdeaSandbox({ eventId, problemStatements = [] }: IdeaSandboxProp
                     ) : (
                       <span className="px-2 py-0.5 bg-[#f2f2eb] text-[#34433f] border border-[#10201d]/20">
                         Deck Skipped
+                      </span>
+                    )}
+                    {missionBrief?.why_it_exists && (
+                      <span className="px-2 py-0.5 bg-[#fef3cd] text-[#8a5d13] border border-[#f5b726] font-bold flex items-center gap-1">
+                        🎯 Sponsor Motive Grounded
+                      </span>
+                    )}
+                    {missionBrief?.tech_stack_mandate?.is_stack_restricted && (
+                      <span className="px-2 py-0.5 bg-[#f6c4c1] text-[#671912] border border-[#e53927] font-bold flex items-center gap-1">
+                        ⚡ Mandatory Stack Integrated
                       </span>
                     )}
                   </div>

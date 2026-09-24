@@ -356,6 +356,125 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column (Main) */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Mission Dossier Banner */}
+          {event.mission_brief && (
+            <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[7px_7px_0_#671912] overflow-hidden">
+              <div className="bg-[#2e4742] p-4 border-b-2 border-[#10201d] text-[#f7f7f2] flex items-center justify-between gap-3 flex-wrap">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-xl">🎯</span>
+                  <div>
+                    <h3 className="font-display text-xl font-bold tracking-tight text-[#f7f7f2]">Mission Dossier</h3>
+                    <p className="font-mono text-[11px] text-[#8bb2de]">Strategic Intelligence & Constraints</p>
+                  </div>
+                </div>
+                <span
+                  className={`font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-1 border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] ${
+                    event.mission_brief.hackathon_tier === 'tech_mandate'
+                      ? 'bg-[#f5b726] text-[#10201d]'
+                      : event.mission_brief.hackathon_tier === 'domain_focused'
+                      ? 'bg-[#8bb2de] text-[#10201d]'
+                      : 'bg-[#d8f3dc] text-[#10201d]'
+                  }`}
+                >
+                  {event.mission_brief.hackathon_tier === 'tech_mandate'
+                    ? '🔧 Tech Mandated'
+                    : event.mission_brief.hackathon_tier === 'domain_focused'
+                    ? '🎯 Domain Focused'
+                    : '🟢 Open Build'}
+                </span>
+              </div>
+
+              <CardContent className="p-5 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                      What to Build (Target Deliverable)
+                    </span>
+                    <p className="font-mono text-sm text-[#10201d] font-bold bg-white p-3 border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
+                      {event.mission_brief.what_to_build}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                      Why It Exists (Sponsor Motive)
+                    </span>
+                    <p className="font-mono text-sm text-[#10201d] bg-white p-3 border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
+                      {event.mission_brief.why_it_exists}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Tech Stack Rules */}
+                {event.mission_brief.tech_stack_mandate && (
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex items-center justify-between">
+                      <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                        Tech Stack Rules
+                      </span>
+                      {event.mission_brief.tech_stack_mandate.is_stack_restricted && (
+                        <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-[#f6c4c1] text-[#671912] border border-[#e53927]">
+                          ⚠️ Stack Restricted Challenge
+                        </span>
+                      )}
+                    </div>
+
+                    {event.mission_brief.tech_stack_mandate.is_stack_restricted ? (
+                      <div className="space-y-2 p-3 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
+                        <p className="font-mono text-xs text-[#34433f]">
+                          {event.mission_brief.tech_stack_mandate.allowed_stack_summary}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5 items-center">
+                          {(event.mission_brief.tech_stack_mandate.mandatory_tools || []).map((tool: string, i: number) => (
+                            <span
+                              key={i}
+                              className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-[#e53927] bg-[#f6c4c1] text-[#671912] shadow-[2px_2px_0_#671912] flex items-center gap-1"
+                            >
+                              <span>⚡</span> {tool}
+                            </span>
+                          ))}
+                          {(event.mission_brief.tech_stack_mandate.bonus_sponsor_tools || []).map((tool: string, i: number) => (
+                            <span
+                              key={`bonus-${i}`}
+                              className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center gap-1"
+                            >
+                              <span>⭐</span> {tool} (Bonus Points)
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="p-3 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
+                        <p className="font-mono text-xs text-[#2e4742] font-bold flex items-center gap-1.5">
+                          <span>✨</span>
+                          {event.mission_brief.tech_stack_mandate.allowed_stack_summary || 'Any tech stack permitted (Free Choice)'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Submission Deliverables */}
+                {event.mission_brief.submission_deliverables && event.mission_brief.submission_deliverables.length > 0 && (
+                  <div className="space-y-1.5 pt-1">
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                      Required Submission Deliverables
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {event.mission_brief.submission_deliverables.map((deliv: string, i: number) => (
+                        <span
+                          key={i}
+                          className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-[#10201d] bg-white text-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center gap-1"
+                        >
+                          <span className="text-[#2e4742]">✓</span> {deliv}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {/* Timeline */}
           <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[7px_7px_0_#671912]">
             <CardContent className="p-6">
@@ -442,6 +561,7 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
           <IdeaSandbox
             eventId={event.id}
             problemStatements={event.problem_statements || []}
+            missionBrief={event.mission_brief || null}
           />
 
           {/* Resources & Attached Documents */}

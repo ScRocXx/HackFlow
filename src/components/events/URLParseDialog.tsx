@@ -10,7 +10,7 @@ import { useToast } from '@/components/ui/use-toast'
 import { Loader2, Plus, Trash2, Calendar, AlertCircle, Sparkles, Check, Tag, FileText, Database, ExternalLink, Link2, Users, RefreshCw, Zap, FileCode, Eye } from 'lucide-react'
 import { createEvent } from '@/app/actions/events'
 import { getMySquads } from '@/app/actions/squads'
-import type { Squad } from '@/lib/supabase/types'
+import type { Squad, MissionBrief } from '@/lib/supabase/types'
 import { useRouter } from 'next/navigation'
 import { ensureExternalUrl } from '@/lib/utils/url'
 
@@ -122,6 +122,9 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
   const [newResourceTitle, setNewResourceTitle] = useState('')
   const [newResourceUrl, setNewResourceUrl] = useState('')
   const [newResourceType, setNewResourceType] = useState('problem_statement')
+  
+  // Mission Brief State
+  const [missionBrief, setMissionBrief] = useState<MissionBrief | null>(null)
 
   useEffect(() => {
     if (open) {
@@ -205,6 +208,13 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
         })))
       } else {
         setResources([])
+      }
+
+      // Auto-populate extracted mission brief (tier, what/why, tech mandate, deliverables)
+      if (data.mission_brief) {
+        setMissionBrief(data.mission_brief)
+      } else {
+        setMissionBrief(null)
       }
 
       // Auto-populate extracted stages as editable cards
@@ -523,6 +533,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
         squad_id: participationMode === 'squad' ? selectedSquadId : null,
         stages: preparedStages,
         resources: resources.filter(r => r.title.trim() && r.url.trim()),
+        mission_brief: missionBrief,
       })
 
       if (!res.success || res.error) {
@@ -540,6 +551,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
       setUrl('')
       setPastedText('')
       setBannerUrl('')
+      setMissionBrief(null)
       
       if (res.data?.id) {
         router.push(`/events/${res.data.id}`)
@@ -928,6 +940,120 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                 </div>
               </div>
             </div>
+
+            {/* Mission Dossier Preview Card */}
+            {missionBrief && (
+              <div className="p-4 bg-[#f2f2eb] border-2 border-[#10201d] shadow-[4px_4px_0_#10201d] space-y-3">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🎯</span>
+                    <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d]">
+                      Mission Dossier
+                    </span>
+                  </div>
+                  <span
+                    className={`font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-[#10201d] shadow-[1px_1px_0_#10201d] ${
+                      missionBrief.hackathon_tier === 'tech_mandate'
+                        ? 'bg-[#f5b726] text-[#10201d]'
+                        : missionBrief.hackathon_tier === 'domain_focused'
+                        ? 'bg-[#8bb2de] text-[#10201d]'
+                        : 'bg-[#d8f3dc] text-[#10201d]'
+                    }`}
+                  >
+                    {missionBrief.hackathon_tier === 'tech_mandate'
+                      ? '🔧 Tech Mandated'
+                      : missionBrief.hackathon_tier === 'domain_focused'
+                      ? '🎯 Domain Focused'
+                      : '🟢 Regular Open'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                      What to Build
+                    </label>
+                    <p className="font-mono text-xs text-[#10201d] bg-white p-2.5 border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
+                      {missionBrief.what_to_build}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                      Why It Exists (Sponsor Motive)
+                    </label>
+                    <p className="font-mono text-xs text-[#10201d] bg-white p-2.5 border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
+                      {missionBrief.why_it_exists}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Stack Rules */}
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex items-center justify-between">
+                    <label className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                      Stack Rules & Constraints
+                    </label>
+                    {missionBrief.tech_stack_mandate.is_stack_restricted && (
+                      <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 bg-[#f6c4c1] text-[#671912] border border-[#e53927]">
+                        ⚠️ Stack Restricted
+                      </span>
+                    )}
+                  </div>
+
+                  {missionBrief.tech_stack_mandate.is_stack_restricted ? (
+                    <div className="space-y-2 p-2.5 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
+                      <p className="font-mono text-[11px] text-[#34433f]">
+                        {missionBrief.tech_stack_mandate.allowed_stack_summary}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 items-center">
+                        {missionBrief.tech_stack_mandate.mandatory_tools.map((tool, idx) => (
+                          <span
+                            key={idx}
+                            className="font-mono text-xs font-bold px-2 py-0.5 border-2 border-[#e53927] bg-[#f6c4c1] text-[#671912] shadow-[1px_1px_0_#671912] flex items-center gap-1"
+                          >
+                            <span>⚡</span> {tool}
+                          </span>
+                        ))}
+                        {missionBrief.tech_stack_mandate.bonus_sponsor_tools.map((tool, idx) => (
+                          <span
+                            key={`bonus-${idx}`}
+                            className="font-mono text-xs font-bold px-2 py-0.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[1px_1px_0_#10201d] flex items-center gap-1"
+                          >
+                            <span>⭐</span> {tool} (Bonus)
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-2.5 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
+                      <p className="font-mono text-xs text-[#2e4742] font-bold flex items-center gap-1.5">
+                        <span>✨</span>
+                        {missionBrief.tech_stack_mandate.allowed_stack_summary || 'Any tech stack permitted (Free Choice)'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Submission Deliverables */}
+                {missionBrief.submission_deliverables && missionBrief.submission_deliverables.length > 0 && (
+                  <div className="space-y-1.5 pt-1">
+                    <label className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                      Required Deliverables Checklist
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {missionBrief.submission_deliverables.map((deliv, idx) => (
+                        <span
+                          key={idx}
+                          className="font-mono text-xs font-bold px-2 py-0.5 border-2 border-[#10201d] bg-white text-[#10201d] shadow-[1px_1px_0_#10201d] flex items-center gap-1"
+                        >
+                          <span className="text-[#2e4742]">✓</span> {deliv}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Stages Section (Auto-Populated as Editable Cards) */}
             <div className="space-y-3">
