@@ -37,14 +37,13 @@ export const metadata: Metadata = {
   description: "Stop losing hackathons to disorganization. Auto-extract rounds, deadlines, deliverables, and stay on schedule with your team.",
   icons: {
     icon: [
-      { url: '/brand/hackflow_emblem.jpg' },
-      { url: '/brand/hackflow_emblem.png', type: 'image/png' },
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/brand/hackflow_emblem.png?v=3', type: 'image/png' },
+      { url: '/brand/hackflow_emblem.jpg?v=3' },
+      { url: '/favicon.ico?v=3', sizes: 'any' },
     ],
-    shortcut: '/favicon.ico',
+    shortcut: '/brand/hackflow_emblem.png?v=3',
     apple: [
-      { url: '/apple-icon.png' },
+      { url: '/apple-icon.png?v=3' },
     ],
   },
 }
@@ -57,9 +56,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn(barlow.variable, martianMono.variable, inter.variable)}>
       <head>
-        <link rel="icon" href="/brand/hackflow_emblem.jpg" />
-        <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="apple-touch-icon" href="/apple-icon.png" />
+        <link rel="icon" type="image/png" href="/brand/hackflow_emblem.png?v=3" />
+        <link rel="icon" type="image/jpeg" href="/brand/hackflow_emblem.jpg?v=3" />
+        <link rel="shortcut icon" href="/brand/hackflow_emblem.png?v=3" />
+        <link rel="apple-touch-icon" href="/apple-icon.png?v=3" />
       </head>
       <body className="min-h-screen bg-[#f2f2eb] text-[#10201d] font-sans antialiased">
         <ToastProvider>
