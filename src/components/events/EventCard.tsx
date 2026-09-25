@@ -219,7 +219,7 @@ export function EventCard({ event }: EventCardProps) {
                   setEditOpen(true)
                 }}
                 title="Edit Hackathon"
-                className="p-1.5 border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+                className="p-1.5 border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#f5b726] active:scale-95 text-[#10201d] shadow-[2px_2px_0_#10201d] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none touch-manipulation"
               >
                 <Edit3 className="w-3.5 h-3.5" />
                 <span className="sr-only">Edit</span>
@@ -232,7 +232,7 @@ export function EventCard({ event }: EventCardProps) {
                   setDeleteOpen(true)
                 }}
                 title="Delete Hackathon"
-                className="p-1.5 border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#e53927] hover:text-[#f7f7f2] text-[#10201d] shadow-[2px_2px_0_#10201d] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+                className="p-1.5 border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#e53927] hover:text-[#f7f7f2] active:scale-95 text-[#10201d] shadow-[2px_2px_0_#10201d] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none touch-manipulation"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span className="sr-only">Delete</span>
@@ -241,7 +241,7 @@ export function EventCard({ event }: EventCardProps) {
           </div>
 
           {/* Card Body */}
-          <div className="p-5 flex-1 flex flex-col">
+          <div className="p-4 sm:p-5 flex-1 flex flex-col">
             <div className="mb-4">
               <h3 className="font-display text-xl font-bold text-[#10201d] line-clamp-1 group-hover:text-[#e53927] transition-colors">
                 {event.title}

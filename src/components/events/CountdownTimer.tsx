@@ -135,25 +135,25 @@ export function CountdownTimer({
           {milestone === 'kickoff' ? '🚀 Sprint Kickoff in:' : '⚡ Code Freeze in:'}
         </span>
       )}
-      <div className={cn("inline-flex items-center gap-1.5 px-3 py-1.5 border-2 border-[#10201d] font-mono font-bold text-xs select-none", bgClass, shadowClass, className)}>
+      <div className={cn("inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 border-2 border-[#10201d] font-mono font-bold text-xs select-none max-w-full overflow-hidden", bgClass, shadowClass, className)}>
         <div className="flex flex-col items-center">
-          <span className="leading-tight text-sm font-extrabold">{pad(days)}</span>
-          <span className="text-[9px] uppercase tracking-wider opacity-80">d</span>
+          <span className="leading-tight text-xs sm:text-sm font-extrabold">{pad(days)}</span>
+          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-80">d</span>
         </div>
-        <span className="opacity-50 font-bold -mt-1">:</span>
+        <span className="opacity-50 font-bold -mt-1 text-xs sm:text-sm">:</span>
         <div className="flex flex-col items-center">
-          <span className="leading-tight text-sm font-extrabold">{pad(hours)}</span>
-          <span className="text-[9px] uppercase tracking-wider opacity-80">h</span>
+          <span className="leading-tight text-xs sm:text-sm font-extrabold">{pad(hours)}</span>
+          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-80">h</span>
         </div>
-        <span className="opacity-50 font-bold -mt-1">:</span>
+        <span className="opacity-50 font-bold -mt-1 text-xs sm:text-sm">:</span>
         <div className="flex flex-col items-center">
-          <span className="leading-tight text-sm font-extrabold">{pad(minutes)}</span>
-          <span className="text-[9px] uppercase tracking-wider opacity-80">m</span>
+          <span className="leading-tight text-xs sm:text-sm font-extrabold">{pad(minutes)}</span>
+          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-80">m</span>
         </div>
-        <span className="opacity-50 font-bold -mt-1">:</span>
+        <span className="opacity-50 font-bold -mt-1 text-xs sm:text-sm">:</span>
         <div className="flex flex-col items-center">
-          <span className="leading-tight text-sm font-extrabold">{pad(seconds)}</span>
-          <span className="text-[9px] uppercase tracking-wider opacity-80">s</span>
+          <span className="leading-tight text-xs sm:text-sm font-extrabold">{pad(seconds)}</span>
+          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-80">s</span>
         </div>
       </div>
 

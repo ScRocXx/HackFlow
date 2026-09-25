@@ -23,6 +23,7 @@ import { PostSubmissionConsole } from '@/components/events/PostSubmissionConsole
 import { downloadIcsFile, getGoogleCalendarUrl } from '@/lib/calendar/calendar-sync'
 import type { EventResource, Friendship } from '@/lib/supabase/types'
 import { ensureExternalUrl } from '@/lib/utils/url'
+import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 
 interface EventDetailContentProps {
@@ -76,6 +77,7 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
   })()
 
   const [isCompleting, setIsCompleting] = useState(false)
+  const [mobileWorkspaceTab, setMobileWorkspaceTab] = useState<'sprint' | 'pitch' | 'team'>('sprint')
   
   // Edit & Delete dialog states
   const [editDialogOpen, setEditDialogOpen] = useState(false)
@@ -300,12 +302,12 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
       {/* Header Banner */}
-      <div className="border-2 border-[#10201d] bg-[#f7f7f2] p-6 shadow-[7px_7px_0_#671912]">
+      <div className="border-2 border-[#10201d] bg-[#f7f7f2] p-4 sm:p-6 shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912]">
         <div className="flex flex-col md:flex-row justify-between md:items-start gap-4">
           <div>
-            <div className="flex items-center gap-2.5 mb-2.5">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
               <span className="font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#2e4742]">
                 {event.source_platform || 'Hackathon'}
               </span>
@@ -321,7 +323,7 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
                 </span>
               )}
             </div>
-            <h1 className="font-display text-3xl md:text-4xl font-extrabold text-[#10201d] tracking-tight">{event.title}</h1>
+            <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#10201d] tracking-tight">{event.title}</h1>
             <p className="font-mono text-xs text-[#34433f] mt-1 font-bold">{event.organizer || 'Independent Hackathon'}</p>
           </div>
           <div className="flex flex-col sm:flex-row md:flex-col items-start md:items-end gap-3 w-full md:w-auto shrink-0">
@@ -353,219 +355,268 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
         </div>
       </div>
 
+      {/* Mobile Workspace Segmented Controller (lg:hidden) */}
+      <div className="flex lg:hidden border-2 border-[#10201d] bg-[#f7f7f2] p-1 shadow-[4px_4px_0_#10201d] gap-1 overflow-x-auto no-scrollbar">
+        <button
+          type="button"
+          onClick={() => setMobileWorkspaceTab('sprint')}
+          className={cn(
+            "flex-1 py-2 px-2 text-center font-mono text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap select-none",
+            mobileWorkspaceTab === 'sprint'
+              ? "bg-[#f5b726] text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#8a5d13]"
+              : "text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"
+          )}
+        >
+          ⚡ Sprint & Tasks
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileWorkspaceTab('pitch')}
+          className={cn(
+            "flex-1 py-2 px-2 text-center font-mono text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap select-none",
+            mobileWorkspaceTab === 'pitch'
+              ? "bg-[#8bb2de] text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#2e4742]"
+              : "text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"
+          )}
+        >
+          💡 Pitch & Blurb
+        </button>
+        <button
+          type="button"
+          onClick={() => setMobileWorkspaceTab('team')}
+          className={cn(
+            "flex-1 py-2 px-2 text-center font-mono text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap select-none",
+            mobileWorkspaceTab === 'team'
+              ? "bg-[#e97b77] text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#671912]"
+              : "text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"
+          )}
+        >
+          👥 Team & Links
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column (Main) */}
         <div className="lg:col-span-2 space-y-6">
           {/* Mission Dossier Banner */}
           {event.mission_brief && (
-            <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[7px_7px_0_#671912] overflow-hidden">
-              <div className="bg-[#2e4742] p-4 border-b-2 border-[#10201d] text-[#f7f7f2] flex items-center justify-between gap-3 flex-wrap">
-                <div className="flex items-center gap-2.5">
-                  <span className="text-xl">🎯</span>
-                  <div>
-                    <h3 className="font-display text-xl font-bold tracking-tight text-[#f7f7f2]">Mission Dossier</h3>
-                    <p className="font-mono text-[11px] text-[#8bb2de]">Strategic Intelligence & Constraints</p>
+            <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:block")}>
+              <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912] overflow-hidden">
+                <div className="bg-[#2e4742] p-4 border-b-2 border-[#10201d] text-[#f7f7f2] flex items-center justify-between gap-3 flex-wrap">
+                  <div className="flex items-center gap-2.5">
+                    <span className="text-xl">🎯</span>
+                    <div>
+                      <h3 className="font-display text-xl font-bold tracking-tight text-[#f7f7f2]">Mission Dossier</h3>
+                      <p className="font-mono text-[11px] text-[#8bb2de]">Strategic Intelligence & Constraints</p>
+                    </div>
                   </div>
-                </div>
-                <span
-                  className={`font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-1 border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] ${
-                    event.mission_brief.hackathon_tier === 'tech_mandate'
-                      ? 'bg-[#f5b726] text-[#10201d]'
+                  <span
+                    className={`font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-1 border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] ${
+                      event.mission_brief.hackathon_tier === 'tech_mandate'
+                        ? 'bg-[#f5b726] text-[#10201d]'
+                        : event.mission_brief.hackathon_tier === 'domain_focused'
+                        ? 'bg-[#8bb2de] text-[#10201d]'
+                        : 'bg-[#d8f3dc] text-[#10201d]'
+                    }`}
+                  >
+                    {event.mission_brief.hackathon_tier === 'tech_mandate'
+                      ? '🔧 Tech Mandated'
                       : event.mission_brief.hackathon_tier === 'domain_focused'
-                      ? 'bg-[#8bb2de] text-[#10201d]'
-                      : 'bg-[#d8f3dc] text-[#10201d]'
-                  }`}
-                >
-                  {event.mission_brief.hackathon_tier === 'tech_mandate'
-                    ? '🔧 Tech Mandated'
-                    : event.mission_brief.hackathon_tier === 'domain_focused'
-                    ? '🎯 Domain Focused'
-                    : '🟢 Open Build'}
-                </span>
-              </div>
-
-              <CardContent className="p-5 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
-                      What to Build (Target Deliverable)
-                    </span>
-                    <p className="font-mono text-sm text-[#10201d] font-bold bg-white p-3 border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
-                      {event.mission_brief.what_to_build}
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
-                      Why It Exists (Sponsor Motive)
-                    </span>
-                    <p className="font-mono text-sm text-[#10201d] bg-white p-3 border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
-                      {event.mission_brief.why_it_exists}
-                    </p>
-                  </div>
+                      ? '🎯 Domain Focused'
+                      : '🟢 Open Build'}
+                  </span>
                 </div>
 
-                {/* Tech Stack Rules */}
-                {event.mission_brief.tech_stack_mandate && (
-                  <div className="space-y-1.5 pt-1">
-                    <div className="flex items-center justify-between">
+                <CardContent className="p-4 sm:p-5 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
                       <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
-                        Tech Stack Rules
+                        What to Build (Target Deliverable)
                       </span>
-                      {event.mission_brief.tech_stack_mandate.is_stack_restricted && (
-                        <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-[#f6c4c1] text-[#671912] border border-[#e53927]">
-                          ⚠️ Stack Restricted Challenge
+                      <p className="font-mono text-sm text-[#10201d] font-bold bg-white p-3 border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
+                        {event.mission_brief.what_to_build}
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                        Why It Exists (Sponsor Motive)
+                      </span>
+                      <p className="font-mono text-sm text-[#10201d] bg-white p-3 border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
+                        {event.mission_brief.why_it_exists}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Tech Stack Rules */}
+                  {event.mission_brief.tech_stack_mandate && (
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                          Tech Stack Rules
                         </span>
+                        {event.mission_brief.tech_stack_mandate.is_stack_restricted && (
+                          <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-[#f6c4c1] text-[#671912] border border-[#e53927]">
+                            ⚠️ Stack Restricted Challenge
+                          </span>
+                        )}
+                      </div>
+
+                      {event.mission_brief.tech_stack_mandate.is_stack_restricted ? (
+                        <div className="space-y-2 p-3 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
+                          <p className="font-mono text-xs text-[#34433f]">
+                            {event.mission_brief.tech_stack_mandate.allowed_stack_summary}
+                          </p>
+                          <div className="flex flex-wrap gap-1.5 items-center">
+                            {(event.mission_brief.tech_stack_mandate.mandatory_tools || []).map((tool: string, i: number) => (
+                              <span
+                                key={i}
+                                className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-[#e53927] bg-[#f6c4c1] text-[#671912] shadow-[2px_2px_0_#671912] flex items-center gap-1"
+                              >
+                                <span>⚡</span> {tool}
+                              </span>
+                            ))}
+                            {(event.mission_brief.tech_stack_mandate.bonus_sponsor_tools || []).map((tool: string, i: number) => (
+                              <span
+                                key={`bonus-${i}`}
+                                className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center gap-1"
+                              >
+                                <span>⭐</span> {tool} (Bonus Points)
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-3 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
+                          <p className="font-mono text-xs text-[#2e4742] font-bold flex items-center gap-1.5">
+                            <span>✨</span>
+                            {event.mission_brief.tech_stack_mandate.allowed_stack_summary || 'Any tech stack permitted (Free Choice)'}
+                          </p>
+                        </div>
                       )}
                     </div>
+                  )}
 
-                    {event.mission_brief.tech_stack_mandate.is_stack_restricted ? (
-                      <div className="space-y-2 p-3 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
-                        <p className="font-mono text-xs text-[#34433f]">
-                          {event.mission_brief.tech_stack_mandate.allowed_stack_summary}
-                        </p>
-                        <div className="flex flex-wrap gap-1.5 items-center">
-                          {(event.mission_brief.tech_stack_mandate.mandatory_tools || []).map((tool: string, i: number) => (
-                            <span
-                              key={i}
-                              className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-[#e53927] bg-[#f6c4c1] text-[#671912] shadow-[2px_2px_0_#671912] flex items-center gap-1"
-                            >
-                              <span>⚡</span> {tool}
-                            </span>
-                          ))}
-                          {(event.mission_brief.tech_stack_mandate.bonus_sponsor_tools || []).map((tool: string, i: number) => (
-                            <span
-                              key={`bonus-${i}`}
-                              className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center gap-1"
-                            >
-                              <span>⭐</span> {tool} (Bonus Points)
-                            </span>
-                          ))}
-                        </div>
+                  {/* Submission Deliverables */}
+                  {event.mission_brief.submission_deliverables && event.mission_brief.submission_deliverables.length > 0 && (
+                    <div className="space-y-1.5 pt-1">
+                      <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                        Required Submission Deliverables
+                      </span>
+                      <div className="flex flex-wrap gap-1.5">
+                        {event.mission_brief.submission_deliverables.map((deliv: string, i: number) => (
+                          <span
+                            key={i}
+                            className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-[#10201d] bg-white text-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center gap-1"
+                          >
+                            <span className="text-[#2e4742]">✓</span> {deliv}
+                          </span>
+                        ))}
                       </div>
-                    ) : (
-                      <div className="p-3 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
-                        <p className="font-mono text-xs text-[#2e4742] font-bold flex items-center gap-1.5">
-                          <span>✨</span>
-                          {event.mission_brief.tech_stack_mandate.allowed_stack_summary || 'Any tech stack permitted (Free Choice)'}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Submission Deliverables */}
-                {event.mission_brief.submission_deliverables && event.mission_brief.submission_deliverables.length > 0 && (
-                  <div className="space-y-1.5 pt-1">
-                    <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
-                      Required Submission Deliverables
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {event.mission_brief.submission_deliverables.map((deliv: string, i: number) => (
-                        <span
-                          key={i}
-                          className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-[#10201d] bg-white text-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center gap-1"
-                        >
-                          <span className="text-[#2e4742]">✓</span> {deliv}
-                        </span>
-                      ))}
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           )}
 
           {/* Timeline */}
-          <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[7px_7px_0_#671912]">
-            <CardContent className="p-6">
-              <h3 className="font-display text-2xl font-bold tracking-tight text-[#10201d] mb-4">Stage Journey</h3>
-              <StageTimeline stages={event.stages || []} activeStageId={activeStage?.id || null} />
-            </CardContent>
-          </Card>
+          <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:block")}>
+            <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912]">
+              <CardContent className="p-4 sm:p-6">
+                <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#10201d] mb-4">Stage Journey</h3>
+                <StageTimeline stages={event.stages || []} activeStageId={activeStage?.id || null} />
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Active Stage Panel */}
           {activeStage && (
-            <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[7px_7px_0_#671912] overflow-hidden">
-              <div className="bg-[#3d5f58] p-6 border-b-2 border-[#10201d] text-[#f7f7f2]">
-                <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
-                  <div>
-                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                      <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d]">
-                        {activeStage.stage_type}
-                      </span>
-                      {activeStage.raw_date_snippet && (
-                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border border-[#10201d] bg-[#f7f7f2] text-[#10201d]">
-                          🗓️ {activeStage.raw_date_snippet}
+            <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:block")}>
+              <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912] overflow-hidden">
+                <div className="bg-[#3d5f58] p-4 sm:p-6 border-b-2 border-[#10201d] text-[#f7f7f2]">
+                  <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d]">
+                          {activeStage.stage_type}
                         </span>
-                      )}
+                        {activeStage.raw_date_snippet && (
+                          <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border border-[#10201d] bg-[#f7f7f2] text-[#10201d]">
+                            🗓️ {activeStage.raw_date_snippet}
+                          </span>
+                        )}
+                      </div>
+                      <h2 className="font-display text-xl sm:text-3xl font-extrabold text-[#f7f7f2] tracking-tight">{activeStage.title}</h2>
                     </div>
-                    <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#f7f7f2] tracking-tight">{activeStage.title}</h2>
-                  </div>
-                  <div className="text-left sm:text-right flex flex-col sm:items-end">
-                    <CountdownTimer 
-                      deadline={activeStage.actionable_deadline || activeStage.deadline} 
-                      windowStart={activeStage.window_start}
-                      windowEnd={activeStage.window_end}
-                      showMilestoneLabel={Boolean(activeStage.actionable_deadline || activeStage.deadline || activeStage.window_start)}
-                      showTimezoneBadge={true}
-                    />
+                    <div className="text-left sm:text-right flex flex-col sm:items-end">
+                      <CountdownTimer 
+                        deadline={activeStage.actionable_deadline || activeStage.deadline} 
+                        windowStart={activeStage.window_start}
+                        windowEnd={activeStage.window_end}
+                        showMilestoneLabel={Boolean(activeStage.actionable_deadline || activeStage.deadline || activeStage.window_start)}
+                        showTimezoneBadge={true}
+                      />
 
-                    {/* Calendar Sync Weapon: Google Calendar + Phone .ics Alarm */}
-                    <div className="flex items-center justify-start sm:justify-end gap-1.5 mt-2 flex-wrap">
-                      <a
-                        href={getGoogleCalLink()}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-mono text-[10px] font-bold px-2 py-1 border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[2px_2px_0_#10201d] inline-flex items-center gap-1 transition-all"
-                        title="Add cutoff to Google Calendar"
-                      >
-                        <Calendar className="w-3 h-3" />
-                        + G-Calendar
-                      </a>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={handleDownloadIcs}
-                        className="font-mono text-[10px] font-bold border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#10201d] h-7 px-2"
-                        title="Download .ics alarm with -24h and -2h phone notifications"
-                      >
-                        ⚡ Phone Alarm (.ics)
-                      </Button>
+                      {/* Calendar Sync Weapon: Google Calendar + Phone .ics Alarm */}
+                      <div className="flex items-center justify-start sm:justify-end gap-1.5 mt-2 flex-wrap">
+                        <a
+                          href={getGoogleCalLink()}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-mono text-[10px] font-bold px-2 py-1 border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[2px_2px_0_#10201d] inline-flex items-center gap-1 transition-all"
+                          title="Add cutoff to Google Calendar"
+                        >
+                          <Calendar className="w-3 h-3" />
+                          + G-Calendar
+                        </a>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={handleDownloadIcs}
+                          className="font-mono text-[10px] font-bold border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#10201d] h-7 px-2"
+                          title="Download .ics alarm with -24h and -2h phone notifications"
+                        >
+                          ⚡ Phone Alarm (.ics)
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              
-              <CardContent className="p-0">
-                <StageChecklist 
-                  stageId={activeStage.id} 
-                  deliverables={event.current_stage_deliverables || activeStage.deliverables || []} 
-                  eventId={event.id} 
-                />
                 
-                <div className="p-4 bg-[#f7f7f2] border-t-2 border-[#10201d] flex justify-end">
-                  <Button 
-                    onClick={handleCompleteStage} 
-                    disabled={isCompleting || activeStage.is_completed}
-                    className="font-mono text-xs font-bold"
-                  >
-                    {activeStage.is_completed ? 'Stage Completed' : 'Mark Stage Complete'}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                <CardContent className="p-0">
+                  <StageChecklist 
+                    stageId={activeStage.id} 
+                    deliverables={event.current_stage_deliverables || activeStage.deliverables || []} 
+                    eventId={event.id} 
+                  />
+                  
+                  <div className="p-3 sm:p-4 bg-[#f7f7f2] border-t-2 border-[#10201d] flex justify-end">
+                    <Button 
+                      onClick={handleCompleteStage} 
+                      disabled={isCompleting || activeStage.is_completed}
+                      className="font-mono text-xs font-bold"
+                    >
+                      {activeStage.is_completed ? 'Stage Completed' : 'Mark Stage Complete'}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           )}
 
           {/* Idea Sandbox & Solution Canvas */}
-          <IdeaSandbox
-            eventId={event.id}
-            problemStatements={event.problem_statements || []}
-            missionBrief={event.mission_brief || null}
-          />
+          <div className={cn(mobileWorkspaceTab !== 'pitch' && "hidden lg:block")}>
+            <IdeaSandbox
+              eventId={event.id}
+              problemStatements={event.problem_statements || []}
+              missionBrief={event.mission_brief || null}
+            />
+          </div>
 
           {/* Resources & Attached Documents */}
-          <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[7px_7px_0_#671912] overflow-hidden">
+          <div className={cn(mobileWorkspaceTab !== 'team' && "hidden lg:block")}>
+            <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912] overflow-hidden">
             <div className="bg-[#2e4742] p-5 border-b-2 border-[#10201d] text-[#f7f7f2]">
               <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                 <div className="flex items-center gap-2">
@@ -732,119 +783,126 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
               </div>
             </CardContent>
           </Card>
+        </div>
 
-          {/* Complete Post-Submission Lifecycle Console */}
+        {/* Complete Post-Submission Lifecycle Console */}
+        <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:block")}>
           <PostSubmissionConsole event={event} />
         </div>
+      </div>
 
         {/* Right Column (Sidebar) */}
         <div className="space-y-6">
           {/* Metadata */}
-          <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[7px_7px_0_#671912]">
-            <CardContent className="p-5 space-y-4">
-              <h3 className="font-display text-2xl font-bold tracking-tight text-[#10201d] border-b-2 border-[#10201d] pb-2">
-                Event Details
-              </h3>
-              
-              {event.source_url && (
-                <a 
-                  href={ensureExternalUrl(event.source_url)} 
-                  target="_blank" 
-                  rel="noreferrer" 
-                  className="flex items-center text-xs font-mono font-bold text-[#10201d] hover:text-[#e53927] p-2.5 border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d] transition-transform hover:translate-x-0.5 hover:translate-y-0.5"
-                >
-                  <ExternalLink className="w-4 h-4 mr-2 text-[#2e4742]" />
-                  View Original Page
-                </a>
-              )}
-              
-              <div className="flex items-center text-xs font-mono font-bold text-[#10201d] p-2.5 border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]">
-                <Calendar className="w-4 h-4 mr-2 text-[#2e4742]" />
-                {event.start_date ? format(new Date(event.start_date), 'MMM d, yyyy') : 'TBA'}
-              </div>
-
-              {event.prize_pool && (
-                <div className="flex items-center text-xs font-mono font-bold text-[#10201d] p-2.5 border-2 border-[#10201d] bg-[#f5b726] shadow-[2px_2px_0_#8a5d13]">
-                  <Trophy className="w-4 h-4 mr-2 text-[#10201d]" />
-                  Prize: {event.prize_pool}
+          <div className={cn(mobileWorkspaceTab !== 'team' && "hidden lg:block")}>
+            <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912]">
+              <CardContent className="p-4 sm:p-5 space-y-4">
+                <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#10201d] border-b-2 border-[#10201d] pb-2">
+                  Event Details
+                </h3>
+                
+                {event.source_url && (
+                  <a 
+                    href={ensureExternalUrl(event.source_url)} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="flex items-center text-xs font-mono font-bold text-[#10201d] hover:text-[#e53927] p-2.5 border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d] transition-transform hover:translate-x-0.5 hover:translate-y-0.5"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2 text-[#2e4742]" />
+                    View Original Page
+                  </a>
+                )}
+                
+                <div className="flex items-center text-xs font-mono font-bold text-[#10201d] p-2.5 border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]">
+                  <Calendar className="w-4 h-4 mr-2 text-[#2e4742]" />
+                  {event.start_date ? format(new Date(event.start_date), 'MMM d, yyyy') : 'TBA'}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+
+                {event.prize_pool && (
+                  <div className="flex items-center text-xs font-mono font-bold text-[#10201d] p-2.5 border-2 border-[#10201d] bg-[#f5b726] shadow-[2px_2px_0_#8a5d13]">
+                    <Trophy className="w-4 h-4 mr-2 text-[#10201d]" />
+                    Prize: {event.prize_pool}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Team Panel */}
-          <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[7px_7px_0_#671912]">
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-3 border-b-2 border-[#10201d] pb-2">
-                <h3 className="font-display text-2xl font-bold tracking-tight text-[#10201d] flex items-center gap-2">
-                  <Users className="w-5 h-5 text-[#e53927]"/> Team
-                </h3>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-xs font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#2e4742]">
-                    {event.event_participants?.length || 0} Members
-                  </span>
-                  <Button
-                    size="sm"
-                    onClick={async () => {
-                      setIsInviteOpen(true)
-                      setLoadingFriends(true)
-                      try {
-                        const res = await getFriendsList()
-                        if (res.success && res.data) setFriends(res.data)
-                      } finally {
-                        setLoadingFriends(false)
-                      }
-                    }}
-                    className="font-mono text-xs font-bold px-2 py-1 h-auto border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] hover:bg-[#faaf00] shadow-[2px_2px_0_#10201d]"
-                  >
-                    <UserPlus className="h-3.5 w-3.5 mr-1" /> Add
-                  </Button>
+          <div className={cn(mobileWorkspaceTab !== 'team' && "hidden lg:block")}>
+            <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912]">
+              <CardContent className="p-4 sm:p-5">
+                <div className="flex items-center justify-between mb-3 border-b-2 border-[#10201d] pb-2">
+                  <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#10201d] flex items-center gap-2">
+                    <Users className="w-5 h-5 text-[#e53927]"/> Team
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-xs font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#2e4742]">
+                      {event.event_participants?.length || 0} Members
+                    </span>
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        setIsInviteOpen(true)
+                        setLoadingFriends(true)
+                        try {
+                          const res = await getFriendsList()
+                          if (res.success && res.data) setFriends(res.data)
+                        } finally {
+                          setLoadingFriends(false)
+                        }
+                      }}
+                      className="font-mono text-xs font-bold px-2 py-1 h-auto border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] hover:bg-[#faaf00] shadow-[2px_2px_0_#10201d]"
+                    >
+                      <UserPlus className="h-3.5 w-3.5 mr-1" /> Add
+                    </Button>
+                  </div>
                 </div>
-              </div>
 
-              {/* Squad Badge if present */}
-              {(event.squad?.name || event.squad_name) && (
-                <div className="mb-3 p-2 bg-[#f5b726]/20 border-2 border-[#10201d] flex items-center justify-between font-mono text-xs font-bold text-[#10201d] shadow-[2px_2px_0_#10201d]">
-                  <span className="flex items-center gap-1.5 truncate">
-                    <Shield className="h-3.5 w-3.5 text-[#2e4742] shrink-0" />
-                    Squad: {event.squad?.name || event.squad_name}
-                  </span>
-                  <Badge variant="outline" className="text-[10px] border-[#10201d] bg-white font-mono shrink-0">
-                    Synced Vault
-                  </Badge>
-                </div>
-              )}
-              
-              <div className="space-y-2.5">
-                {(event.event_participants || []).map((member: any) => {
-                  const roleLabel = (member.role === 'lead' || member.role === 'owner') ? 'Lead' : 'Collaborator'
-                  const isLead = roleLabel === 'Lead'
+                {/* Squad Badge if present */}
+                {(event.squad?.name || event.squad_name) && (
+                  <div className="mb-3 p-2 bg-[#f5b726]/20 border-2 border-[#10201d] flex items-center justify-between font-mono text-xs font-bold text-[#10201d] shadow-[2px_2px_0_#10201d]">
+                    <span className="flex items-center gap-1.5 truncate">
+                      <Shield className="h-3.5 w-3.5 text-[#2e4742] shrink-0" />
+                      Squad: {event.squad?.name || event.squad_name}
+                    </span>
+                    <Badge variant="outline" className="text-[10px] border-[#10201d] bg-white font-mono shrink-0">
+                      Synced Vault
+                    </Badge>
+                  </div>
+                )}
+                
+                <div className="space-y-2.5">
+                  {(event.event_participants || []).map((member: any) => {
+                    const roleLabel = (member.role === 'lead' || member.role === 'owner') ? 'Lead' : 'Collaborator'
+                    const isLead = roleLabel === 'Lead'
 
-                  return (
-                    <div key={member.id} className="p-2.5 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className={`w-8 h-8 border-2 border-[#10201d] ${isLead ? 'bg-[#f5b726]' : 'bg-[#8bb2de]'} flex items-center justify-center font-mono text-xs font-bold text-[#10201d] shadow-[1px_1px_0_#10201d] shrink-0`}>
-                          {member.profile?.full_name?.charAt(0) || 'U'}
+                    return (
+                      <div key={member.id} className="p-2.5 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className={`w-8 h-8 border-2 border-[#10201d] ${isLead ? 'bg-[#f5b726]' : 'bg-[#8bb2de]'} flex items-center justify-center font-mono text-xs font-bold text-[#10201d] shadow-[1px_1px_0_#10201d] shrink-0`}>
+                            {member.profile?.full_name?.charAt(0) || 'U'}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-display text-sm font-bold text-[#10201d] truncate">{member.profile?.full_name || 'Team Member'}</p>
+                            <p className="font-mono text-[10px] text-[#57726d] truncate">{member.profile?.email || ''}</p>
+                          </div>
                         </div>
-                        <div className="min-w-0">
-                          <p className="font-display text-sm font-bold text-[#10201d] truncate">{member.profile?.full_name || 'Team Member'}</p>
-                          <p className="font-mono text-[10px] text-[#57726d] truncate">{member.profile?.email || ''}</p>
-                        </div>
+                        <Badge
+                          variant="outline"
+                          className={`font-mono text-[10px] font-bold uppercase border-2 border-[#10201d] shrink-0 ${
+                            isLead ? 'bg-[#f5b726] text-[#10201d]' : 'bg-[#f7f7f2] text-[#34433f]'
+                          }`}
+                        >
+                          {roleLabel}
+                        </Badge>
                       </div>
-                      <Badge
-                        variant="outline"
-                        className={`font-mono text-[10px] font-bold uppercase border-2 border-[#10201d] shrink-0 ${
-                          isLead ? 'bg-[#f5b726] text-[#10201d]' : 'bg-[#f7f7f2] text-[#34433f]'
-                        }`}
-                      >
-                        {roleLabel}
-                      </Badge>
-                    </div>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
+                    )
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Add Teammate Dialog */}
           <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
