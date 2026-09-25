@@ -7,7 +7,7 @@ import { LayoutDashboard, Calendar, Menu, X, LogOut, ChevronDown, User, FolderKa
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { HackFlowLogo, HackFlowEmblem } from '@/components/brand/Logo'
+import { HackFlowLogo, HackFlowImageLogo } from '@/components/brand/Logo'
 import { NotificationToast } from '@/components/notifications/NotificationToast'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { ProfileSidebarWidget } from '@/components/profile/ProfileSidebarWidget'
@@ -126,7 +126,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
 
             {/* Mobile Brand Emblem */}
             <Link href="/dashboard" prefetch={true} className="flex items-center lg:hidden shrink-0 active:scale-90 transition-transform">
-              <HackFlowEmblem className="w-8 h-8" />
+              <HackFlowImageLogo className="w-8 h-8" />
             </Link>
 
             <h1 className="font-display text-base sm:text-2xl font-bold tracking-tight text-[#f7f7f2] truncate">

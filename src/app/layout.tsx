@@ -37,9 +37,10 @@ export const metadata: Metadata = {
   description: "Stop losing hackathons to disorganization. Auto-extract rounds, deadlines, deliverables, and stay on schedule with your team.",
   icons: {
     icon: [
+      { url: '/brand/hackflow_emblem.jpg' },
       { url: '/brand/hackflow_emblem.png', type: 'image/png' },
-      { url: '/icon.svg', type: 'image/svg+xml' },
       { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
     ],
     shortcut: '/favicon.ico',
     apple: [
@@ -56,7 +57,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn(barlow.variable, martianMono.variable, inter.variable)}>
       <head>
-        <link rel="icon" href="/brand/hackflow_emblem.png" type="image/png" sizes="any" />
+        <link rel="icon" href="/brand/hackflow_emblem.jpg" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/apple-icon.png" />
       </head>
