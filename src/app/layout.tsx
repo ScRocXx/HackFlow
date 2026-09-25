@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Barlow_Semi_Condensed, Martian_Mono, Inter } from 'next/font/google'
 import './globals.css'
 import { cn } from '@/lib/utils'
@@ -25,9 +25,25 @@ const inter = Inter({
   display: 'swap',
 })
 
+export const viewport: Viewport = {
+  themeColor: '#10201d',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+}
+
 export const metadata: Metadata = {
   title: 'HackFlow | Built for Hackathons',
   description: "Stop losing hackathons to disorganization. Auto-extract rounds, deadlines, deliverables, and stay on schedule with your team.",
+  icons: {
+    icon: [
+      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico' },
+    ],
+    apple: [
+      { url: '/apple-icon.png' },
+    ],
+  },
 }
 
 export default function RootLayout({
@@ -45,4 +61,3 @@ export default function RootLayout({
     </html>
   )
 }
-

@@ -13,8 +13,9 @@ export function HackFlowSquares({ className = "", size = "w-3 h-3" }: { classNam
 }
 
 /**
- * Scalable retro-brutalist vector emblem:
- * Circular stopwatch housing with dynamic lightning bolt and cyclic flow tracks.
+ * Scalable Neo-Brutalist Vector Emblem for HackFlow:
+ * Deep ink octagonal shield, dual kinetic sprint flow chevrons (Crimson & Steel Blue),
+ * and high-voltage solar amber lightning bolt with tactical telemetry markers.
  */
 export function HackFlowEmblem({
   className = "w-8 h-8",
@@ -23,42 +24,50 @@ export function HackFlowEmblem({
   className?: string;
   variant?: "dark" | "light";
 }) {
-  const isDarkBg = variant === "light";
-  const bg = isDarkBg ? "#f7f7f2" : "#10201d";
-  const ring = isDarkBg ? "#e53927" : "#8bb2de";
-  const bolt = "#f5b726";
-  const tick = isDarkBg ? "#10201d" : "#f7f7f2";
+  const isLight = variant === "light";
+  const badgeBg = isLight ? "#f7f7f2" : "#10201d";
+  const innerBg = isLight ? "#ffffff" : "#182d28";
+  const rimStroke = isLight ? "#d1d5db" : "#2e4742";
+  const inkStroke = "#10201d";
+  const boltColor = "#f5b726";
+  const crimsonFlow = "#e53927";
+  const cyanFlow = "#8bb2de";
+  const dotColor = isLight ? "#10201d" : "#f7f7f2";
 
   return (
     <div className={cn("relative inline-flex items-center justify-center shrink-0 select-none", className)}>
-      <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[2px_2px_0px_#10201d]">
-        {/* Outer stopwatch top crown */}
-        <rect x="21" y="2" width="6" height="4" rx="1" fill={bg} stroke="#10201d" strokeWidth="2" />
-        <rect x="33" y="5" width="4" height="4" rx="1" transform="rotate(30 33 5)" fill="#e53927" stroke="#10201d" strokeWidth="1.5" />
+      <svg 
+        viewBox="0 0 64 64" 
+        fill="none" 
+        xmlns="http://www.w3.org/2000/svg" 
+        className="w-full h-full drop-shadow-[2px_2px_0px_#10201d]"
+      >
+        {/* Outer Brutalist Badge Foundation */}
+        <rect x="4" y="4" width="56" height="56" rx="14" fill={badgeBg} stroke={inkStroke} strokeWidth="2.5" />
+        <rect x="6.5" y="6.5" width="51" height="51" rx="11.5" fill={innerBg} stroke={rimStroke} strokeWidth="1.5" />
 
-        {/* Outer circle casing */}
-        <circle cx="24" cy="26" r="19" fill={bg} stroke="#10201d" strokeWidth="3" />
-        
-        {/* Segmented sprint track */}
-        <circle cx="24" cy="26" r="14.5" stroke={ring} strokeWidth="2.5" strokeDasharray="16 6" strokeLinecap="round" />
+        {/* Dual Kinetic Flow Arcs (Sprint Velocity) */}
+        {/* Upper-left Crimson Flow Track */}
+        <path d="M14 18L26 18L21 26L11 26L14 18Z" fill={crimsonFlow} />
+        <circle cx="12" cy="14" r="2" fill={crimsonFlow} />
 
-        {/* Stopwatch tick marks */}
-        <line x1="24" y1="13" x2="24" y2="15.5" stroke={tick} strokeWidth="2" strokeLinecap="round" />
-        <line x1="37" y1="26" x2="34.5" y2="26" stroke={tick} strokeWidth="2" strokeLinecap="round" />
-        <line x1="24" y1="39" x2="24" y2="36.5" stroke={tick} strokeWidth="2" strokeLinecap="round" />
-        <line x1="11" y1="26" x2="13.5" y2="26" stroke={tick} strokeWidth="2" strokeLinecap="round" />
+        {/* Lower-right Steel Blue Flow Track */}
+        <path d="M43 38L53 38L48 46L38 46L43 38Z" fill={cyanFlow} />
+        <circle cx="52" cy="50" r="2" fill={cyanFlow} />
 
-        {/* Central dynamic lightning bolt */}
-        <path
-          d="M25.5 15L17 26.5H23.5L22.5 37L31 25.5H24.5L25.5 15Z"
-          fill={bolt}
-          stroke="#10201d"
-          strokeWidth="1.75"
-          strokeLinejoin="round"
+        {/* High-Voltage Central Lightning Bolt */}
+        <path 
+          d="M37 11L19 32H31L25 53L47 28H34L37 11Z" 
+          fill={boltColor} 
+          stroke={inkStroke} 
+          strokeWidth="2.5" 
+          strokeLinejoin="round" 
+          strokeLinecap="round" 
         />
 
-        {/* Accent mini-dot */}
-        <circle cx="33" cy="18" r="2" fill="#e53927" stroke="#10201d" strokeWidth="1" />
+        {/* High-contrast Tactical Telemetry Dots */}
+        <circle cx="18" cy="48" r="2" fill={dotColor} />
+        <circle cx="48" cy="16" r="2" fill={boltColor} />
       </svg>
     </div>
   );
@@ -76,7 +85,7 @@ export function HackFlowImageLogo({
 }) {
   const src = type === "full" ? "/brand/hackflow_logo.jpg" : "/brand/hackflow_emblem.jpg";
   return (
-    <div className={cn("relative overflow-hidden rounded-md border-2 border-[#10201d] shadow-[2px_2px_0px_#10201d] bg-[#10201d] shrink-0", className)}>
+    <div className={cn("relative overflow-hidden rounded-md border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] bg-[#10201d] shrink-0", className)}>
       <img
         src={src}
         alt="HackFlow"
@@ -93,7 +102,7 @@ export function HackFlowIcon({ className = "h-7 w-7" }: { className?: string }) 
 export function HackFlowLogo({
   className = "",
   textClassName = "",
-  showImage = true,
+  showImage = false,
   size = "md"
 }: {
   className?: string;
