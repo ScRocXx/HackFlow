@@ -7,7 +7,7 @@ import { LayoutDashboard, Calendar, Menu, X, LogOut, ChevronDown, User, FolderKa
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { HackFlowLogo } from '@/components/brand/Logo'
+import { HackFlowLogo, HackFlowEmblem } from '@/components/brand/Logo'
 import { NotificationToast } from '@/components/notifications/NotificationToast'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { ProfileSidebarWidget } from '@/components/profile/ProfileSidebarWidget'
@@ -114,23 +114,31 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col overflow-hidden">
         {/* Top Navbar (#3d5f58) */}
-        <header className="flex h-16 shrink-0 items-center justify-between border-b-2 border-[#10201d] bg-[#3d5f58] text-[#f7f7f2] px-4 sm:px-8">
-          <div className="flex items-center">
+        <header className="flex h-14 sm:h-16 shrink-0 items-center justify-between border-b-2 border-[#10201d] bg-[#3d5f58] text-[#f7f7f2] px-3 sm:px-8">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
-              className="mr-4 p-1.5 text-[#f7f7f2] hover:bg-[#2e4742] border border-[#10201d] lg:hidden"
+              className="p-1.5 text-[#f7f7f2] hover:bg-[#2e4742] border-2 border-[#10201d] bg-[#2e4742] shadow-[2px_2px_0_#10201d] lg:hidden active:translate-x-[1px] active:translate-y-[1px] shrink-0"
               onClick={() => setIsMobileMenuOpen(true)}
+              aria-label="Toggle navigation menu"
             >
               <Menu className="h-5 w-5" />
             </button>
-            <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#f7f7f2]">
+
+            {/* Mobile Brand Emblem */}
+            <Link href="/dashboard" prefetch={true} className="flex items-center lg:hidden shrink-0">
+              <HackFlowEmblem className="w-7 h-7" />
+            </Link>
+
+            <h1 className="font-display text-base sm:text-2xl font-bold tracking-tight text-[#f7f7f2] truncate">
               {pathname === '/dashboard' ? 'Dashboard' : 
                pathname === '/vault' ? 'Squad Vault' : 
                pathname === '/archive' ? 'Trophy Case' : 
+               pathname === '/friends' ? 'Squads & Friends' :
                pathname.startsWith('/events') ? 'Hackathon Workspace' : 'HackFlow'}
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border border-[#10201d] bg-[#2e4742] text-[#8bb2de] hidden sm:inline-block">
               Team Workspace
             </span>
@@ -140,12 +148,42 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
           </div>
         </header>
 
-        {/* Main View */}
-        <main className="flex-1 overflow-y-auto bg-[#f2f2eb] p-4 sm:p-6 lg:p-8">
+        {/* Main View with bottom dock clearance on mobile */}
+        <main className="flex-1 overflow-y-auto bg-[#f2f2eb] p-3 sm:p-6 lg:p-8 pb-24 lg:pb-8">
           {children}
         </main>
+
+        {/* Fixed Mobile Bottom Navigation Dock (lg:hidden) */}
+        <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#2e4742] border-t-2 border-[#10201d] shadow-[0_-3px_0_#10201d] px-2 py-1 pb-[max(env(safe-area-inset-bottom),0.5rem)] flex items-center justify-around lg:hidden">
+          {navItems.map((item) => {
+            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(`${item.href}/`))
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                prefetch={true}
+                className={cn(
+                  "flex flex-col items-center justify-center flex-1 py-1 px-1 font-mono transition-all rounded-xs select-none",
+                  isActive
+                    ? "bg-[#10201d] text-[#f5b726] border border-[#10201d] shadow-[1px_1px_0_#10201d]"
+                    : "text-[#8bb2de] hover:text-[#f7f7f2] active:bg-[#3d5f58]"
+                )}
+              >
+                <item.icon className={cn("h-4 w-4 mb-0.5", isActive ? "text-[#f5b726]" : "text-[#8bb2de]")} />
+                <span className={cn(
+                  "text-[10px] font-bold uppercase tracking-tight truncate max-w-[70px]",
+                  isActive ? "text-[#f5b726]" : "text-[#f7f7f2]"
+                )}>
+                  {item.name === 'Squad Vault' ? 'Vault' :
+                   item.name === 'Squads & Friends' ? 'Squads' :
+                   item.name === 'Trophy Case' ? 'Trophies' :
+                   'Tracker'}
+                </span>
+              </Link>
+            )
+          })}
+        </nav>
       </div>
     </div>
   )
-
 }
