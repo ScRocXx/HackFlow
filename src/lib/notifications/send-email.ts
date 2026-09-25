@@ -136,10 +136,19 @@ export async function sendEmail(options: SendEmailOptions) {
 }
 
 export async function sendDeadlineEmail(params: DeadlineReminderEmailProps & { to: string }) {
-  const urgencyPrefix = params.intervalKey === '6h' ? '🚨 [CRITICAL 6H]' : params.intervalKey === '24h' ? '⚡ [FREEZE 24H]' : params.intervalKey === '3d' ? '⏳ [MIDPOINT 3D]' : '🚀 [KICKOFF 7D]';
+  const daysOrHoursLeft = params.intervalKey === '6h'
+    ? '6 hours'
+    : params.intervalKey === '24h'
+    ? '24 hours'
+    : params.intervalKey === '3d'
+    ? '3 days'
+    : params.intervalKey === '7d'
+    ? '7 days'
+    : params.timeRemaining || params.intervalKey;
+
   return sendEmail({
     to: params.to,
-    subject: `${urgencyPrefix} ${params.eventTitle}: ${params.stageName}`,
+    subject: `🚨 ${daysOrHoursLeft} left: ${params.stageName} — ${params.eventTitle}`,
     html: renderDeadlineReminderHtml(params),
   });
 }

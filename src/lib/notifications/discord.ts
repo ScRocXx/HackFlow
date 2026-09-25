@@ -90,8 +90,18 @@ export async function sendDiscordDeadlineAlert(params: {
     }
   }
 
+  const daysOrHoursLeft = params.intervalKey === '6h'
+    ? '6 hours'
+    : params.intervalKey === '24h'
+    ? '24 hours'
+    : params.intervalKey === '3d'
+    ? '3 days'
+    : params.intervalKey === '7d'
+    ? '7 days'
+    : params.intervalKey;
+
   const embed: DiscordEmbed = {
-    title: `🚨 [${params.intervalKey.toUpperCase()}] ${params.eventTitle}`,
+    title: `🚨 ${daysOrHoursLeft} left: ${params.stageName} — ${params.eventTitle}`,
     description: `Active Stage: **${params.stageName}** is approaching its hard submission cutoff.`,
     url: params.eventUrl,
     color: getColor(params.intervalKey),

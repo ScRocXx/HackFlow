@@ -42,33 +42,20 @@ export function getTriggeredIntervals(deadline: Date): string[] {
 }
 
 export function getIntervalMessage(intervalKey: string, stageName: string, eventTitle: string): { subject: string; body: string } {
-  switch (intervalKey) {
-    case '7d':
-      return {
-        subject: `[Kickoff] ${eventTitle}: ${stageName} due in 7 days`,
-        body: `[Kickoff] ${eventTitle}: ${stageName} due in 7 days — review requirements and start planning`
-      };
-    case '3d':
-      return {
-        subject: `[Midpoint] ${eventTitle}: ${stageName} due in 3 days`,
-        body: `[Midpoint] ${eventTitle}: ${stageName} due in 3 days — verify drafts and progress`
-      };
-    case '24h':
-      return {
-        subject: `[Freeze Warning] ${eventTitle}: ${stageName} due TOMORROW`,
-        body: `[Freeze Warning] ${eventTitle}: ${stageName} due TOMORROW — finalize all content`
-      };
-    case '6h':
-      return {
-        subject: `🚨 [Critical] ${eventTitle}: ${stageName} due in 6 HOURS`,
-        body: `🚨 [Critical] ${eventTitle}: ${stageName} due in 6 HOURS — final submission checklist`
-      };
-    default:
-      return {
-        subject: `${eventTitle}: ${stageName} reminder`,
-        body: `${eventTitle}: ${stageName} is approaching its deadline.`
-      };
-  }
+  const daysOrHoursLeft = intervalKey === '6h'
+    ? '6 hours'
+    : intervalKey === '24h'
+    ? '24 hours'
+    : intervalKey === '3d'
+    ? '3 days'
+    : intervalKey === '7d'
+    ? '7 days'
+    : intervalKey;
+
+  return {
+    subject: `🚨 ${daysOrHoursLeft} left: ${stageName} — ${eventTitle}`,
+    body: `${daysOrHoursLeft} left to submit ${stageName} for ${eventTitle}. Review pending deliverables and guidelines.`
+  };
 }
 
 export async function evaluateAndDispatchNotifications(options?: { baseUrl?: string }) {
@@ -91,7 +78,7 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
   // 1. Query pending event stages (strictly ignore TBA stages with null deadlines)
   const { data: stages, error: stagesError } = await supabaseAdmin
     .from('event_stages')
-    .select('id, title, stage_type, evaluation_format, deliverables_description, deadline, event_id, events!event_stages_event_id_fkey(id, title, created_by, team_size_min, team_size_max, meet_url)')
+    .select('id, title, stage_type, evaluation_format, deliverables_description, deadline, event_id, events!event_stages_event_id_fkey(id, title, created_by, team_size_min, team_size_max, meet_url, mode, location, prize_pool)')
     .eq('is_completed', false)
     .not('deadline', 'is', null)
     .gt('deadline', new Date().toISOString());
@@ -221,17 +208,32 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
 
     let cutoffDate = 'TBA';
     try {
-      cutoffDate = deadline.toLocaleString('en-US', {
+      const datePart = deadline.toLocaleDateString('en-US', {
         timeZone: 'Asia/Kolkata',
+        weekday: 'long',
         month: 'short',
         day: 'numeric',
-        hour: '2-digit',
+        year: 'numeric',
+      });
+      const timePart = deadline.toLocaleTimeString('en-US', {
+        timeZone: 'Asia/Kolkata',
+        hour: 'numeric',
         minute: '2-digit',
         hour12: true,
-      }) + ' IST';
+      });
+      cutoffDate = `${datePart} at ${timePart} IST`;
     } catch {
       cutoffDate = stage.deadline;
     }
+
+    const diffMs = Math.max(0, deadline.getTime() - Date.now());
+    const days = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+    const hours = Math.floor((diffMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+    const minutes = Math.floor((diffMs % (60 * 60 * 1000)) / (60 * 1000));
+    const seconds = Math.floor((diffMs % (60 * 1000)) / 1000);
+
+    const pad = (n: number) => String(Math.max(0, n)).padStart(2, '0');
+    const formattedCountdown = `${pad(days)}D : ${pad(hours)}H : ${pad(minutes)}M : ${pad(seconds)}S`;
 
     const constraints = {
       teamSize: eventData?.team_size_min || eventData?.team_size_max
@@ -291,7 +293,7 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
               to: normalizedEmail,
               eventTitle,
               stageName: stage.title,
-              timeRemaining: intervalKey,
+              timeRemaining: formattedCountdown,
               checklistProgress,
               eventUrl,
               intervalKey,
@@ -301,6 +303,10 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
               deliverablesDescription: stage.deliverables_description,
               constraints,
               meetUrl,
+              mode: eventData?.mode || 'online',
+              location: eventData?.location || null,
+              prizePool: eventData?.prize_pool || null,
+              timerGifUrl: null,
             });
 
             if (emailResult?.success) {
@@ -366,7 +372,7 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
           await sendDiscordDeadlineAlert({
             eventTitle,
             stageName: stage.title,
-            timeRemaining: intervalKey,
+            timeRemaining: formattedCountdown,
             eventUrl,
             intervalKey,
             checklistProgress,
