@@ -56,10 +56,10 @@ export default async function HomePage() {
 
       {/* 2. Navbar */}
       <header className="sticky top-0 z-30 border-b-2 border-[#10201d] bg-[#3d5f58] text-[#f7f7f2] shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 sm:h-20 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-20 flex items-center justify-between gap-3">
           {/* Brand Wordmark */}
-          <Link href="/" className="flex items-center select-none">
-            <HackFlowLogo textClassName="text-[#f7f7f2]" size="lg" />
+          <Link href="/" className="flex items-center select-none active:scale-95 transition-transform">
+            <HackFlowLogo textClassName="text-[#f7f7f2] text-lg sm:text-2xl" size="md" />
           </Link>
 
           {/* Desktop Navigation Links */}
@@ -72,7 +72,7 @@ export default async function HomePage() {
           </nav>
 
           {/* Action CTAs */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/login"
               className="hidden sm:inline-flex items-center font-mono text-xs font-bold uppercase tracking-wider text-[#f7f7f2] hover:text-[#e97b77] transition-colors px-2 py-1"
@@ -81,7 +81,7 @@ export default async function HomePage() {
             </Link>
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center px-4 sm:px-5 py-2 sm:py-2.5 font-mono text-xs sm:text-sm font-bold uppercase tracking-tight text-[#10201d] border-2 border-[#10201d] bg-[#e97b77] shadow-[4px_4px_0_#671912] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#671912] transition-all"
+              className="inline-flex items-center justify-center px-3.5 sm:px-5 py-2 sm:py-2.5 font-mono text-xs sm:text-sm font-bold uppercase tracking-tight text-[#10201d] border-2 border-[#10201d] bg-[#e97b77] shadow-[3px_3px_0_#671912] sm:shadow-[4px_4px_0_#671912] active:scale-95 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#671912] transition-all touch-manipulation whitespace-nowrap"
             >
               Open HackFlow
             </Link>
@@ -91,7 +91,7 @@ export default async function HomePage() {
 
       <main id="main" className="flex-1">
         {/* ===================== HERO SECTION ===================== */}
-        <section id="hero" className="relative overflow-hidden border-b-2 border-[#10201d] bg-[#3d5f58] text-[#f7f7f2] py-16 sm:py-24 lg:py-28">
+        <section id="hero" className="relative overflow-hidden border-b-2 border-[#10201d] bg-[#3d5f58] text-[#f7f7f2] py-12 sm:py-24 lg:py-28">
           {/* Decorative Corner Pixel SVGs */}
           <div aria-hidden="true" className="absolute top-0 left-0 pointer-events-none opacity-40 lg:opacity-75 w-32 sm:w-48 lg:w-64">
             <svg viewBox="0 0 317.71 293.34" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -138,13 +138,13 @@ export default async function HomePage() {
           {/* Hero Content Container */}
           <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 text-center flex flex-col items-center">
             {/* 3. Hero Eyebrow */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 border-2 border-[#10201d] bg-[#f7f7f2] text-[#10201d] font-mono text-xs font-black uppercase tracking-widest shadow-[3px_3px_0_#10201d] mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1 border-2 border-[#10201d] bg-[#f7f7f2] text-[#10201d] font-mono text-xs font-black uppercase tracking-widest shadow-[3px_3px_0_#10201d] mb-4 sm:mb-6">
               <span className="w-2 h-2 bg-[#e53927] inline-block" />
               BUILT FOR HACKATHONS
             </div>
 
             {/* 4. Hero Headline */}
-            <h1 className="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-[0.93] text-[#f7f7f2] max-w-4xl mx-auto">
+            <h1 className="font-display text-3xl sm:text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight leading-[1.05] sm:leading-[0.93] text-[#f7f7f2] max-w-4xl mx-auto">
               Hackathons aren't hard because of the deadline.{' '}
               <em className="block text-[#8bb2de] font-extrabold not-italic mt-2">
                 They're hard because there are five of them.
@@ -152,24 +152,24 @@ export default async function HomePage() {
             </h1>
 
             {/* 5. Hero Description */}
-            <p className="mt-7 max-w-2xl mx-auto text-[#f7f7f2]/90 text-base sm:text-lg md:text-xl leading-relaxed font-normal">
+            <p className="mt-5 sm:mt-7 max-w-2xl mx-auto text-[#f7f7f2]/90 text-sm sm:text-lg md:text-xl leading-relaxed font-normal">
               You register, drop the link in the group, everyone says "we'll do it later" — and suddenly it's 2 hours before submission.
             </p>
-            <p className="mt-2 max-w-2xl mx-auto text-[#8bb2de] text-base sm:text-lg font-mono font-bold">
+            <p className="mt-2 max-w-2xl mx-auto text-[#8bb2de] text-sm sm:text-lg font-mono font-bold">
               HackFlow turns the whole hackathon into one shared plan: rounds, deadlines, deliverables, links and who's doing what.
             </p>
 
             {/* 6. Hero CTAs */}
-            <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
+            <div className="mt-7 sm:mt-9 flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 w-full sm:w-auto">
               <Link
                 href="/signup"
-                className="w-full sm:w-auto inline-flex items-center justify-center min-h-[52px] px-8 py-3.5 font-mono text-sm font-bold uppercase tracking-wide text-[#10201d] border-2 border-[#10201d] bg-[#e97b77] shadow-[5px_5px_0_#671912] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_#671912] transition-all"
+                className="w-full sm:w-auto inline-flex items-center justify-center min-h-[48px] sm:min-h-[52px] px-6 sm:px-8 py-3 sm:py-3.5 font-mono text-xs sm:text-sm font-bold uppercase tracking-wide text-[#10201d] border-2 border-[#10201d] bg-[#e97b77] shadow-[4px_4px_0_#671912] sm:shadow-[5px_5px_0_#671912] active:scale-[0.98] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_#671912] transition-all touch-manipulation"
               >
                 Paste a hackathon link →
               </Link>
               <a
                 href="#how-it-works"
-                className="w-full sm:w-auto inline-flex items-center justify-center min-h-[52px] px-8 py-3.5 font-mono text-sm font-bold uppercase tracking-wide text-[#f7f7f2] border-2 border-white/80 bg-transparent shadow-[5px_5px_0_#2e4742] hover:bg-[#f7f7f2] hover:text-[#10201d] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_#2e4742] transition-all"
+                className="w-full sm:w-auto inline-flex items-center justify-center min-h-[48px] sm:min-h-[52px] px-6 sm:px-8 py-3 sm:py-3.5 font-mono text-xs sm:text-sm font-bold uppercase tracking-wide text-[#f7f7f2] border-2 border-white/80 bg-transparent shadow-[4px_4px_0_#2e4742] sm:shadow-[5px_5px_0_#2e4742] active:scale-[0.98] hover:bg-[#f7f7f2] hover:text-[#10201d] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_#2e4742] transition-all touch-manipulation"
               >
                 See how it works
               </a>

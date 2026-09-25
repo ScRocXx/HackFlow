@@ -175,7 +175,7 @@ export function EventCard({ event }: EventCardProps) {
           className="flex flex-col h-full flex-1"
         >
           {/* Banner Container */}
-          <div className="h-32 w-full relative bg-[#2e4742] border-b-2 border-[#10201d] overflow-hidden">
+          <div className="h-28 sm:h-32 w-full relative bg-[#2e4742] border-b-2 border-[#10201d] overflow-hidden">
             {event.banner_url ? (
               <img src={event.banner_url} alt={event.title} className="w-full h-full object-cover" />
             ) : (
@@ -187,7 +187,7 @@ export function EventCard({ event }: EventCardProps) {
             )}
 
             {/* Badges on Top Left */}
-            <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap max-w-[70%] z-10">
+            <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 flex gap-1.5 flex-wrap max-w-[70%] z-10">
               <span className={`inline-flex items-center px-2 py-0.5 border-2 font-mono text-[10px] font-black uppercase tracking-wider shadow-[2px_2px_0_#10201d] ${platformBadge.className}`}>
                 {platformBadge.label}
               </span>
@@ -210,7 +210,7 @@ export function EventCard({ event }: EventCardProps) {
             </div>
 
             {/* Edit & Delete Action Buttons (Top Right) */}
-            <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-20">
+            <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center gap-1.5 z-20">
               <button
                 type="button"
                 onClick={(e) => {
@@ -219,7 +219,7 @@ export function EventCard({ event }: EventCardProps) {
                   setEditOpen(true)
                 }}
                 title="Edit Hackathon"
-                className="p-1.5 border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#f5b726] active:scale-95 text-[#10201d] shadow-[2px_2px_0_#10201d] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none touch-manipulation"
+                className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#f5b726] active:scale-90 text-[#10201d] shadow-[2px_2px_0_#10201d] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none touch-manipulation"
               >
                 <Edit3 className="w-3.5 h-3.5" />
                 <span className="sr-only">Edit</span>
@@ -232,7 +232,7 @@ export function EventCard({ event }: EventCardProps) {
                   setDeleteOpen(true)
                 }}
                 title="Delete Hackathon"
-                className="p-1.5 border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#e53927] hover:text-[#f7f7f2] active:scale-95 text-[#10201d] shadow-[2px_2px_0_#10201d] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none touch-manipulation"
+                className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#e53927] hover:text-[#f7f7f2] active:scale-90 text-[#10201d] shadow-[2px_2px_0_#10201d] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none touch-manipulation"
               >
                 <Trash2 className="w-3.5 h-3.5" />
                 <span className="sr-only">Delete</span>
@@ -241,9 +241,9 @@ export function EventCard({ event }: EventCardProps) {
           </div>
 
           {/* Card Body */}
-          <div className="p-4 sm:p-5 flex-1 flex flex-col">
-            <div className="mb-4">
-              <h3 className="font-display text-xl font-bold text-[#10201d] line-clamp-1 group-hover:text-[#e53927] transition-colors">
+          <div className="p-3.5 sm:p-5 flex-1 flex flex-col">
+            <div className="mb-3 sm:mb-4">
+              <h3 className="font-display text-lg sm:text-xl font-bold text-[#10201d] line-clamp-1 group-hover:text-[#e53927] transition-colors">
                 {event.title}
               </h3>
               <p className="font-mono text-xs text-[#34433f] line-clamp-1 mt-0.5">

@@ -117,7 +117,7 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
         <header className="flex h-14 sm:h-16 shrink-0 items-center justify-between border-b-2 border-[#10201d] bg-[#3d5f58] text-[#f7f7f2] px-3 sm:px-8">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
-              className="p-1.5 text-[#f7f7f2] hover:bg-[#2e4742] border-2 border-[#10201d] bg-[#2e4742] shadow-[2px_2px_0_#10201d] lg:hidden active:translate-x-[1px] active:translate-y-[1px] shrink-0"
+              className="p-1.5 text-[#f7f7f2] hover:bg-[#2e4742] border-2 border-[#10201d] bg-[#2e4742] shadow-[2px_2px_0_#10201d] lg:hidden active:scale-95 transition-transform shrink-0 touch-manipulation"
               onClick={() => setIsMobileMenuOpen(true)}
               aria-label="Toggle navigation menu"
             >
@@ -125,8 +125,8 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
             </button>
 
             {/* Mobile Brand Emblem */}
-            <Link href="/dashboard" prefetch={true} className="flex items-center lg:hidden shrink-0">
-              <HackFlowEmblem className="w-7 h-7" />
+            <Link href="/dashboard" prefetch={true} className="flex items-center lg:hidden shrink-0 active:scale-90 transition-transform">
+              <HackFlowEmblem className="w-8 h-8" />
             </Link>
 
             <h1 className="font-display text-base sm:text-2xl font-bold tracking-tight text-[#f7f7f2] truncate">
@@ -149,12 +149,12 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
         </header>
 
         {/* Main View with bottom dock clearance on mobile */}
-        <main className="flex-1 overflow-y-auto bg-[#f2f2eb] p-3 sm:p-6 lg:p-8 pb-24 lg:pb-8">
+        <main className="flex-1 overflow-y-auto bg-[#f2f2eb] p-3 sm:p-6 lg:p-8 pb-24 lg:pb-8 overscroll-contain">
           {children}
         </main>
 
         {/* Fixed Mobile Bottom Navigation Dock (lg:hidden) */}
-        <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#2e4742] border-t-2 border-[#10201d] shadow-[0_-3px_0_#10201d] px-2 py-1 pb-[max(env(safe-area-inset-bottom),0.5rem)] flex items-center justify-around lg:hidden">
+        <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#2e4742]/95 backdrop-blur-md border-t-2 border-[#10201d] shadow-[0_-4px_16px_rgba(16,32,29,0.35)] px-2 py-1.5 pb-[max(env(safe-area-inset-bottom),0.65rem)] flex items-center justify-around lg:hidden">
           {navItems.map((item) => {
             const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(`${item.href}/`))
             return (
@@ -163,13 +163,16 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
                 href={item.href}
                 prefetch={true}
                 className={cn(
-                  "flex flex-col items-center justify-center flex-1 py-1 px-1 font-mono transition-all rounded-xs select-none",
+                  "relative flex flex-col items-center justify-center flex-1 py-1 px-1 font-mono transition-all rounded-xs select-none min-h-[46px] active:scale-95 touch-manipulation",
                   isActive
                     ? "bg-[#10201d] text-[#f5b726] border border-[#10201d] shadow-[1px_1px_0_#10201d]"
                     : "text-[#8bb2de] hover:text-[#f7f7f2] active:bg-[#3d5f58]"
                 )}
               >
-                <item.icon className={cn("h-4 w-4 mb-0.5", isActive ? "text-[#f5b726]" : "text-[#8bb2de]")} />
+                {isActive && (
+                  <span className="absolute -top-1 w-6 h-1 bg-[#f5b726] rounded-full shadow-[0_0_6px_#f5b726]" />
+                )}
+                <item.icon className={cn("h-4 w-4 mb-0.5 transition-transform", isActive ? "text-[#f5b726] scale-110" : "text-[#8bb2de]")} />
                 <span className={cn(
                   "text-[10px] font-bold uppercase tracking-tight truncate max-w-[70px]",
                   isActive ? "text-[#f5b726]" : "text-[#f7f7f2]"

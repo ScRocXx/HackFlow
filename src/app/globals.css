@@ -88,5 +88,20 @@ body::after {
 
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
+
+button, a, input, select, textarea {
+  touch-action: manipulation;
+}
+
+/* Hide scrollbar for clean horizontal snap rails while preserving scrollability */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 

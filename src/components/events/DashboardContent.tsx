@@ -73,21 +73,21 @@ export function DashboardContent({ events = [] }: DashboardContentProps) {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Console Header Bar */}
-      <div className="border-2 border-[#10201d] bg-[#3d5f58] p-4 sm:p-6 text-[#f7f7f2] shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912] flex flex-col md:flex-row justify-between md:items-center gap-4">
+      <div className="border-2 border-[#10201d] bg-[#3d5f58] p-3.5 sm:p-6 text-[#f7f7f2] shadow-[4px_4px_0_#671912] sm:shadow-[7px_7px_0_#671912] flex flex-col md:flex-row justify-between md:items-center gap-3 sm:gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
-            <span className="w-2.5 h-2.5 bg-[#e53927] inline-block" />
-            <span className="w-2.5 h-2.5 bg-[#8bb2de] inline-block" />
-            <span className="w-2.5 h-2.5 bg-[#f5b726] inline-block" />
-            <span className="w-2.5 h-2.5 bg-[#e97b77] inline-block" />
-            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#f6c4c1] ml-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+            <span className="w-2 h-2 bg-[#e53927] inline-block" />
+            <span className="w-2 h-2 bg-[#8bb2de] inline-block" />
+            <span className="w-2 h-2 bg-[#f5b726] inline-block" />
+            <span className="w-2 h-2 bg-[#e97b77] inline-block" />
+            <span className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#f6c4c1] ml-1.5">
               My Hackathons
             </span>
           </div>
           <h1 className="font-display text-2xl sm:text-4xl font-extrabold tracking-tight text-[#f7f7f2]">
             Hackathon Tracker
           </h1>
-          <p className="font-mono text-xs text-[#8bb2de] mt-1">
+          <p className="font-mono text-xs text-[#8bb2de] mt-0.5 sm:mt-1">
             All your rounds, deadlines, and team checklists in one place.
           </p>
         </div>
@@ -97,53 +97,53 @@ export function DashboardContent({ events = [] }: DashboardContentProps) {
             <Button 
               onClick={() => setIsDialogOpen(true)}
               size="lg"
-              className="w-full md:w-auto border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] font-mono text-xs font-bold uppercase tracking-wide shadow-[3px_3px_0_#671912] sm:shadow-[4px_4px_0_#671912] active:translate-x-[1px] active:translate-y-[1px] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#671912] px-5 sm:px-6 h-11 sm:h-12 flex items-center justify-center"
+              className="w-full md:w-auto border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] active:scale-[0.98] text-[#10201d] font-mono text-xs font-black uppercase tracking-wide shadow-[3px_3px_0_#671912] sm:shadow-[4px_4px_0_#671912] active:translate-x-[1px] active:translate-y-[1px] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#671912] px-5 sm:px-6 h-11 sm:h-12 flex items-center justify-center gap-1.5 touch-manipulation"
             >
-              + Paste Hackathon Link
+              <span className="text-base font-bold">+</span> Paste Hackathon Link
             </Button>
           </div>
         )}
       </div>
 
-      {/* Stats Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5">
-        <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[4px_4px_0_#671912] sm:shadow-[5px_5px_0_#671912]">
-          <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-4 sm:p-6">
-            <CardTitle className="font-mono text-xs font-bold uppercase tracking-wider text-[#34433f]">Active Hackathons</CardTitle>
-            <div className="p-1 sm:p-1.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#2e4742]">
-              <Trophy className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+      {/* Stats Metric Cards (High-Density 3-Column on mobile) */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-5">
+        <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[2px_2px_0_#671912] sm:shadow-[5px_5px_0_#671912]">
+          <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-2.5 sm:p-6">
+            <CardTitle className="font-mono text-[9px] sm:text-xs font-bold uppercase tracking-wider text-[#34433f] truncate">Active</CardTitle>
+            <div className="hidden xs:block p-1 sm:p-1.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] shadow-[1px_1px_0_#2e4742]">
+              <Trophy className="h-3 w-3 sm:h-4 sm:w-4" />
             </div>
           </CardHeader>
-          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-            <div className="font-display text-2xl sm:text-4xl font-extrabold text-[#10201d]">{activeEventsCount}</div>
-            <p className="font-mono text-[10px] sm:text-[11px] text-[#34433f] mt-0.5 sm:mt-1 font-bold">Currently registered & building</p>
+          <CardContent className="p-2.5 pt-0 sm:p-6 sm:pt-0">
+            <div className="font-display text-xl sm:text-4xl font-extrabold text-[#10201d]">{activeEventsCount}</div>
+            <p className="font-mono text-[9px] sm:text-[11px] text-[#34433f] mt-0.5 sm:mt-1 font-bold hidden sm:block">Currently registered & building</p>
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[4px_4px_0_#671912] sm:shadow-[5px_5px_0_#671912]">
-          <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-4 sm:p-6">
-            <CardTitle className="font-mono text-xs font-bold uppercase tracking-wider text-[#34433f]">Upcoming Deadlines</CardTitle>
-            <div className="p-1 sm:p-1.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#8a5d13]">
-              <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+        <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[2px_2px_0_#671912] sm:shadow-[5px_5px_0_#671912]">
+          <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-2.5 sm:p-6">
+            <CardTitle className="font-mono text-[9px] sm:text-xs font-bold uppercase tracking-wider text-[#34433f] truncate">Deadlines</CardTitle>
+            <div className="hidden xs:block p-1 sm:p-1.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[1px_1px_0_#8a5d13]">
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
             </div>
           </CardHeader>
-          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-            <div className="font-display text-2xl sm:text-4xl font-extrabold text-[#10201d]">{upcomingDeadlinesCount}</div>
-            <p className="font-mono text-[10px] sm:text-[11px] text-[#34433f] mt-0.5 sm:mt-1 font-bold">Due within the next 7 days</p>
+          <CardContent className="p-2.5 pt-0 sm:p-6 sm:pt-0">
+            <div className="font-display text-xl sm:text-4xl font-extrabold text-[#10201d]">{upcomingDeadlinesCount}</div>
+            <p className="font-mono text-[9px] sm:text-[11px] text-[#34433f] mt-0.5 sm:mt-1 font-bold hidden sm:block">Due within 7 days</p>
           </CardContent>
         </Card>
 
-        <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[4px_4px_0_#671912] sm:shadow-[5px_5px_0_#671912]">
-          <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-4 sm:p-6">
-            <CardTitle className="font-mono text-xs font-bold uppercase tracking-wider text-[#34433f]">Tasks Completed</CardTitle>
-            <div className="p-1 sm:p-1.5 border-2 border-[#10201d] bg-[#e97b77] text-[#10201d] shadow-[2px_2px_0_#671912]">
-              <CheckCircle2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+        <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[2px_2px_0_#671912] sm:shadow-[5px_5px_0_#671912]">
+          <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-2.5 sm:p-6">
+            <CardTitle className="font-mono text-[9px] sm:text-xs font-bold uppercase tracking-wider text-[#34433f] truncate">Done</CardTitle>
+            <div className="hidden xs:block p-1 sm:p-1.5 border-2 border-[#10201d] bg-[#e97b77] text-[#10201d] shadow-[1px_1px_0_#671912]">
+              <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
             </div>
           </CardHeader>
-          <CardContent className="p-4 pt-0 sm:p-6 sm:pt-0">
-            <div className="font-display text-2xl sm:text-4xl font-extrabold text-[#10201d]">{completionRate}%</div>
-            <p className="font-mono text-[10px] sm:text-[11px] text-[#34433f] mt-0.5 sm:mt-1 font-bold">
-              {doneDeliverables} of {totalDeliverables} team tasks checked off
+          <CardContent className="p-2.5 pt-0 sm:p-6 sm:pt-0">
+            <div className="font-display text-xl sm:text-4xl font-extrabold text-[#10201d]">{completionRate}%</div>
+            <p className="font-mono text-[9px] sm:text-[11px] text-[#34433f] mt-0.5 sm:mt-1 font-bold hidden sm:block">
+              {doneDeliverables}/{totalDeliverables} tasks done
             </p>
           </CardContent>
         </Card>
@@ -152,14 +152,14 @@ export function DashboardContent({ events = [] }: DashboardContentProps) {
       {/* Filter Tabs & Section Header with Horizontal Scroll on Mobile */}
       <div className="space-y-3 sm:space-y-4">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2.5 sm:gap-3">
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 sm:flex-wrap">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 sm:flex-wrap">
             <div className="flex items-center gap-1.5 shrink-0 sm:shrink sm:flex-wrap">
               {filters.map((f) => (
                 <button
                   key={f.id}
                   onClick={() => setSelectedFilter(f.id)}
                   className={cn(
-                    "font-mono text-xs font-bold uppercase tracking-wider px-2.5 sm:px-3 py-1.5 border-2 border-[#10201d] transition-all whitespace-nowrap shrink-0",
+                    "font-mono text-xs font-bold uppercase tracking-wider px-2.5 sm:px-3 py-1.5 border-2 border-[#10201d] transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
                     selectedFilter === f.id
                       ? "bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#8a5d13]"
                       : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"

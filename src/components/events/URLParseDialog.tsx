@@ -573,7 +573,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[760px] max-h-[90vh] overflow-y-auto border-2 border-[#10201d] bg-[#f7f7f2] shadow-[8px_8px_0_#671912] p-6">
+      <DialogContent className="sm:max-w-[760px] max-h-[92vh] sm:max-h-[90vh] overflow-y-auto border-2 border-[#10201d] bg-[#f7f7f2] shadow-[6px_6px_0_#671912] sm:shadow-[8px_8px_0_#671912] p-3.5 sm:p-6">
         <DialogHeader>
           <div className="flex items-center gap-3">
             <div className="p-2.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d]">

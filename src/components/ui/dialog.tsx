@@ -76,16 +76,16 @@ export const DialogContent = React.forwardRef<HTMLDivElement, React.HTMLAttribut
     if (!mounted || !open) return null
 
     return createPortal(
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 overflow-y-auto">
         <div 
-          className="fixed inset-0 bg-[#10201d]/60 backdrop-blur-sm transition-all duration-100"
+          className="fixed inset-0 bg-[#10201d]/60 backdrop-blur-xs transition-all duration-100"
           onClick={() => setOpen(false)}
         />
         <div
           ref={ref}
           role="dialog"
           className={cn(
-            "relative z-50 grid w-full max-w-lg gap-4 border-2 border-[#10201d] bg-[#f7f7f2] p-6 shadow-[8px_8px_0_#671912] duration-200 animate-in fade-in-0 zoom-in-95",
+            "relative z-50 grid w-full max-w-lg gap-4 border-2 border-[#10201d] bg-[#f7f7f2] p-4 sm:p-6 shadow-[6px_6px_0_#671912] sm:shadow-[8px_8px_0_#671912] duration-200 animate-in fade-in-0 zoom-in-95 my-auto max-h-[92vh] overflow-y-auto overscroll-contain",
             className
           )}
           {...props}
@@ -93,7 +93,7 @@ export const DialogContent = React.forwardRef<HTMLDivElement, React.HTMLAttribut
           {children}
           <button
             onClick={() => setOpen(false)}
-            className="absolute right-4 top-4 p-1 border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#e97b77] text-[#10201d] shadow-[2px_2px_0_#10201d] transition-colors focus:outline-none"
+            className="absolute right-3 top-3 sm:right-4 sm:top-4 p-1.5 border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#e97b77] text-[#10201d] shadow-[2px_2px_0_#10201d] transition-colors focus:outline-none active:scale-95 touch-manipulation min-w-[32px] min-h-[32px] flex items-center justify-center"
           >
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>

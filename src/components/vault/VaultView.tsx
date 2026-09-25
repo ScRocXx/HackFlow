@@ -489,15 +489,15 @@ export function VaultView({
         </div>
       </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 border-b-2 border-[#10201d] pb-2 flex-wrap">
+      {/* Navigation Tabs (Smooth Horizontal Scroll on mobile) */}
+      <div className="flex items-center gap-2 border-b-2 border-[#10201d] pb-2 overflow-x-auto no-scrollbar scroll-smooth flex-nowrap sm:flex-wrap -mx-3 px-3 sm:mx-0 sm:px-0">
         <button
           onClick={() => setActiveTab('profiles')}
           className={cn(
-            "font-mono text-xs font-bold uppercase tracking-wider px-4 py-2 border-2 border-[#10201d] transition-all",
+            "font-mono text-xs font-bold uppercase tracking-wider px-3 sm:px-4 py-2 border-2 border-[#10201d] transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
             activeTab === 'profiles'
               ? "bg-[#f5b726] text-[#10201d] shadow-[3px_3px_0_#8a5d13]"
-              : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da]"
+              : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"
           )}
         >
           Quick-Fill Team Profiles ({profiles.length})
@@ -506,10 +506,10 @@ export function VaultView({
         <button
           onClick={() => setActiveTab('scratchpad')}
           className={cn(
-            "font-mono text-xs font-bold uppercase tracking-wider px-4 py-2 border-2 border-[#10201d] transition-all flex items-center gap-1.5",
+            "font-mono text-xs font-bold uppercase tracking-wider px-3 sm:px-4 py-2 border-2 border-[#10201d] transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
             activeTab === 'scratchpad'
               ? "bg-[#f5b726] text-[#10201d] shadow-[3px_3px_0_#8a5d13]"
-              : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da]"
+              : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"
           )}
         >
           <Pin className="w-3.5 h-3.5" />
@@ -520,10 +520,10 @@ export function VaultView({
         <button
           onClick={() => setActiveTab('decks')}
           className={cn(
-            "font-mono text-xs font-bold uppercase tracking-wider px-4 py-2 border-2 border-[#10201d] transition-all",
+            "font-mono text-xs font-bold uppercase tracking-wider px-3 sm:px-4 py-2 border-2 border-[#10201d] transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
             activeTab === 'decks'
               ? "bg-[#f5b726] text-[#10201d] shadow-[3px_3px_0_#8a5d13]"
-              : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da]"
+              : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"
           )}
         >
           Pitch & Deck Kit ({deckAssets.length})
@@ -532,10 +532,10 @@ export function VaultView({
         <button
           onClick={() => setActiveTab('boilerplates')}
           className={cn(
-            "font-mono text-xs font-bold uppercase tracking-wider px-4 py-2 border-2 border-[#10201d] transition-all",
+            "font-mono text-xs font-bold uppercase tracking-wider px-3 sm:px-4 py-2 border-2 border-[#10201d] transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
             activeTab === 'boilerplates'
               ? "bg-[#f5b726] text-[#10201d] shadow-[3px_3px_0_#8a5d13]"
-              : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da]"
+              : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"
           )}
         >
           Boilerplate Hub ({boilerplateAssets.length})
