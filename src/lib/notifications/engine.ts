@@ -289,6 +289,8 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
           const lockId = insertLog?.[0]?.id;
 
           try {
+            const timerGifUrl = `${appBaseUrl}/api/timer?until=${encodeURIComponent(stage.deadline)}`;
+
             const emailResult = await sendDeadlineEmail({
               to: normalizedEmail,
               eventTitle,
@@ -298,15 +300,16 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
               eventUrl,
               intervalKey,
               cutoffDate,
+              rawDeadline: stage.deadline,
               timezone: 'IST',
               deliverables,
               deliverablesDescription: stage.deliverables_description,
               constraints,
-              meetUrl,
+              meetUrl: meetUrl || 'https://meet.google.com/new',
               mode: eventData?.mode || 'online',
               location: eventData?.location || null,
               prizePool: eventData?.prize_pool || null,
-              timerGifUrl: null,
+              timerGifUrl,
             });
 
             if (emailResult?.success) {
