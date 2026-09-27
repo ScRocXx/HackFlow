@@ -52,9 +52,15 @@ export function getIntervalMessage(intervalKey: string, stageName: string, event
     ? '7 days'
     : intervalKey;
 
+  let cleanStage = stageName.trim();
+  const eventTitleLower = eventTitle.trim().toLowerCase();
+  if (cleanStage.toLowerCase().startsWith(eventTitleLower)) {
+    cleanStage = cleanStage.slice(eventTitle.trim().length).replace(/^[\s:\-–—|]+/, '').trim() || cleanStage;
+  }
+
   return {
-    subject: `🚨 ${daysOrHoursLeft} left: ${stageName} — ${eventTitle}`,
-    body: `${daysOrHoursLeft} left to submit ${stageName} for ${eventTitle}. Review pending deliverables and guidelines.`
+    subject: `🚨 ${daysOrHoursLeft} left: ${cleanStage} — ${eventTitle}`,
+    body: `${daysOrHoursLeft} left to submit ${cleanStage} for ${eventTitle}. Review pending deliverables and guidelines.`
   };
 }
 
@@ -289,6 +295,8 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
           const lockId = insertLog?.[0]?.id;
 
           try {
+            const timerGifUrl = `${appBaseUrl}/api/timer?until=${encodeURIComponent(stage.deadline)}`;
+
             const emailResult = await sendDeadlineEmail({
               to: normalizedEmail,
               eventTitle,
@@ -298,6 +306,7 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
               eventUrl,
               intervalKey,
               cutoffDate,
+              rawDeadline: stage.deadline,
               timezone: 'IST',
               deliverables,
               deliverablesDescription: stage.deliverables_description,
@@ -306,7 +315,7 @@ export async function evaluateAndDispatchNotifications(options?: { baseUrl?: str
               mode: eventData?.mode || 'online',
               location: eventData?.location || null,
               prizePool: eventData?.prize_pool || null,
-              timerGifUrl: null,
+              timerGifUrl,
             });
 
             if (emailResult?.success) {
