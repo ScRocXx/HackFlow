@@ -13,6 +13,7 @@ export interface DeadlineReminderEmailProps {
   eventUrl: string;
   intervalKey: string;
   cutoffDate?: string;
+  rawDeadline?: string | null;
   timezone?: string;
   deliverables?: DeliverableItem[];
   deliverablesDescription?: string | null;
@@ -37,9 +38,16 @@ export interface DeadlineReminderEmailProps {
  */
 export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): string {
   const safeEventUrl = ensureExternalUrl(props.eventUrl);
-  const safeMeetUrl = props.meetUrl ? ensureExternalUrl(props.meetUrl) : null;
+  const safeMeetUrl = props.meetUrl ? ensureExternalUrl(props.meetUrl) : 'https://meet.google.com/new';
 
-  // 1. Context Line: Mode & Prize Pool
+  // 1. Clean Stage Title (eliminate all-caps "STAGE:" and strip redundant event title prefix)
+  let cleanStageName = props.stageName.trim();
+  const eventTitleLower = props.eventTitle.trim().toLowerCase();
+  if (cleanStageName.toLowerCase().startsWith(eventTitleLower)) {
+    cleanStageName = cleanStageName.slice(props.eventTitle.trim().length).replace(/^[\s:\-–—|]+/, '').trim() || cleanStageName;
+  }
+
+  // 2. Context Line: Mode & Prize Pool
   const modeText = props.mode === 'in-person'
     ? `📍 In-Person${props.location ? ` (${props.location})` : ''}`
     : props.mode === 'hybrid'
@@ -57,18 +65,30 @@ export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): s
   if (prizeText) contextItems.push(prizeText);
   const contextLine = contextItems.join(' &nbsp;&bull;&nbsp; ');
 
-  // 2. Format cutoff date cleanly
+  // 3. Format cutoff date cleanly
   let formattedCutoff = props.cutoffDate || 'Check Workspace';
   if (props.timezone && !formattedCutoff.includes(props.timezone)) {
     formattedCutoff += ` ${props.timezone}`;
   }
 
-  // 3. Compact Deliverables & Checklist
+  // 4. Resolve Live Countdown Timer GIF URL
+  let timerUrl = props.timerGifUrl;
+  if (!timerUrl && (props.rawDeadline || props.cutoffDate)) {
+    try {
+      const baseUrl = new URL(safeEventUrl).origin;
+      const untilParam = props.rawDeadline || props.cutoffDate;
+      if (untilParam) {
+        timerUrl = `${baseUrl}/api/timer?until=${encodeURIComponent(untilParam)}`;
+      }
+    } catch {}
+  }
+
+  // 5. Compact Deliverables & Checklist
   const deliverables = props.deliverables || [];
   const pending = deliverables.filter(d => !d.is_done);
   const done = deliverables.filter(d => d.is_done);
 
-  // 4. Combined Rules & Guidelines
+  // 6. Combined Rules & Guidelines with Strict Deduplication against Deliverable titles
   const rulesParts: string[] = [];
   if (props.constraints?.teamSize) {
     rulesParts.push(`Team of ${props.constraints.teamSize}`);
@@ -80,7 +100,15 @@ export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): s
     rulesParts.push(`Max ${props.constraints.fileLimit}`);
   }
   if (props.deliverablesDescription && props.deliverablesDescription.trim().length > 0) {
-    rulesParts.push(props.deliverablesDescription.trim());
+    const desc = props.deliverablesDescription.trim();
+    const isAlreadyInDeliverables = deliverables.some(d =>
+      d.title.trim().toLowerCase() === desc.toLowerCase() ||
+      desc.toLowerCase().includes(d.title.trim().toLowerCase()) ||
+      d.title.trim().toLowerCase().includes(desc.toLowerCase())
+    );
+    if (!isAlreadyInDeliverables) {
+      rulesParts.push(desc);
+    }
   }
   const rulesLine = rulesParts.join(' &nbsp;&bull;&nbsp; ');
 
@@ -89,19 +117,19 @@ export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): s
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escapeHtml(props.eventTitle)} - ${escapeHtml(props.stageName)}</title>
+  <title>${escapeHtml(props.eventTitle)} - ${escapeHtml(cleanStageName)}</title>
 </head>
 <body style="background-color: #f2f2eb; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 24px 12px; color: #10201d;">
   <div style="background-color: #f7f7f2; max-width: 580px; margin: 0 auto; border: 2px solid #10201d; box-shadow: 6px 6px 0px #10201d; overflow: hidden;">
     
-    <!-- 1. Header: Event Title, Stage Badge, Quick Context -->
+    <!-- 1. Header: Event Title, Stage Name, Quick Context -->
     <div style="padding: 24px 26px 20px 26px; border-bottom: 2px solid #10201d; background-color: #f7f7f2;">
       <h1 style="margin: 0 0 6px 0; font-size: 24px; font-weight: 900; color: #10201d; letter-spacing: -0.5px; line-height: 1.25; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
         ${escapeHtml(props.eventTitle)}
       </h1>
       <div style="margin: 4px 0 10px 0;">
-        <span style="display: inline-block; background-color: #f5b726; color: #10201d; border: 1.5px solid #10201d; box-shadow: 2px 2px 0 #10201d; padding: 3px 10px; font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 12px; font-weight: 800;">
-          STAGE: ${escapeHtml(props.stageName)}
+        <span style="display: inline-block; background-color: #f5b726; color: #10201d; border: 1.5px solid #10201d; box-shadow: 2px 2px 0 #10201d; padding: 4px 12px; font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 13px; font-weight: 800;">
+          ${escapeHtml(cleanStageName)}
         </span>
       </div>
       ${contextLine ? `
@@ -112,20 +140,20 @@ export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): s
     </div>
 
     <!-- 2. Countdown Box: Live Countdown GIF or Digital Clock -->
-    <div style="background-color: #ffffff; padding: 20px 24px; border-bottom: 2px solid #10201d; text-align: center;">
-      <div style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 12px; font-weight: 700; color: #57726d; margin-bottom: 6px;">
+    <div style="background-color: #f7f7f2; padding: 20px 24px; border-bottom: 2px solid #10201d; text-align: center;">
+      <div style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 12px; font-weight: 700; color: #57726d; margin-bottom: 8px;">
         ⌛ Portal closes in:
       </div>
-      ${props.timerGifUrl ? `
-        <div style="margin: 8px 0 12px 0;">
-          <img src="${escapeHtml(props.timerGifUrl)}" alt="Live Countdown Timer" width="320" style="display: block; margin: 0 auto; max-width: 100%; border: 2px solid #10201d; box-shadow: 3px 3px 0 #10201d;" />
+      ${timerUrl ? `
+        <div style="margin: 6px 0 12px 0;">
+          <img src="${escapeHtml(timerUrl)}" alt="${escapeHtml(props.timeRemaining.toUpperCase())}" width="380" height="72" style="display: block; margin: 0 auto; max-width: 100%; height: auto;" />
         </div>
       ` : `
-        <div style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 24px; font-weight: 900; color: #10201d; letter-spacing: 1.5px; padding: 10px 18px; background-color: #f7f7f2; border: 2px solid #10201d; box-shadow: 3px 3px 0 #10201d; display: inline-block; margin: 6px 0 10px 0;">
+        <div style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 24px; font-weight: 900; color: #10201d; letter-spacing: 1.5px; padding: 10px 18px; background-color: #ffffff; border: 2px solid #10201d; box-shadow: 3px 3px 0 #10201d; display: inline-block; margin: 6px 0 10px 0;">
           ${escapeHtml(props.timeRemaining.toUpperCase())}
         </div>
       `}
-      <div style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 13px; font-weight: 700; color: #10201d; margin-top: 4px;">
+      <div style="font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 13px; font-weight: 700; color: #10201d; margin-top: 6px;">
         Deadline: <span style="font-weight: 900;">${escapeHtml(formattedCutoff)}</span>
       </div>
     </div>
@@ -177,22 +205,20 @@ export function renderDeadlineReminderHtml(props: DeadlineReminderEmailProps): s
       ` : ''}
     </div>
 
-    <!-- 4. Direct CTAs -->
+    <!-- 4. Direct Side-by-Side CTAs -->
     <div style="padding: 18px 24px; background-color: #f7f7f2;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse: separate; border-spacing: 8px 0;">
         <tr>
-          <td align="center" style="padding: 4px; ${safeMeetUrl ? 'width: 50%;' : 'width: 100%;'}">
-            <a href="${safeEventUrl}" style="background-color: #f5b726; color: #10201d; border: 2px solid #10201d; box-shadow: 3px 3px 0 #10201d; padding: 12px 18px; font-weight: 900; font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 12px; text-decoration: none; text-transform: uppercase; display: block; text-align: center;">
+          <td align="center" style="width: 50%; padding: 0;">
+            <a href="${safeEventUrl}" style="background-color: #f5b726; color: #10201d; border: 2px solid #10201d; box-shadow: 3px 3px 0 #10201d; padding: 13px 14px; font-weight: 900; font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 12px; text-decoration: none; text-transform: uppercase; display: block; text-align: center;">
               OPEN WORKSPACE &rarr;
             </a>
           </td>
-          ${safeMeetUrl ? `
-          <td align="center" style="padding: 4px; width: 50%;">
-            <a href="${safeMeetUrl}" style="background-color: #ffffff; color: #10201d; border: 2px solid #10201d; box-shadow: 3px 3px 0 #10201d; padding: 12px 18px; font-weight: 900; font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 12px; text-decoration: none; text-transform: uppercase; display: block; text-align: center;">
+          <td align="center" style="width: 50%; padding: 0;">
+            <a href="${safeMeetUrl}" style="background-color: #ffffff; color: #10201d; border: 2px solid #10201d; box-shadow: 3px 3px 0 #10201d; padding: 13px 14px; font-weight: 900; font-family: 'SF Mono', Consolas, Monaco, monospace; font-size: 12px; text-decoration: none; text-transform: uppercase; display: block; text-align: center;">
               HOP ON GOOGLE MEET
             </a>
           </td>
-          ` : ''}
         </tr>
       </table>
     </div>

@@ -146,9 +146,15 @@ export async function sendDeadlineEmail(params: DeadlineReminderEmailProps & { t
     ? '7 days'
     : params.timeRemaining || params.intervalKey;
 
+  let cleanStage = params.stageName.trim();
+  const eventTitleLower = params.eventTitle.trim().toLowerCase();
+  if (cleanStage.toLowerCase().startsWith(eventTitleLower)) {
+    cleanStage = cleanStage.slice(params.eventTitle.trim().length).replace(/^[\s:\-–—|]+/, '').trim() || cleanStage;
+  }
+
   return sendEmail({
     to: params.to,
-    subject: `🚨 ${daysOrHoursLeft} left: ${params.stageName} — ${params.eventTitle}`,
+    subject: `🚨 ${daysOrHoursLeft} left: ${cleanStage} — ${params.eventTitle}`,
     html: renderDeadlineReminderHtml(params),
   });
 }
