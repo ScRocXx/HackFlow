@@ -724,48 +724,46 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                   </label>
                 </div>
                 <form onSubmit={handleAddResource} className="space-y-2.5">
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_170px_auto] gap-2 items-center">
                     <Input
                       placeholder="Title (e.g. Team Figma, Pitch Deck)"
                       value={newTitle}
                       onChange={(e) => setNewTitle(e.target.value)}
                       disabled={addingResource}
-                      className="h-9 text-xs bg-white border-2 border-[#10201d] font-mono shadow-[2px_2px_0_#10201d]"
+                      className="h-9 text-xs bg-white border-2 border-[#10201d] font-mono shadow-[2px_2px_0_#10201d] min-w-0"
                     />
                     <Input
                       placeholder="URL (e.g. https://figma.com/...)"
                       value={newUrl}
                       onChange={(e) => setNewUrl(e.target.value)}
                       disabled={addingResource}
-                      className="h-9 text-xs bg-white border-2 border-[#10201d] font-mono shadow-[2px_2px_0_#10201d]"
+                      className="h-9 text-xs bg-white border-2 border-[#10201d] font-mono shadow-[2px_2px_0_#10201d] min-w-0"
                     />
-                    <div className="flex gap-2">
-                      <select
-                        value={newType}
-                        onChange={(e) => setNewType(e.target.value)}
-                        disabled={addingResource}
-                        className="h-9 px-2.5 border-2 border-[#10201d] bg-white font-mono text-xs shadow-[2px_2px_0_#10201d] flex-1 focus:outline-none focus:ring-0"
-                      >
-                        {RESOURCE_TYPES.map((type) => (
-                          <option key={type.value} value={type.value}>
-                            {type.label}
-                          </option>
-                        ))}
-                      </select>
-                      <Button
-                        type="submit"
-                        disabled={addingResource || !newTitle.trim() || !newUrl.trim()}
-                        className="h-9 text-xs px-3 font-mono font-bold border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[3px_3px_0_#671912] shrink-0"
-                      >
-                        {addingResource ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <>
-                            <Plus className="h-3.5 w-3.5 mr-1" /> Add
-                          </>
-                        )}
-                      </Button>
-                    </div>
+                    <select
+                      value={newType}
+                      onChange={(e) => setNewType(e.target.value)}
+                      disabled={addingResource}
+                      className="h-9 px-2.5 border-2 border-[#10201d] bg-white font-mono text-xs shadow-[2px_2px_0_#10201d] w-full min-w-0 focus:outline-none focus:ring-0"
+                    >
+                      {RESOURCE_TYPES.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                    <Button
+                      type="submit"
+                      disabled={addingResource || !newTitle.trim() || !newUrl.trim()}
+                      className="h-9 text-xs px-3 font-mono font-bold border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[3px_3px_0_#671912] shrink-0 whitespace-nowrap min-w-0"
+                    >
+                      {addingResource ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <>
+                          <Plus className="h-3.5 w-3.5 mr-1" /> Add
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </form>
               </div>
@@ -826,7 +824,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                   </h3>
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-xs font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#2e4742]">
-                      {event.event_participants?.length || 0} Members
+                      {(currentEvent.team_members || currentEvent.event_participants || event.team_members || event.event_participants || []).length} {((currentEvent.team_members || currentEvent.event_participants || event.team_members || event.event_participants || []).length === 1) ? 'Member' : 'Members'}
                     </span>
                     <Button
                       size="sm"
@@ -848,11 +846,11 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                 </div>
 
                 {/* Squad Badge if present */}
-                {(event.squad?.name || event.squad_name) && (
+                {(currentEvent.squad?.name || currentEvent.squad_name || event.squad?.name || event.squad_name) && (
                   <div className="mb-3 p-2 bg-[#f5b726]/20 border-2 border-[#10201d] flex items-center justify-between font-mono text-xs font-bold text-[#10201d] shadow-[2px_2px_0_#10201d]">
                     <span className="flex items-center gap-1.5 truncate">
                       <Shield className="h-3.5 w-3.5 text-[#2e4742] shrink-0" />
-                      Squad: {event.squad?.name || event.squad_name}
+                      ⚡ SQUAD: {currentEvent.squad?.name || currentEvent.squad_name || event.squad?.name || event.squad_name}
                     </span>
                     <Badge variant="outline" className="text-[10px] border-[#10201d] bg-white font-mono shrink-0">
                       Synced Vault
@@ -861,29 +859,55 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                 )}
                 
                 <div className="space-y-2.5">
-                  {(event.event_participants || []).map((member: any) => {
-                    const roleLabel = (member.role === 'lead' || member.role === 'owner') ? 'Lead' : 'Collaborator'
-                    const isLead = roleLabel === 'Lead'
+                  {(currentEvent.team_members || currentEvent.event_participants || event.team_members || event.event_participants || []).map((member: any) => {
+                    const isLead = member.is_lead || member.is_creator || member.role === 'lead' || member.role === 'owner' || member.role === 'leader'
+                    const isCurrentUser = member.is_current_user || (member.user_id && (member.user_id === currentEvent.current_user_id || member.user_id === event.current_user_id))
+                    const name = member.full_name || member.profile?.full_name || (isCurrentUser ? 'You' : 'Team Member')
+                    const email = member.email || member.profile?.email || ''
+                    const initial = (name.charAt(0) || 'U').toUpperCase()
 
                     return (
-                      <div key={member.id} className="p-2.5 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center justify-between gap-3">
+                      <div key={member.id || member.user_id} className="p-2.5 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className={`w-8 h-8 border-2 border-[#10201d] ${isLead ? 'bg-[#f5b726]' : 'bg-[#8bb2de]'} flex items-center justify-center font-mono text-xs font-bold text-[#10201d] shadow-[1px_1px_0_#10201d] shrink-0`}>
-                            {member.profile?.full_name?.charAt(0) || 'U'}
+                            {initial}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-display text-sm font-bold text-[#10201d] truncate">{member.profile?.full_name || 'Team Member'}</p>
-                            <p className="font-mono text-[10px] text-[#57726d] truncate">{member.profile?.email || ''}</p>
+                            <p className="font-display text-sm font-bold text-[#10201d] truncate">
+                              {name}
+                              {isCurrentUser && !name.toLowerCase().includes('you') && (
+                                <span className="font-mono text-xs text-[#57726d] ml-1.5">(YOU)</span>
+                              )}
+                            </p>
+                            <p className="font-mono text-[10px] text-[#57726d] truncate">{email || (isLead ? 'Team Lead' : 'Collaborator')}</p>
                           </div>
                         </div>
-                        <Badge
-                          variant="outline"
-                          className={`font-mono text-[10px] font-bold uppercase border-2 border-[#10201d] shrink-0 ${
-                            isLead ? 'bg-[#f5b726] text-[#10201d]' : 'bg-[#f7f7f2] text-[#34433f]'
-                          }`}
-                        >
-                          {roleLabel}
-                        </Badge>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {isLead && (
+                            <Badge
+                              variant="outline"
+                              className="font-mono text-[10px] font-bold uppercase border-2 border-[#10201d] bg-[#f5b726] text-[#10201d]"
+                            >
+                              LEAD
+                            </Badge>
+                          )}
+                          {isCurrentUser && (
+                            <Badge
+                              variant="outline"
+                              className="font-mono text-[10px] font-bold uppercase border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d]"
+                            >
+                              YOU
+                            </Badge>
+                          )}
+                          {!isLead && !isCurrentUser && (
+                            <Badge
+                              variant="outline"
+                              className="font-mono text-[10px] font-bold uppercase border-2 border-[#10201d] bg-[#f7f7f2] text-[#34433f]"
+                            >
+                              MEMBER
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                     )
                   })}
