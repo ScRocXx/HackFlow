@@ -187,8 +187,8 @@ export function EditEventDialog({ open, onOpenChange, event, onSuccess }: EditEv
           stage_type: stg.stage_type || 'other',
           deadline: isoDeadline,
           window_start: isoStart,
-          window_end: isoEnd,
-          actionable_deadline: isoStart || isoDeadline,
+          window_end: isoDeadline,
+          actionable_deadline: isoDeadline,
           raw_date_snippet: stg.raw_date_snippet?.trim() || (!isoDeadline ? 'TBA' : null),
           deliverables_description: stg.deliverables_description,
         }

@@ -577,9 +577,12 @@ export async function updateEvent(input: UpdateEventInput) {
       const updatePromises: PromiseLike<any>[] = [];
 
       for (const stg of stages) {
-        const effectiveDeadline = stg.deadline || null;
-        const effectiveEnd = stg.window_end || effectiveDeadline;
-        const effectiveActionable = stg.actionable_deadline || stg.window_start || effectiveDeadline;
+        const effectiveDeadline = stg.deadline 
+          ? (isNaN(new Date(stg.deadline).getTime()) ? stg.deadline : new Date(stg.deadline).toISOString()) 
+          : null;
+        // In updateEvent, set deadline, actionable_deadline, and window_end to the exact same updated ISO string
+        const effectiveEnd = effectiveDeadline;
+        const effectiveActionable = effectiveDeadline;
         const rawSnippet = stg.raw_date_snippet || (!effectiveDeadline ? 'TBA' : null);
 
         if (stg.id && existingIds.has(stg.id)) {
@@ -624,19 +627,26 @@ export async function updateEvent(input: UpdateEventInput) {
       }
       await Promise.all(stageOperations);
 
-      // Ensure active_stage_id points to lowest uncompleted stage
+      // Automatically recalculate events.active_stage_id to the earliest uncompleted stage and update public.events
       const { data: updatedStages } = await supabase
         .from('event_stages')
-        .select('id, round_number, is_completed')
+        .select('id, round_number, deadline, is_completed')
         .eq('event_id', eventId)
         .order('round_number', { ascending: true });
 
       if (updatedStages && updatedStages.length > 0) {
-        const nextActive = updatedStages.find(s => !s.is_completed) || updatedStages[0];
-        await supabase
-          .from('events')
-          .update({ active_stage_id: nextActive.id })
-          .eq('id', eventId);
+        const uncompleted = updatedStages.filter(s => !s.is_completed);
+        const upcomingUncompleted = uncompleted
+          .filter(s => s.deadline && !isNaN(new Date(s.deadline).getTime()) && new Date(s.deadline).getTime() > Date.now())
+          .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
+
+        const nextActive = upcomingUncompleted[0] || uncompleted[0] || updatedStages[0];
+        if (nextActive) {
+          await supabase
+            .from('events')
+            .update({ active_stage_id: nextActive.id })
+            .eq('id', eventId);
+        }
       }
     }
 

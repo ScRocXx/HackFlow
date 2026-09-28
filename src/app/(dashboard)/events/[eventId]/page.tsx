@@ -11,5 +11,5 @@ export default async function EventDetailPage({ params }: { params: { eventId: s
     notFound()
   }
 
-  return <EventDetailContent event={result.data as any} />
+  return <EventDetailContent event={result.data as any} initialStages={(result.data as any).stages} />
 }

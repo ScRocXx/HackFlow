@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { MapPin, Globe, ExternalLink, Calendar, Users, Trophy, FileText, Database, Link2, Plus, Trash2, Loader2, Sparkles, UserPlus, Shield, Edit3, AlertTriangle, UploadCloud } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -28,6 +28,7 @@ import { format } from 'date-fns'
 
 interface EventDetailContentProps {
   event: any // type would be Event with joined stages, deliverables, resources, etc
+  initialStages?: any[]
 }
 
 const RESOURCE_TYPES = [
@@ -39,42 +40,29 @@ const RESOURCE_TYPES = [
   { value: 'other', label: 'Other Workspace Link' },
 ]
 
-export function EventDetailContent({ event }: EventDetailContentProps) {
+export function EventDetailContent({ event, initialStages: propInitialStages }: EventDetailContentProps) {
   const router = useRouter()
+  const initialStages = propInitialStages || event?.stages || []
 
-  // Dynamic Stage Auto-Roll: Advance highlight to earliest upcoming stage when current stage passes
-  const activeStage = (() => {
-    if (!event.stages || event.stages.length === 0) return null
-    const now = Date.now()
+  const [currentEvent, setCurrentEvent] = useState(event)
+  const [stages, setStages] = useState<any[]>(initialStages)
 
-    const designated = event.stages.find((s: any) => s.id === event.active_stage_id)
-    if (designated && !designated.is_completed) {
-      const dlStr = designated.actionable_deadline || designated.window_end || designated.deadline
-      if (dlStr) {
-        const dl = new Date(dlStr).getTime()
-        if (!isNaN(dl) && dl > now) {
-          return designated
-        }
-      }
+  // Fix Stale State on Edit: update internal state when router.refresh() runs after an edit
+  useEffect(() => {
+    setCurrentEvent(event)
+    setStages(propInitialStages || event?.stages || [])
+    if (event?.resources) {
+      setResources(event.resources)
     }
+  }, [event, initialStages])
 
-    const upcoming = event.stages
-      .filter((s: any) => {
-        if (s.is_completed) return false
-        const dlStr = s.actionable_deadline || s.window_end || s.deadline
-        if (!dlStr) return true
-        const dl = new Date(dlStr).getTime()
-        return !isNaN(dl) && dl > now
-      })
-      .sort((a: any, b: any) => {
-        const dlA = new Date(a.actionable_deadline || a.window_end || a.deadline || 0).getTime()
-        const dlB = new Date(b.actionable_deadline || b.window_end || b.deadline || 0).getTime()
-        return dlA - dlB
-      })
-
-    if (upcoming.length > 0) return upcoming[0]
-    return event.stages.find((s: any) => !s.is_completed) || event.stages[0]
-  })()
+  // Dynamically compute activeStage using:
+  // stages.find(s => s.id === currentEvent.active_stage_id) || stages.find(s => !s.is_completed && new Date(s.deadline).getTime() > Date.now()) || stages[0]
+  const activeStage = stages && stages.length > 0
+    ? (stages.find((s: any) => s.id === currentEvent.active_stage_id) ||
+       stages.find((s: any) => !s.is_completed && s.deadline && new Date(s.deadline).getTime() > Date.now()) ||
+       stages[0])
+    : null
 
   const [isCompleting, setIsCompleting] = useState(false)
   const [mobileWorkspaceTab, setMobileWorkspaceTab] = useState<'sprint' | 'pitch' | 'team'>('sprint')
@@ -524,7 +512,7 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
             <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912]">
               <CardContent className="p-4 sm:p-6">
                 <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#10201d] mb-4">Stage Journey</h3>
-                <StageTimeline stages={event.stages || []} activeStageId={activeStage?.id || null} />
+                <StageTimeline stages={stages || []} activeStageId={activeStage?.id || null} />
               </CardContent>
             </Card>
           </div>
@@ -996,7 +984,7 @@ export function EventDetailContent({ event }: EventDetailContentProps) {
           <EditEventDialog
             open={editDialogOpen}
             onOpenChange={setEditDialogOpen}
-            event={event}
+            event={{ ...currentEvent, stages }}
           />
 
           {/* Delete Confirmation Dialog */}
