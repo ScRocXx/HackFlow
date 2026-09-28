@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { MapPin, Globe, ExternalLink, Calendar, Users, Trophy, FileText, Database, Link2, Plus, Trash2, Loader2, Sparkles, UserPlus, Shield, Edit3, AlertTriangle, UploadCloud } from 'lucide-react'
+import { MapPin, Globe, ExternalLink, Calendar, Users, Trophy, FileText, Database, Link2, Plus, Trash2, Loader2, Sparkles, UserPlus, Shield, Edit3, AlertTriangle, UploadCloud, MoreHorizontal } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/use-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import { StatusPills } from '@/components/events/StatusPills'
 import { StageTimeline } from '@/components/events/StageTimeline'
 import { StageChecklist } from '@/components/events/StageChecklist'
@@ -63,6 +64,10 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
        stages.find((s: any) => !s.is_completed && s.deadline && new Date(s.deadline).getTime() > Date.now()) ||
        stages[0])
     : null
+
+  // Interactive Stage Journey Focus (Allows clicking any stage rail node to view its deliverables)
+  const [focusedStageId, setFocusedStageId] = useState<string | null>(null)
+  const currentDisplayStage = (focusedStageId && stages.find((s: any) => s.id === focusedStageId)) || activeStage
 
   const [isCompleting, setIsCompleting] = useState(false)
   const [mobileWorkspaceTab, setMobileWorkspaceTab] = useState<'sprint' | 'pitch' | 'team'>('sprint')
@@ -292,10 +297,10 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
   return (
     <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
       {/* Header Banner */}
-      <div className="border-2 border-[#10201d] bg-[#f7f7f2] p-4 sm:p-6 shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912]">
+      <div className="border-2 border-[#10201d] bg-[#f7f7f2] p-4 sm:p-6 shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912] space-y-4">
         <div className="flex flex-col md:flex-row justify-between md:items-start gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <div className="space-y-1.5 flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
               <span className="font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#2e4742]">
                 {event.source_platform || 'Hackathon'}
               </span>
@@ -312,34 +317,98 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
               )}
             </div>
             <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#10201d] tracking-tight">{event.title}</h1>
-            <p className="font-mono text-xs text-[#34433f] mt-1 font-bold">{event.organizer || 'Independent Hackathon'}</p>
+            <p className="font-mono text-xs text-[#34433f] font-bold">{event.organizer || 'Independent Hackathon'}</p>
           </div>
-          <div className="flex flex-col sm:flex-row md:flex-col items-start md:items-end gap-3 w-full md:w-auto shrink-0">
-            <div className="w-full sm:w-64">
+
+          <div className="flex items-center gap-2.5 shrink-0 self-start">
+            <div className="w-full sm:w-auto">
               <StatusPills eventId={event.id} currentStatus={event.status || 'registered'} />
             </div>
-            <div className="w-full sm:w-auto flex flex-wrap md:justify-end items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setEditDialogOpen(true)}
-                className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#f5b726] shadow-[2px_2px_0_#10201d]"
-              >
-                <Edit3 className="w-3.5 h-3.5 mr-1.5" /> Edit Hackathon
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setDeleteDialogOpen(true)}
-                className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#e53927] hover:text-[#f7f7f2] shadow-[2px_2px_0_#10201d]"
-              >
-                <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete
-              </Button>
-            </div>
-            <div className="w-full sm:w-auto flex md:justify-end">
-              <MeetCompanionBar eventId={event.id} meetUrl={event.meet_url} />
+
+            {/* Overflow Options Menu (...) */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  title="Hackathon options"
+                  className="p-2 border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#e4e5da] active:scale-95 text-[#10201d] shadow-[2px_2px_0_#10201d] transition-all touch-manipulation h-10 w-10 flex items-center justify-center shrink-0"
+                >
+                  <MoreHorizontal className="w-4 h-4" />
+                  <span className="sr-only">More options</span>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[3px_3px_0_#10201d] font-mono text-xs w-48">
+                <DropdownMenuItem
+                  onClick={() => setEditDialogOpen(true)}
+                  className="cursor-pointer font-bold text-[#10201d] hover:bg-[#e4e5da]"
+                >
+                  <Edit3 className="w-3.5 h-3.5 mr-2 text-[#34433f]" /> Edit Hackathon
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => setDeleteDialogOpen(true)}
+                  className="cursor-pointer font-bold text-[#e53927] hover:bg-[#f6c4c1]"
+                >
+                  <Trash2 className="w-3.5 h-3.5 mr-2 text-[#e53927]" /> Delete Hackathon
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+
+        {/* Prominent Next Deadline Strip */}
+        <div className="border-2 border-[#10201d] bg-[#f2f2eb] p-3 sm:p-4 shadow-[3px_3px_0_#10201d] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <span className="font-mono text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-[#34433f] block">
+              Next Actionable Deadline
+            </span>
+            <div className="flex items-center gap-2 mt-0.5">
+              <span className="font-mono text-sm sm:text-base font-extrabold text-[#e53927]">
+                {activeStage?.actionable_deadline || activeStage?.deadline
+                  ? format(new Date(activeStage.actionable_deadline || activeStage.deadline), 'dd MMM yyyy · HH:mm')
+                  : (activeStage?.raw_date_snippet || 'TBA')}
+              </span>
+              {activeStage?.title && (
+                <span className="font-mono text-xs text-[#34433f] font-bold">
+                  ({activeStage.title})
+                </span>
+              )}
             </div>
           </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {event.source_url && (
+              <a
+                href={ensureExternalUrl(event.source_url)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-xs font-bold px-3 py-1.5 border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#10201d] inline-flex items-center gap-1.5 transition-all"
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> Open Portal
+              </a>
+            )}
+            <a
+              href={getGoogleCalLink()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-xs font-bold px-3 py-1.5 border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[2px_2px_0_#10201d] inline-flex items-center gap-1.5 transition-all"
+            >
+              <Calendar className="w-3.5 h-3.5" /> + Calendar
+            </a>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={handleDownloadIcs}
+              className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#93C9B8] text-[#10201d] shadow-[2px_2px_0_#10201d] h-8 px-2.5"
+            >
+              ⚡ Alarm (.ics)
+            </Button>
+          </div>
+        </div>
+
+        {/* Collapsible/Compact MeetCompanionBar */}
+        <div className="pt-1">
+          <MeetCompanionBar eventId={event.id} meetUrl={event.meet_url} />
         </div>
       </div>
 
@@ -507,18 +576,18 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
             </div>
           )}
 
-          {/* Timeline */}
+          {/* Stage Journey Timeline (Interactive round rail) */}
           <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:block")}>
-            <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912]">
-              <CardContent className="p-4 sm:p-6">
-                <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#10201d] mb-4">Stage Journey</h3>
-                <StageTimeline stages={stages || []} activeStageId={activeStage?.id || null} />
-              </CardContent>
-            </Card>
+            <StageTimeline 
+              stages={stages || []} 
+              activeStageId={activeStage?.id || null}
+              selectedStageId={currentDisplayStage?.id || null}
+              onStageSelect={(id) => setFocusedStageId(id)}
+            />
           </div>
 
-          {/* Active Stage Panel */}
-          {activeStage && (
+          {/* Focused Stage Panel & Deliverables Checklist */}
+          {currentDisplayStage && (
             <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:block")}>
               <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912] overflow-hidden">
                 <div className="bg-[#3d5f58] p-4 sm:p-6 border-b-2 border-[#10201d] text-[#f7f7f2]">
@@ -526,22 +595,27 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                     <div>
                       <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                         <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d]">
-                          {activeStage.stage_type}
+                          {currentDisplayStage.stage_type}
                         </span>
-                        {activeStage.raw_date_snippet && (
+                        {currentDisplayStage.raw_date_snippet && (
                           <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border border-[#10201d] bg-[#f7f7f2] text-[#10201d]">
-                            🗓️ {activeStage.raw_date_snippet}
+                            🗓️ {currentDisplayStage.raw_date_snippet}
+                          </span>
+                        )}
+                        {focusedStageId && focusedStageId !== activeStage?.id && (
+                          <span className="font-mono text-[10px] font-black uppercase tracking-wider px-2 py-0.5 border border-[#10201d] bg-[#8bb2de] text-[#10201d]">
+                            Browsing Round {currentDisplayStage.round_number || ''}
                           </span>
                         )}
                       </div>
-                      <h2 className="font-display text-xl sm:text-3xl font-extrabold text-[#f7f7f2] tracking-tight">{activeStage.title}</h2>
+                      <h2 className="font-display text-xl sm:text-3xl font-extrabold text-[#f7f7f2] tracking-tight">{currentDisplayStage.title}</h2>
                     </div>
                     <div className="text-left sm:text-right flex flex-col sm:items-end">
                       <CountdownTimer 
-                        deadline={activeStage.actionable_deadline || activeStage.deadline} 
-                        windowStart={activeStage.window_start}
-                        windowEnd={activeStage.window_end}
-                        showMilestoneLabel={Boolean(activeStage.actionable_deadline || activeStage.deadline || activeStage.window_start)}
+                        deadline={currentDisplayStage.actionable_deadline || currentDisplayStage.deadline} 
+                        windowStart={currentDisplayStage.window_start}
+                        windowEnd={currentDisplayStage.window_end}
+                        showMilestoneLabel={Boolean(currentDisplayStage.actionable_deadline || currentDisplayStage.deadline || currentDisplayStage.window_start)}
                         showTimezoneBadge={true}
                       />
 
@@ -574,18 +648,18 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                 
                 <CardContent className="p-0">
                   <StageChecklist 
-                    stageId={activeStage.id} 
-                    deliverables={event.current_stage_deliverables || activeStage.deliverables || []} 
+                    stageId={currentDisplayStage.id} 
+                    deliverables={currentDisplayStage.stage_deliverables || currentDisplayStage.deliverables || (currentDisplayStage.id === activeStage?.id ? event.current_stage_deliverables : []) || []} 
                     eventId={event.id} 
                   />
                   
                   <div className="p-3 sm:p-4 bg-[#f7f7f2] border-t-2 border-[#10201d] flex justify-end">
                     <Button 
                       onClick={handleCompleteStage} 
-                      disabled={isCompleting || activeStage.is_completed}
+                      disabled={isCompleting || currentDisplayStage.is_completed}
                       className="font-mono text-xs font-bold"
                     >
-                      {activeStage.is_completed ? 'Stage Completed' : 'Mark Stage Complete'}
+                      {currentDisplayStage.is_completed ? 'Stage Completed' : 'Mark Stage Complete'}
                     </Button>
                   </div>
                 </CardContent>

@@ -143,35 +143,48 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
               <div 
                 key={item.id} 
                 className={cn(
-                  "flex items-center gap-3 p-3 border-2 border-[#10201d] transition-all group font-mono text-xs",
-                  isDone ? "bg-[#e4e5da] text-[#34433f] opacity-75" : "bg-[#f7f7f2] text-[#10201d] shadow-[2px_2px_0_#10201d]"
+                  "flex items-center gap-3 p-3 sm:p-3.5 border-2 border-[#10201d] transition-all group font-mono text-xs min-h-[46px]",
+                  isDone 
+                    ? "bg-[#e4e5da] text-[#34433f] opacity-80" 
+                    : "bg-[#f7f7f2] text-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-white"
                 )}
               >
                 <button 
                   disabled={isLoading}
                   onClick={() => handleToggle(item.id, isDone)}
-                  className="shrink-0 w-5 h-5 border-2 border-[#10201d] bg-white flex items-center justify-center transition-colors"
+                  className={cn(
+                    "shrink-0 w-6 h-6 border-2 border-[#10201d] flex items-center justify-center transition-all touch-manipulation select-none",
+                    isDone ? "bg-[#93C9B8]" : "bg-white hover:bg-[#f7f7f2]"
+                  )}
+                  title={isDone ? "Mark incomplete" : "Mark complete"}
                 >
                   {isLoading ? (
-                    <Loader2 className="w-3 h-3 animate-spin text-[#10201d]" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#10201d]" />
                   ) : isDone ? (
-                    <span className="w-3 h-3 bg-[#e53927] inline-block" />
+                    <span className="w-2.5 h-2.5 bg-[#10201d] inline-block" />
                   ) : null}
                 </button>
                 
                 <span className={cn(
-                  "flex-1 font-mono text-xs font-bold transition-all",
-                  isDone ? "line-through text-[#34433f]" : "text-[#10201d]"
+                  "flex-1 font-mono text-xs sm:text-sm font-bold transition-all select-none",
+                  isDone ? "line-through text-[#34433f]/70 decoration-[#e53927] decoration-2" : "text-[#10201d]"
                 )}>
                   {item.title}
                 </span>
 
+                <span className={cn(
+                  "font-mono text-[9px] font-black uppercase px-1.5 py-0.5 border border-[#10201d] shrink-0",
+                  isDone ? "bg-[#93C9B8] text-[#10201d]" : "bg-[#f5b726] text-[#10201d]"
+                )}>
+                  {isDone ? 'Cleared' : 'Pending'}
+                </span>
+
                 <button 
                   onClick={() => handleDelete(item.id)}
-                  className="opacity-0 group-hover:opacity-100 shrink-0 text-[#10201d] hover:text-[#e53927] transition-opacity p-1"
+                  className="opacity-60 hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 shrink-0 text-[#10201d] hover:text-[#e53927] transition-opacity p-1 touch-manipulation"
                   title="Delete task"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
             )
