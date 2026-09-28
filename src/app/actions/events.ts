@@ -712,19 +712,20 @@ export async function getEventWithDetails(eventId: string) {
     const [
       { data: event, error: eventError },
       { data: stages },
-      { data: participants },
+      { data: participants, error: participantsError },
       { data: resources },
       { data: problemStatements }
     ] = await Promise.all([
       supabase.from('events').select('*').eq('id', eventId).maybeSingle(),
       supabase.from('event_stages').select('*').eq('event_id', eventId).order('round_number', { ascending: true }),
-      supabase.from('event_participants').select(`
-        *,
-        profile:profiles(id, email, full_name, avatar_url)
-      `).eq('event_id', eventId),
+      supabase.from('event_participants').select('*').eq('event_id', eventId),
       supabase.from('event_resources').select('*').eq('event_id', eventId).order('created_at', { ascending: true }),
       supabase.from('event_problem_statements').select('*').eq('event_id', eventId).order('created_at', { ascending: true }),
     ]);
+
+    if (participantsError) {
+      console.error('Error fetching event_participants:', participantsError);
+    }
 
     if (eventError || !event) {
       return { success: false, error: eventError?.message || 'Event not found' };
@@ -1375,7 +1376,10 @@ export async function addEventParticipant(eventId: string, userId: string, role:
 
     if (error) {
       if (error.code === '23505') {
-        return { success: false, error: 'User is already a participant in this event' };
+        // User is already enrolled - revalidate and return success gracefully
+        revalidatePath(`/events/${eventId}`);
+        revalidatePath('/dashboard');
+        return { success: true };
       }
       return { success: false, error: error.message };
     }

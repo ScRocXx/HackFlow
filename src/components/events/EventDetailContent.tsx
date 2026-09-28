@@ -946,8 +946,10 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                       const friendName = f.friend_profile?.full_name || f.receiver_email
                       const friendEmail = f.friend_profile?.email || f.receiver_email
 
-                      const existingIds = (event.event_participants || []).map((m: any) => m.user_id)
-                      const isAlreadyIn = friendUserId && existingIds.includes(friendUserId)
+                      const currentTeamMembers = currentEvent.team_members || currentEvent.event_participants || event.team_members || event.event_participants || []
+                      const existingIds = currentTeamMembers.map((m: any) => m.user_id)
+                      const isAlreadyIn = (friendUserId && existingIds.includes(friendUserId)) ||
+                        currentTeamMembers.some((m: any) => m.email && friendEmail && m.email.toLowerCase() === friendEmail.toLowerCase())
 
                       return (
                         <div
