@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-import { Link as LinkIcon, Trophy, Calendar, CheckCircle2 } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Trophy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { EventCard } from '@/components/events/EventCard'
+import { NextUpStrip, type UrgentItem } from '@/components/events/NextUpStrip'
+import { AtRiskWarnings, type RiskItem } from '@/components/events/AtRiskWarnings'
 import dynamic from 'next/dynamic'
 import { cn } from '@/lib/utils'
 import type { Event, EventStage } from '@/lib/supabase/types'
@@ -16,7 +16,12 @@ const URLParseDialog = dynamic(
 )
 
 type ExtendedEvent = Event & {
-  active_stage?: EventStage
+  active_stage?: EventStage & {
+    stage_deliverables?: Array<{ id: string; title: string; is_done: boolean }>
+  }
+  stages?: Array<EventStage & {
+    stage_deliverables?: Array<{ id: string; title: string; is_done: boolean }>
+  }>
   deliverable_progress?: { done: number; total: number }
   team_count?: number
   squad_name?: string | null
@@ -24,9 +29,10 @@ type ExtendedEvent = Event & {
 
 interface DashboardContentProps {
   events: ExtendedEvent[]
+  userName?: string
 }
 
-export function DashboardContent({ events = [] }: DashboardContentProps) {
+export function DashboardContent({ events = [], userName = '' }: DashboardContentProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedFilter, setSelectedFilter] = useState<string>('all')
   const [selectedSquad, setSelectedSquad] = useState<string>('all')
@@ -34,7 +40,86 @@ export function DashboardContent({ events = [] }: DashboardContentProps) {
   const safeEvents = Array.isArray(events) ? events : []
   const availableSquads = Array.from(new Set(safeEvents.map(e => e.squad_name).filter(Boolean))) as string[]
 
-  // Filter events
+  // 1.1 Compute Urgent Items across all active hackathons for Next Up strip
+  const urgentItems: UrgentItem[] = useMemo(() => {
+    const now = Date.now()
+    const cutoff = now + 72 * 60 * 60 * 1000 // 72 hours
+    const items: UrgentItem[] = []
+
+    for (const ev of safeEvents) {
+      if (['winner', 'runner_up', 'archived'].includes(ev.status)) continue
+
+      const stage = ev.active_stage
+      if (!stage?.deadline) continue
+
+      const dlStr = stage.actionable_deadline || stage.window_end || stage.deadline
+      const dl = new Date(dlStr).getTime()
+      if (isNaN(dl) || dl < now || dl > cutoff) continue
+
+      const deliverables = stage.stage_deliverables || []
+      const incomplete = deliverables.filter(d => !d.is_done)
+
+      if (incomplete.length > 0) {
+        items.push({
+          eventTitle: ev.title,
+          eventId: ev.id,
+          deliverableTitle: incomplete[0].title || `${incomplete.length} deliverables pending`,
+          deadline: new Date(dlStr),
+          stageName: stage.title,
+          hoursLeft: (dl - now) / (1000 * 60 * 60)
+        })
+      }
+    }
+
+    return items.sort((a, b) => a.hoursLeft - b.hoursLeft).slice(0, 3)
+  }, [safeEvents])
+
+  // 1.2 Compute At-Risk Deliverables and Deadlines
+  const risks: RiskItem[] = useMemo(() => {
+    const riskList: RiskItem[] = []
+    const now = Date.now()
+
+    for (const ev of safeEvents) {
+      if (['winner', 'runner_up', 'archived', 'submitted'].includes(ev.status)) continue
+
+      const stage = ev.active_stage
+      if (!stage?.deadline) continue
+
+      const dlStr = stage.actionable_deadline || stage.window_end || stage.deadline
+      const dl = new Date(dlStr).getTime()
+      if (isNaN(dl) || dl < now) continue
+
+      const hoursLeft = (dl - now) / (1000 * 60 * 60)
+      const deliverables = stage.stage_deliverables || []
+      const incomplete = deliverables.filter(d => !d.is_done)
+      const total = deliverables.length
+      const completionRate = total > 0 ? (total - incomplete.length) / total : 1
+
+      // Case 1: Deadline within 48h with incomplete deliverables and < 50% completion
+      if (hoursLeft < 48 && completionRate < 0.5 && incomplete.length > 0) {
+        riskList.push({
+          eventTitle: ev.title,
+          eventId: ev.id,
+          message: `${stage.title} has ${incomplete.length} unfinished tasks (${Math.round(hoursLeft)}h left).`,
+          severity: hoursLeft < 12 ? 'critical' : 'warning'
+        })
+      }
+
+      // Case 2: Deadline within 72h but zero deliverables created at all
+      if (deliverables.length === 0 && hoursLeft < 72) {
+        riskList.push({
+          eventTitle: ev.title,
+          eventId: ev.id,
+          message: `${stage.title} checklist is empty (${Math.round(hoursLeft)}h left).`,
+          severity: hoursLeft < 24 ? 'critical' : 'warning'
+        })
+      }
+    }
+
+    return riskList.slice(0, 3)
+  }, [safeEvents])
+
+  // Filter events for the board
   const filteredEvents = safeEvents.filter(ev => {
     if (selectedSquad !== 'all' && ev.squad_name !== selectedSquad) return false
     if (selectedFilter === 'all') return true
@@ -57,7 +142,7 @@ export function DashboardContent({ events = [] }: DashboardContentProps) {
   const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
   const upcomingDeadlinesCount = safeEvents.filter(ev => {
     if (!ev?.active_stage?.deadline) return false
-    const d = new Date(ev.active_stage.deadline)
+    const d = new Date(ev.active_stage.actionable_deadline || ev.active_stage.deadline)
     return !isNaN(d.getTime()) && d >= now && d <= in7Days
   }).length
 
@@ -72,81 +157,37 @@ export function DashboardContent({ events = [] }: DashboardContentProps) {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Console Header Bar */}
-      <div className="border-2 border-[#10201d] bg-[#3d5f58] p-3.5 sm:p-6 text-[#f7f7f2] shadow-[4px_4px_0_#671912] sm:shadow-[7px_7px_0_#671912] flex flex-col md:flex-row justify-between md:items-center gap-3 sm:gap-4">
-        <div>
-          <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
-            <span className="w-2 h-2 bg-[#e53927] inline-block" />
-            <span className="w-2 h-2 bg-[#8bb2de] inline-block" />
-            <span className="w-2 h-2 bg-[#f5b726] inline-block" />
-            <span className="w-2 h-2 bg-[#e97b77] inline-block" />
-            <span className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#f6c4c1] ml-1.5">
-              My Hackathons
-            </span>
-          </div>
-          <h1 className="font-display text-2xl sm:text-4xl font-extrabold tracking-tight text-[#f7f7f2]">
-            Hackathon Tracker
-          </h1>
-          <p className="font-mono text-xs text-[#8bb2de] mt-0.5 sm:mt-1">
-            All your rounds, deadlines, and team checklists in one place.
-          </p>
+      {/* 1.1 Next Up Urgency Strip (Control Room Command Center) */}
+      <NextUpStrip userName={userName} items={urgentItems} />
+
+      {/* 1.2 At-Risk Warning Callouts (Rendered conditionally when blockers exist) */}
+      <AtRiskWarnings risks={risks} />
+
+      {/* Compact Secondary Metrics Strip & Quick Ingest CTA */}
+      <div className="border-2 border-[#10201d] bg-[#f7f7f2] p-3 sm:p-4 shadow-[4px_4px_0_#10201d] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 sm:gap-4 flex-wrap font-mono text-xs text-[#34433f]">
+          <span className="font-bold text-[#10201d]">
+            <strong className="text-base text-[#10201d] font-black">{activeEventsCount}</strong> active
+          </span>
+          <span className="text-[#10201d]/30 font-black">|</span>
+          <span className="font-bold text-[#10201d]">
+            <strong className="text-base text-[#10201d] font-black">{upcomingDeadlinesCount}</strong> deadlines this week
+          </span>
+          <span className="text-[#10201d]/30 font-black">|</span>
+          <span className="font-bold text-[#10201d]">
+            <strong className="text-base text-[#10201d] font-black">{doneDeliverables}/{totalDeliverables}</strong> tasks done ({completionRate}%)
+          </span>
         </div>
 
-        {safeEvents.length > 0 && (
-          <div className="flex items-center gap-3 shrink-0 w-full md:w-auto">
-            <Button 
-              onClick={() => setIsDialogOpen(true)}
-              size="lg"
-              className="w-full md:w-auto border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] active:scale-[0.98] text-[#10201d] font-mono text-xs font-black uppercase tracking-wide shadow-[3px_3px_0_#671912] sm:shadow-[4px_4px_0_#671912] active:translate-x-[1px] active:translate-y-[1px] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_#671912] px-5 sm:px-6 h-11 sm:h-12 flex items-center justify-center gap-1.5 touch-manipulation"
-            >
-              <span className="text-base font-bold">+</span> Paste Hackathon Link
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Stats Metric Cards (High-Density 3-Column on mobile) */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-5">
-        <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[2px_2px_0_#671912] sm:shadow-[5px_5px_0_#671912]">
-          <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-2.5 sm:p-6">
-            <CardTitle className="font-mono text-[9px] sm:text-xs font-bold uppercase tracking-wider text-[#34433f] truncate">Active</CardTitle>
-            <div className="hidden xs:block p-1 sm:p-1.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] shadow-[1px_1px_0_#2e4742]">
-              <Trophy className="h-3 w-3 sm:h-4 sm:w-4" />
-            </div>
-          </CardHeader>
-          <CardContent className="p-2.5 pt-0 sm:p-6 sm:pt-0">
-            <div className="font-display text-xl sm:text-4xl font-extrabold text-[#10201d]">{activeEventsCount}</div>
-            <p className="font-mono text-[9px] sm:text-[11px] text-[#34433f] mt-0.5 sm:mt-1 font-bold hidden sm:block">Currently registered & building</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[2px_2px_0_#671912] sm:shadow-[5px_5px_0_#671912]">
-          <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-2.5 sm:p-6">
-            <CardTitle className="font-mono text-[9px] sm:text-xs font-bold uppercase tracking-wider text-[#34433f] truncate">Deadlines</CardTitle>
-            <div className="hidden xs:block p-1 sm:p-1.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[1px_1px_0_#8a5d13]">
-              <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
-            </div>
-          </CardHeader>
-          <CardContent className="p-2.5 pt-0 sm:p-6 sm:pt-0">
-            <div className="font-display text-xl sm:text-4xl font-extrabold text-[#10201d]">{upcomingDeadlinesCount}</div>
-            <p className="font-mono text-[9px] sm:text-[11px] text-[#34433f] mt-0.5 sm:mt-1 font-bold hidden sm:block">Due within 7 days</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[2px_2px_0_#671912] sm:shadow-[5px_5px_0_#671912]">
-          <CardHeader className="flex flex-row items-center justify-between pb-1 sm:pb-2 p-2.5 sm:p-6">
-            <CardTitle className="font-mono text-[9px] sm:text-xs font-bold uppercase tracking-wider text-[#34433f] truncate">Done</CardTitle>
-            <div className="hidden xs:block p-1 sm:p-1.5 border-2 border-[#10201d] bg-[#e97b77] text-[#10201d] shadow-[1px_1px_0_#671912]">
-              <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4" />
-            </div>
-          </CardHeader>
-          <CardContent className="p-2.5 pt-0 sm:p-6 sm:pt-0">
-            <div className="font-display text-xl sm:text-4xl font-extrabold text-[#10201d]">{completionRate}%</div>
-            <p className="font-mono text-[9px] sm:text-[11px] text-[#34433f] mt-0.5 sm:mt-1 font-bold hidden sm:block">
-              {doneDeliverables}/{totalDeliverables} tasks done
-            </p>
-          </CardContent>
-        </Card>
+        <div className="shrink-0">
+          <Button 
+            onClick={() => setIsDialogOpen(true)}
+            size="sm"
+            className="w-full sm:w-auto border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] active:scale-[0.98] text-[#10201d] font-mono text-xs font-black uppercase tracking-wide shadow-[3px_3px_0_#671912] active:translate-x-[1px] active:translate-y-[1px] hover:translate-x-[1px] hover:translate-y-[1px] px-4 h-9 flex items-center justify-center gap-1.5 touch-manipulation"
+          >
+            <span className="text-base font-bold">+</span> Paste Hackathon Link
+          </Button>
+        </div>
       </div>
 
       {/* Filter Tabs & Section Header with Horizontal Scroll on Mobile */}

@@ -935,7 +935,7 @@ export async function getUserEvents() {
         stages:event_stages!event_stages_event_id_fkey(
           id, round_number, title, stage_type, deadline, 
           window_start, window_end, actionable_deadline, raw_date_snippet, is_completed,
-          stage_deliverables(id, is_done)
+          stage_deliverables(id, title, is_done)
         ),
         resources:event_resources(id, title, url, resource_type),
         squad:squads(id, name),

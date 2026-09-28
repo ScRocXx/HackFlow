@@ -13,8 +13,13 @@ import {
   Calendar,
   Edit3,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  MoreHorizontal,
+  ArrowRight
 } from 'lucide-react'
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
+import { getDeadlineSeverity } from '@/lib/utils/deadline'
+import { cn } from '@/lib/utils'
 import { StatusPills } from '@/components/events/StatusPills'
 import { CountdownTimer } from '@/components/events/CountdownTimer'
 import { EditEventDialog } from '@/components/events/EditEventDialog'
@@ -186,7 +191,7 @@ export function EventCard({ event }: EventCardProps) {
               </div>
             )}
 
-            {/* Badges on Top Left */}
+            {/* Badges on Top Left (Max 2 Badges) */}
             <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 flex gap-1.5 flex-wrap max-w-[70%] z-10">
               <span className={`inline-flex items-center px-2 py-0.5 border-2 font-mono text-[10px] font-black uppercase tracking-wider shadow-[2px_2px_0_#10201d] ${platformBadge.className}`}>
                 {platformBadge.label}
@@ -196,47 +201,46 @@ export function EventCard({ event }: EventCardProps) {
                   👥 {event.squad_name}
                 </span>
               )}
-              {event.mode && (
-                <span className="inline-flex items-center px-2 py-0.5 border-2 border-[#10201d] bg-[#f7f7f2] text-[#10201d] font-mono text-[10px] font-bold uppercase tracking-wider shadow-[2px_2px_0_#10201d]">
-                  {event.mode === 'in-person' ? <MapPin className="w-3 h-3 mr-1" /> : <Globe className="w-3 h-3 mr-1" />}
-                  <span className="capitalize">{event.mode}</span>
-                </span>
-              )}
-              {prizeDisplay && (
-                <span className="inline-flex items-center px-2 py-0.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] font-mono text-[10px] font-bold uppercase tracking-wider shadow-[2px_2px_0_#10201d] truncate max-w-[170px]">
-                  🏆 {prizeDisplay}
-                </span>
-              )}
             </div>
 
-            {/* Edit & Delete Action Buttons (Top Right) */}
-            <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 flex items-center gap-1.5 z-20">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  setEditOpen(true)
-                }}
-                title="Edit Hackathon"
-                className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#f5b726] active:scale-90 text-[#10201d] shadow-[2px_2px_0_#10201d] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none touch-manipulation"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span className="sr-only">Edit</span>
-              </button>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  setDeleteOpen(true)
-                }}
-                title="Delete Hackathon"
-                className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#e53927] hover:text-[#f7f7f2] active:scale-90 text-[#10201d] shadow-[2px_2px_0_#10201d] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none touch-manipulation"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                <span className="sr-only">Delete</span>
-              </button>
+            {/* Overflow Options Menu (Top Right) */}
+            <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 z-20">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                    }}
+                    title="Hackathon options"
+                    className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#e4e5da] active:scale-90 text-[#10201d] shadow-[2px_2px_0_#10201d] transition-all touch-manipulation"
+                  >
+                    <MoreHorizontal className="w-4 h-4" />
+                    <span className="sr-only">Options</span>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[3px_3px_0_#10201d] font-mono text-xs w-44">
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setEditOpen(true)
+                    }}
+                    className="cursor-pointer font-bold text-[#10201d] hover:bg-[#e4e5da]"
+                  >
+                    <Edit3 className="w-3.5 h-3.5 mr-2 text-[#34433f]" /> Edit Hackathon
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setDeleteOpen(true)
+                    }}
+                    className="cursor-pointer font-bold text-[#e53927] hover:bg-[#f6c4c1]"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-2 text-[#e53927]" /> Delete Hackathon
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
@@ -246,9 +250,24 @@ export function EventCard({ event }: EventCardProps) {
               <h3 className="font-display text-lg sm:text-xl font-bold text-[#10201d] line-clamp-1 group-hover:text-[#e53927] transition-colors">
                 {event.title}
               </h3>
-              <p className="font-mono text-xs text-[#34433f] line-clamp-1 mt-0.5">
-                {event.organizer || 'Independent Hackathon'}
-              </p>
+              <div className="flex items-center justify-between gap-2 mt-0.5">
+                <p className="font-mono text-xs text-[#34433f] line-clamp-1">
+                  {event.organizer || 'Independent Hackathon'}
+                </p>
+                {event.mode && (
+                  <span className="inline-flex items-center font-mono text-[10px] font-bold text-[#34433f] uppercase shrink-0">
+                    {event.mode === 'in-person' ? <MapPin className="w-3 h-3 mr-0.5" /> : <Globe className="w-3 h-3 mr-0.5" />}
+                    {event.mode}
+                  </span>
+                )}
+              </div>
+              {prizeDisplay && (
+                <div className="mt-1.5">
+                  <span className="inline-flex items-center font-mono text-[10px] font-bold text-[#10201d] bg-[#8bb2de]/30 px-1.5 py-0.5 border border-[#10201d]/30 truncate max-w-full">
+                    🏆 {prizeDisplay}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Active Stage & Countdown (Auto-Rolled) */}
@@ -284,19 +303,57 @@ export function EventCard({ event }: EventCardProps) {
             )}
 
             {/* Progress & Team Count */}
-            <div className="mt-auto">
-              <div className="flex justify-between items-center font-mono text-xs font-bold text-[#34433f] mb-2">
-                <span className="flex items-center gap-1">
-                  <Users className="w-3.5 h-3.5" /> {event.team_count || 1} members
-                </span>
-                <span>{event.deliverable_progress?.done || 0}/{event.deliverable_progress?.total || 0} tasks</span>
+            <div className="mt-auto space-y-3">
+              <div>
+                <div className="flex justify-between items-center font-mono text-xs font-bold text-[#34433f] mb-1.5">
+                  <span className="flex items-center gap-1">
+                    <Users className="w-3.5 h-3.5" /> {event.team_count || 1} members
+                  </span>
+                  <span>{event.deliverable_progress?.done || 0}/{event.deliverable_progress?.total || 0} tasks</span>
+                </div>
+                <div className="w-full h-2 border border-[#10201d] bg-[#e4e5da] overflow-hidden">
+                  <div 
+                    className="h-full bg-[#e97b77] transition-all" 
+                    style={{ width: `${progressPercent}%` }} 
+                  />
+                </div>
               </div>
-              <div className="w-full h-2 border border-[#10201d] bg-[#e4e5da] overflow-hidden">
-                <div 
-                  className="h-full bg-[#e97b77] transition-all" 
-                  style={{ width: `${progressPercent}%` }} 
-                />
-              </div>
+
+              {/* State-Dependent Primary Action Button */}
+              {(() => {
+                const targetDl = computedActiveStage?.actionable_deadline || computedActiveStage?.deadline
+                const severity = getDeadlineSeverity(targetDl)
+                let cta = {
+                  label: 'Continue →',
+                  className: 'bg-[#e97b77] text-[#10201d] hover:bg-[#f6c4c1] shadow-[2px_2px_0_#671912]'
+                }
+                if (severity.severity === 'critical') {
+                  cta = {
+                    label: '⏰ Due Soon — Open',
+                    className: 'bg-[#e53927] text-white hover:bg-[#c82717] shadow-[2px_2px_0_#10201d]'
+                  }
+                } else if (event.status === 'winner' || event.status === 'runner_up') {
+                  cta = {
+                    label: '🏆 View in Trophy Case',
+                    className: 'bg-[#f5b726] text-[#10201d] hover:bg-[#e5a81e] shadow-[2px_2px_0_#8a5d13]'
+                  }
+                } else if (event.status === 'submitted') {
+                  cta = {
+                    label: 'Check Status',
+                    className: 'bg-[#8bb2de] text-[#10201d] hover:bg-[#7ba2ce] shadow-[2px_2px_0_#2e4742]'
+                  }
+                }
+                return (
+                  <div className="w-full">
+                    <span className={cn(
+                      "w-full py-2 px-3 border-2 border-[#10201d] font-mono text-xs font-black uppercase tracking-wide flex items-center justify-center gap-1.5 transition-all group-hover:translate-x-[1px] group-hover:translate-y-[1px]",
+                      cta.className
+                    )}>
+                      {cta.label}
+                    </span>
+                  </div>
+                )
+              })()}
             </div>
           </div>
         </Link>
