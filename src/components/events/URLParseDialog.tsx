@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
-import { Loader2, Plus, Trash2, Calendar, AlertCircle, Sparkles, Check, Tag, FileText, Database, ExternalLink, Link2, Users, RefreshCw, Zap, FileCode, Eye } from 'lucide-react'
+import { Loader2, Plus, Trash2, Calendar, AlertCircle, Sparkles, Check, Tag, FileText, Database, ExternalLink, Link2, Users, RefreshCw, Zap, FileCode, Eye, ChevronDown, ChevronUp } from 'lucide-react'
+import { ExtractionProgress, type ExtractionConfidence } from '@/components/events/ExtractionProgress'
 import { createEvent } from '@/app/actions/events'
 import { getMySquads } from '@/app/actions/squads'
 import type { Squad, MissionBrief } from '@/lib/supabase/types'
@@ -79,6 +80,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
   const [submitting, setSubmitting] = useState(false)
   const [extractError, setExtractError] = useState<string | null>(null)
   const [hasParsed, setHasParsed] = useState(false)
+  const [showTextInput, setShowTextInput] = useState(false)
 
   // Squad Participation Mode
   const [userSquads, setUserSquads] = useState<Squad[]>([])
@@ -116,6 +118,14 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
   const [teamSizeMax, setTeamSizeMax] = useState(4)
   const [stages, setStages] = useState<EditableStage[]>([])
   const [newDeliverableInputs, setNewDeliverableInputs] = useState<Record<number, string>>({})
+
+  // Confidence metrics computed from parsed output
+  const confidence: ExtractionConfidence | null = hasParsed ? {
+    roundsCount: stages.length,
+    deadlinesCount: stages.filter(s => Boolean(s.deadline && s.deadline !== 'TBA')).length,
+    deliverablesCount: stages.reduce((acc, s) => acc + (s.deliverables?.length || 0), 0),
+    unconfirmedCount: stages.filter(s => !s.deadline || s.deadline === 'TBA').length,
+  } : null
   
   // Resources State
   const [resources, setResources] = useState<EditableResource[]>([])
@@ -590,171 +600,134 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
           </div>
         </DialogHeader>
 
-        {/* Step 1: Choose Import Method (URL or Paste Text) */}
+        {/* Step 1: Single URL Intake with Stepped Progress and Secondary Text Accordion */}
         {!hasParsed ? (
           <div className="space-y-4 py-3">
-            <Tabs 
-              value={activeTab} 
-              onValueChange={(val) => setActiveTab(val as 'url' | 'text')}
-              className="w-full"
-            >
-              <TabsList className="grid grid-cols-2 w-full bg-[#f2f2eb] border-2 border-[#10201d] p-1 h-auto shadow-[3px_3px_0_#10201d]">
-                <TabsTrigger
-                  value="url"
-                  className="font-mono text-xs font-bold py-2.5 px-3 flex items-center justify-center gap-2 data-[state=active]:bg-[#2e4742] data-[state=active]:text-[#f2f2eb] border-2 border-transparent data-[state=active]:border-[#10201d] transition-all"
+            {/* Primary Action Card: URL Input */}
+            <div className="border-2 border-[#10201d] bg-white p-4 sm:p-5 shadow-[4px_4px_0_#10201d] space-y-3">
+              <label className="font-mono text-xs font-black uppercase tracking-wider text-[#10201d] block">
+                Paste the competition link. We'll figure out the rest.
+              </label>
+
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Input 
+                  placeholder="https://unstop.com/... or https://devfolio.co/..." 
+                  value={url} 
+                  onChange={(e) => setUrl(e.target.value)} 
+                  onKeyDown={(e) => e.key === 'Enter' && handleParse()}
+                  disabled={extracting}
+                  className="flex-1 h-12 font-mono text-xs border-2 border-[#10201d] bg-[#f7f7f2] shadow-[2px_2px_0_#10201d]"
+                />
+                <Button 
+                  onClick={() => handleParse()} 
+                  disabled={extracting || !url.trim()} 
+                  className="h-12 px-6 font-mono text-xs font-black uppercase tracking-wider border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[3px_3px_0_#671912] shrink-0 active:translate-x-[1px] active:translate-y-[1px]"
                 >
-                  <Link2 className="h-3.5 w-3.5 shrink-0" />
-                  <span>Enter URL</span>
-                </TabsTrigger>
-                <TabsTrigger
-                  value="text"
-                  className="font-mono text-xs font-bold py-2.5 px-3 flex items-center justify-center gap-2 data-[state=active]:bg-[#2e4742] data-[state=active]:text-[#f2f2eb] border-2 border-transparent data-[state=active]:border-[#10201d] transition-all"
-                >
-                  <FileText className="h-3.5 w-3.5 shrink-0" />
-                  <span>Paste Text / Flyer</span>
-                  <span className="font-mono text-[9px] px-1.5 py-0.5 bg-[#f5b726] text-[#10201d] font-bold border border-[#10201d] rounded-sm hidden sm:inline-block shadow-[1px_1px_0_#10201d]">
-                    Universal
-                  </span>
-                </TabsTrigger>
-              </TabsList>
+                  {extracting ? 'Reading page...' : 'Extract Hackathon'}
+                </Button>
+              </div>
 
-              {/* Tab 1: URL Import */}
-              <TabsContent value="url" className="space-y-3 pt-3">
-                <div className="space-y-2">
-                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">
-                    Hackathon or Competition Link
-                  </label>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <Input 
-                      placeholder="e.g. https://hackmit.org or https://devpost.com/..." 
-                      value={url} 
-                      onChange={(e) => setUrl(e.target.value)} 
-                      onKeyDown={(e) => e.key === 'Enter' && handleParse()}
-                      disabled={extracting}
-                      className="flex-1 h-11 font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
-                    />
-                    <Button 
-                      onClick={() => handleParse()} 
-                      disabled={extracting || !url.trim()} 
-                      className="h-11 px-5 font-mono text-xs font-bold border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[3px_3px_0_#671912] shrink-0"
-                    >
-                      {extracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                      {extracting ? 'Reading page...' : 'Get Rounds & Deadlines'}
-                    </Button>
-                  </div>
-                  <p className="font-mono text-[11px] text-[#34433f]">
-                    Works with any competition website, Devpost, Devfolio, Unstop, MLH, or university portals.
-                  </p>
-                </div>
-              </TabsContent>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
+                <p className="font-mono text-[11px] text-[#34433f]">
+                  Works with Unstop, Devfolio, Devpost, MLH, Kaggle, or any university contest.
+                </p>
 
-              {/* Tab 2: Paste Text / Flyer */}
-              <TabsContent value="text" className="space-y-3 pt-3">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">
-                      Paste Raw Announcement Text, Flyer Details, or Guidelines
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-[10px] text-[#34433f]">
-                        {pastedText.length > 0 ? `${pastedText.length.toLocaleString()} characters` : 'Direct AI Parsing (Fastest)'}
-                      </span>
-                      {pastedText.length > 0 && !extracting && (
-                        <button
-                          type="button"
-                          onClick={() => setPastedText('')}
-                          className="font-mono text-[10px] font-bold text-[#e53927] hover:underline"
-                        >
-                          Clear
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <textarea 
-                    value={pastedText}
-                    onChange={(e) => setPastedText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                        e.preventDefault()
-                        handleParseText()
+                <button
+                  type="button"
+                  onClick={() => {
+                    setTitle('My Hackathon')
+                    setStages([
+                      {
+                        round_number: 1,
+                        title: 'Round 1: Submission',
+                        stage_type: 'prototype',
+                        deadline: toLocalDatetimeInputString(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+                        deliverables: ['GitHub Repository', 'Live Demo URL'],
                       }
-                    }}
-                    disabled={extracting}
-                    placeholder="Paste raw announcement text, flyer details, Discord/WhatsApp updates, rulebook PDFs, or select all (Ctrl+A) on any competition page and paste here.&#10;&#10;Gemini AI will analyze universal competition lifecycles to extract all stages, deadlines, and prizes in seconds! (Tip: Press Ctrl+Enter to parse)"
-                    rows={8}
-                    className="w-full p-3 font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d] focus:outline-none placeholder:text-[#34433f]/60 resize-y min-h-[140px]"
-                  />
+                    ])
+                    setHasParsed(true)
+                  }}
+                  className="font-mono text-xs font-bold text-[#10201d] hover:text-[#e53927] underline shrink-0"
+                >
+                  or Add manually →
+                </button>
+              </div>
+            </div>
 
-                  <div className="space-y-1">
-                    <label className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#10201d] block">
-                      Source Link (Optional)
-                    </label>
-                    <Input 
-                      placeholder="e.g. https://example.com/hackathon (optional reference link)" 
-                      value={url} 
-                      onChange={(e) => setUrl(e.target.value)} 
-                      onKeyDown={(e) => e.key === 'Enter' && handleParseText()}
-                      disabled={extracting}
-                      className="h-9 font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
-                    />
-                  </div>
+            {/* Stepped Progress Animation while Extracting */}
+            <ExtractionProgress isExtracting={extracting} />
 
-                  <Button 
-                    onClick={handleParseText} 
-                    disabled={extracting || !pastedText.trim()} 
-                    className="w-full h-11 font-mono text-xs font-bold border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[3px_3px_0_#671912]"
-                  >
-                    {extracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                    {extracting ? 'Analyzing announcement / flyer...' : 'Extract Rounds & Deadlines from Text'}
-                  </Button>
-
-                  <div className="p-2.5 bg-[#e4e5da] border border-[#10201d] text-[11px] font-mono text-[#34433f] flex items-start gap-2">
-                    <span className="text-base leading-none shrink-0">💡</span>
-                    <div>
-                      <strong className="text-[#10201d]">Flyer & Announcement Ingestion:</strong> Paste flyer text, email broadcasts, or copy from portals behind logins/captchas. Our universal parser scans for all 4 competition phases and extracts chronological milestones.
-                    </div>
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
-
+            {/* Extraction Error Callout */}
             {extractError && (
               <div className="p-3.5 border-2 border-[#10201d] bg-[#f6c4c1] text-[#671912] shadow-[3px_3px_0_#671912] text-sm flex gap-2.5 items-start">
                 <AlertCircle className="h-5 w-5 text-[#e53927] shrink-0 mt-0.5" />
                 <div className="flex-1">
-                  <p className="font-display font-bold text-base">Extraction Error</p>
+                  <p className="font-display font-bold text-base">Extraction Notice</p>
                   <p className="font-mono text-xs mt-0.5">{extractError}</p>
                 </div>
               </div>
             )}
 
-            {/* Option to create manually if parse fails or user wants */}
-            <div className="pt-2 text-center">
+            {/* Secondary Accordion: Paste Text / Guidelines */}
+            <div className="border-2 border-[#10201d] bg-[#f2f2eb]">
               <button
                 type="button"
-                onClick={() => {
-                  setTitle('My New Hackathon')
-                  setStages([
-                    {
-                      round_number: 1,
-                      title: 'Round 1: Submission',
-                      stage_type: 'prototype',
-                      deadline: toLocalDatetimeInputString(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
-                      deliverables: ['GitHub Repository', 'Live Demo URL'],
-                    }
-                  ])
-                  setHasParsed(true)
-                }}
-                className="font-mono text-xs font-bold text-[#2e4742] hover:text-[#e53927] underline"
+                onClick={() => setShowTextInput(!showTextInput)}
+                className="w-full p-3 font-mono text-xs font-bold text-[#10201d] flex items-center justify-between hover:bg-[#e4e5da] transition-colors"
               >
-                Or set up rounds manually &rarr;
+                <span className="flex items-center gap-2">
+                  <FileText className="w-3.5 h-3.5 text-[#34433f]" />
+                  Need to paste announcement text, guidelines, or flyer instead?
+                </span>
+                {showTextInput ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
+
+              {showTextInput && (
+                <div className="p-4 border-t-2 border-[#10201d] space-y-3 bg-white">
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-[10px] text-[#34433f]">
+                      {pastedText.length > 0 ? `${pastedText.length.toLocaleString()} characters` : 'Direct AI Parsing (Fastest)'}
+                    </span>
+                    {pastedText.length > 0 && !extracting && (
+                      <button
+                        type="button"
+                        onClick={() => setPastedText('')}
+                        className="font-mono text-[10px] font-bold text-[#e53927] hover:underline"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+
+                  <textarea 
+                    value={pastedText}
+                    onChange={(e) => setPastedText(e.target.value)}
+                    disabled={extracting}
+                    placeholder="Paste raw guidelines, announcement text, WhatsApp/Discord messages, or rulebook copy here..."
+                    rows={6}
+                    className="w-full p-3 font-mono text-xs border-2 border-[#10201d] bg-[#f7f7f2] focus:outline-none"
+                  />
+
+                  <div className="flex justify-end">
+                    <Button 
+                      onClick={handleParseText} 
+                      disabled={extracting || !pastedText.trim()} 
+                      className="h-10 px-5 font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[2px_2px_0_#10201d]"
+                    >
+                      {extracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                      Extract from Text
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ) : (
           /* Step 2: Review and Edit Auto-Populated Cards */
           <div className="space-y-6 py-2">
+            {/* Extraction Confidence & Verification Summary */}
+            <ExtractionProgress isExtracting={false} confidence={confidence} />
+
             {/* Raw Text Stash & Re-Parse Engine Bar */}
             <div className="p-3 bg-[#e8ece9] border-2 border-[#10201d] shadow-[3px_3px_0_#10201d] flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
