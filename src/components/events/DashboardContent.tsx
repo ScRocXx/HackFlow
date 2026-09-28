@@ -242,11 +242,11 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
               <Trophy className="h-8 w-8" />
             </div>
             <h3 className="font-display text-2xl font-bold text-[#10201d]">
-              {safeEvents.length === 0 ? 'No hackathons added yet' : 'No competitions match this filter'}
+              {safeEvents.length === 0 ? 'Nothing here yet' : 'No competitions match this filter'}
             </h3>
             <p className="mt-2 font-mono text-xs text-[#34433f] max-w-sm">
               {safeEvents.length === 0 
-                ? 'Paste a hackathon link from Unstop, Devfolio, Devpost, or anywhere else to get rounds, deadlines, and a shared team checklist.'
+                ? "Paste your first hackathon link and we'll build the workspace for you."
                 : 'Try selecting a different filter above or add another hackathon.'}
             </p>
             <Button 

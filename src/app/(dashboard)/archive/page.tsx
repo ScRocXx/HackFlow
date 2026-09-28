@@ -54,9 +54,9 @@ export default async function ArchivePage() {
       {concludedEvents.length === 0 ? (
         <div className="p-16 border-2 border-dashed border-[#10201d] text-center bg-[#f7f7f2]">
           <Trophy className="h-12 w-12 text-[#34433f] mx-auto opacity-40 mb-3" />
-          <h3 className="font-display text-2xl font-bold text-[#10201d]">No Concluded Hackathons Yet</h3>
+          <h3 className="font-display text-2xl font-bold text-[#10201d]">No wins yet</h3>
           <p className="font-mono text-xs text-[#34433f] mt-1 max-w-sm mx-auto">
-            Once you submit and mark a hackathon as Completed or Won, it will be showcased here in your squad portfolio.
+            That's fine. First build something worth putting here.
           </p>
           <Link
             href="/dashboard"

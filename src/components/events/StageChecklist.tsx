@@ -132,7 +132,7 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
       <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
         {items.length === 0 ? (
           <div className="text-center font-mono text-[#34433f] py-8 text-xs font-bold">
-            No tasks for this stage yet. Add one below!
+            No deliverables for this round yet. Add what needs to get done.
           </div>
         ) : (
           items.map(item => {
@@ -167,7 +167,7 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
                 
                 <span className={cn(
                   "flex-1 font-mono text-xs sm:text-sm font-bold transition-all select-none",
-                  isDone ? "line-through text-[#34433f]/70 decoration-[#e53927] decoration-2" : "text-[#10201d]"
+                  isDone ? "deliverable-done text-[#34433f]/70" : "text-[#10201d]"
                 )}>
                   {item.title}
                 </span>

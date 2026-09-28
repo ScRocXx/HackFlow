@@ -612,9 +612,9 @@ export function VaultView({
           {profiles.length === 0 ? (
             <div className="p-12 border-2 border-dashed border-[#10201d] text-center bg-[#f7f7f2]">
               <User className="h-10 w-10 text-[#34433f] mx-auto opacity-40 mb-3" />
-              <h3 className="font-display text-2xl font-bold text-[#10201d]">No Profiles in Vault</h3>
+              <h3 className="font-display text-2xl font-bold text-[#10201d]">Your team's info isn't here yet</h3>
               <p className="font-mono text-xs text-[#34433f] mt-2 max-w-md mx-auto">
-                No registration profiles found. Click below to add your registration details.
+                Fill it once, reuse it everywhere across hackathon registrations.
               </p>
               <Button
                 onClick={handleOpenEditProfile}

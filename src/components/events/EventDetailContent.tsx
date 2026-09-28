@@ -456,7 +456,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column (Main) */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Mission Dossier Banner */}
+          {/* Hackathon Brief Banner */}
           {event.mission_brief && (
             <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:block")}>
               <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912] overflow-hidden">

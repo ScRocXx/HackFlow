@@ -914,7 +914,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
               </div>
             </div>
 
-            {/* Mission Dossier Preview Card */}
+            {/* Hackathon Brief Preview Card */}
             {missionBrief && (
               <div className="p-4 bg-[#f2f2eb] border-2 border-[#10201d] shadow-[4px_4px_0_#10201d] space-y-3">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
