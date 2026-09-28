@@ -378,30 +378,30 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
         onClick={() => setIsExpanded(!isExpanded)}
         className="bg-[#3d5f58] p-5 border-b-2 border-[#10201d] text-[#f7f7f2] flex flex-col sm:flex-row justify-between sm:items-center gap-3 cursor-pointer select-none hover:bg-[#34524c] transition-colors"
       >
-        <div className="flex items-center gap-3">
-          <div className="p-2 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d]">
+        <div className="flex items-center gap-3 min-w-0 flex-1 mr-3">
+          <div className="p-2 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d] shrink-0">
             <Trophy className="h-5 w-5" />
           </div>
-          <div>
-            <h3 className="font-display text-2xl font-bold tracking-tight text-[#f7f7f2] flex items-center gap-2">
-              Submission Confirmation & Follow-up
-              {!isExpanded && <span className="font-mono text-xs font-normal text-[#8bb2de]">(Click to expand)</span>}
+          <div className="min-w-0 flex-1">
+            <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#f7f7f2] flex items-center gap-2 truncate">
+              <span className="truncate">Submission Confirmation & Follow-up</span>
+              {!isExpanded && <span className="font-mono text-xs font-normal text-[#8bb2de] shrink-0">(Click to expand)</span>}
             </h3>
-            <p className="font-mono text-xs text-[#8bb2de]">
+            <p className="font-mono text-xs text-[#8bb2de] truncate">
               Keep submission proof, verify public repo access for judges, and track results.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xs font-bold uppercase px-2.5 py-1 border-2 border-[#10201d] bg-[#e97b77] text-[#10201d] shadow-[2px_2px_0_#671912]">
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="font-mono text-xs font-bold uppercase px-2.5 py-1 border-2 border-[#10201d] bg-[#e97b77] text-[#10201d] shadow-[2px_2px_0_#671912] shrink-0">
             Stage: {event.status.replace('_', ' ')}
           </span>
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="border-2 border-[#10201d] bg-[#f7f7f2] text-[#10201d] p-1.5 h-auto"
+            className="border-2 border-[#10201d] bg-[#f7f7f2] text-[#10201d] p-1.5 h-auto shrink-0"
             onClick={(e) => {
               e.stopPropagation()
               setIsExpanded(!isExpanded)

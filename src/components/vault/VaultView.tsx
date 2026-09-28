@@ -751,20 +751,21 @@ export function VaultView({
                         })}
                       </div>
 
-                      {/* Edit button at bottom of own card */}
-                      {isMe && !isPending && (
-                        <div className="pt-2 flex justify-end">
-                          <button
-                            type="button"
-                            onClick={handleOpenEditProfile}
-                            className="font-mono text-xs font-bold text-[#10201d] hover:text-[#e53927] flex items-center gap-1 underline"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                            <span>Edit My Details</span>
-                          </button>
-                        </div>
-                      )}
                     </CardContent>
+
+                    {/* Dedicated Edit Footer for own card */}
+                    {isMe && !isPending && (
+                      <div className="px-3 py-2 bg-white border-t-2 border-[#10201d] flex justify-end">
+                        <button
+                          type="button"
+                          onClick={handleOpenEditProfile}
+                          className="font-mono text-xs font-bold text-[#10201d] hover:text-[#e53927] flex items-center gap-1.5 underline"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                          <span>✏️ Edit My Details</span>
+                        </button>
+                      </div>
+                    )}
                   </Card>
                 )
               })}
