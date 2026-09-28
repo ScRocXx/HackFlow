@@ -40,11 +40,14 @@ function LoginForm() {
       password,
     });
 
+    const returnTo = searchParams.get('returnTo') || '/dashboard';
+    const redirectPath = returnTo.startsWith('/') ? returnTo : '/dashboard';
+
     if (error) {
       setError(error.message);
       setLoading(false);
     } else {
-      router.push('/dashboard');
+      router.push(redirectPath);
       router.refresh();
     }
   };
@@ -54,10 +57,16 @@ function LoginForm() {
     setError(null);
     
     try {
+      const returnTo = searchParams.get('returnTo');
+      const callbackUrl = new URL(`${window.location.origin}/auth/callback`);
+      if (returnTo && returnTo.startsWith('/')) {
+        callbackUrl.searchParams.set('next', returnTo);
+      }
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: callbackUrl.toString(),
         },
       });
 

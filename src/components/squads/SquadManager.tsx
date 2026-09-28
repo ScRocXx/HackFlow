@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { Users, Plus, Trash2, LogOut, FolderKanban, ShieldAlert, Check, UserPlus } from 'lucide-react'
+import { Users, Plus, Trash2, LogOut, FolderKanban, ShieldAlert, Check, UserPlus, Copy, Link as LinkIcon } from 'lucide-react'
 import Link from 'next/link'
 
 interface SquadManagerProps {
@@ -25,12 +25,28 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
   const [selectedFriendIds, setSelectedFriendIds] = useState<string[]>([])
   const [creating, setCreating] = useState(false)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [copiedSquadId, setCopiedSquadId] = useState<string | null>(null)
 
   // Add member modal state
   const [activeSquadForAdd, setActiveSquadForAdd] = useState<Squad | null>(null)
   const [selectedFriendToAdd, setSelectedFriendToAdd] = useState<string>('')
 
   const { toast } = useToast()
+
+  const handleCopyInviteLink = (squad: Squad) => {
+    const code = squad.invite_code || squad.id.slice(0, 8).toUpperCase()
+    const url = typeof window !== 'undefined' ? `${window.location.origin}/join/${code}` : `https://hackflow.app/join/${code}`
+    navigator.clipboard.writeText(url)
+    setCopiedSquadId(squad.id)
+    toast({
+      title: 'Invite link copied!',
+      description: 'Share this link with your teammates on WhatsApp or Discord.',
+      variant: 'success',
+    })
+    setTimeout(() => {
+      setCopiedSquadId((prev) => (prev === squad.id ? null : prev))
+    }, 2500)
+  }
 
   const handleToggleFriend = (userId: string) => {
     if (selectedFriendIds.includes(userId)) {
@@ -231,6 +247,36 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
                             {squad.member_count || 1} active teammate(s)
                           </span>
                         )}
+                      </div>
+                    </div>
+
+                    {/* Shareable Team Invite Link */}
+                    <div className="pt-2 border-t border-[#10201d]/15">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#f2f2eb] p-2.5 border border-[#10201d]">
+                        <div className="flex items-center gap-1.5 overflow-hidden">
+                          <LinkIcon className="h-3.5 w-3.5 text-[#57726d] shrink-0" />
+                          <span className="font-mono text-[11px] text-[#34433f] truncate">
+                            {typeof window !== 'undefined'
+                              ? `${window.location.host}/join/${squad.invite_code || squad.id.slice(0, 8).toUpperCase()}`
+                              : `hackflow.app/join/${squad.invite_code || squad.id.slice(0, 8).toUpperCase()}`}
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          onClick={() => handleCopyInviteLink(squad)}
+                          size="sm"
+                          className="font-mono text-xs font-bold border border-[#10201d] bg-white text-[#10201d] hover:bg-[#e4e5da] shadow-[1px_1px_0_#10201d] shrink-0 h-7 px-2.5"
+                        >
+                          {copiedSquadId === squad.id ? (
+                            <>
+                              <Check className="h-3 w-3 mr-1 text-green-600" /> Copied!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-3 w-3 mr-1" /> Copy invite link
+                            </>
+                          )}
+                        </Button>
                       </div>
                     </div>
                   </CardContent>

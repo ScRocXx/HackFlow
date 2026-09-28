@@ -206,6 +206,7 @@ export interface Squad {
   name: string
   created_by: string
   created_at: string
+  invite_code?: string
   members?: SquadMember[]
   member_count?: number
 }
