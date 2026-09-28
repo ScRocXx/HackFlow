@@ -20,6 +20,7 @@ import { addEventResource, deleteEventResource, addEventParticipant, deleteEvent
 import { getFriendsList } from '@/app/actions/friends'
 import { MeetCompanionBar } from '@/components/events/MeetCompanionBar'
 import { IdeaSandbox } from '@/components/events/IdeaSandbox'
+import { SubmissionReadiness } from '@/components/events/SubmissionReadiness'
 import { PostSubmissionConsole } from '@/components/events/PostSubmissionConsole'
 import { downloadIcsFile, getGoogleCalendarUrl } from '@/lib/calendar/calendar-sync'
 import type { EventResource, Friendship } from '@/lib/supabase/types'
@@ -585,6 +586,13 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
               onStageSelect={(id) => setFocusedStageId(id)}
             />
           </div>
+
+          {/* Submission Readiness Pre-Flight Diagnostic (Surfaced for immediate visibility) */}
+          {['registered', 'building', 'submitted', 'under_review'].includes(currentEvent.status) && (
+            <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:block")}>
+              <SubmissionReadiness event={currentEvent} />
+            </div>
+          )}
 
           {/* Focused Stage Panel & Deliverables Checklist */}
           {currentDisplayStage && (
