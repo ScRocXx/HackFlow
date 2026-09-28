@@ -730,37 +730,166 @@ export async function getEventWithDetails(eventId: string) {
       return { success: false, error: eventError?.message || 'Event not found' };
     }
 
-    // Parallel Batch 2: Fetch squad (if assigned) and deliverables for active stage concurrently
+    // Parallel Batch 2: Fetch squad, squad_members, creator profile, and active stage deliverables concurrently
     const activeStageId = event.active_stage_id || stages?.[0]?.id;
-    const [squadRes, delivRes] = await Promise.all([
+    const [squadRes, delivRes, creatorProfileRes, squadMembersRes] = await Promise.all([
       event.squad_id
         ? supabase.from('squads').select('*').eq('id', event.squad_id).maybeSingle()
         : Promise.resolve({ data: null }),
       activeStageId
         ? supabase.from('stage_deliverables').select('*').eq('stage_id', activeStageId).order('sort_order', { ascending: true })
         : Promise.resolve({ data: [] }),
+      event.created_by
+        ? supabase.from('profiles').select('id, email, full_name, avatar_url').eq('id', event.created_by).maybeSingle()
+        : Promise.resolve({ data: null }),
+      event.squad_id
+        ? supabase.from('squad_members').select('id, squad_id, user_id, role, joined_at').eq('squad_id', event.squad_id)
+        : Promise.resolve({ data: [] }),
     ]);
 
     const squad = squadRes?.data || null;
     const deliverables = delivRes?.data || [];
+    const creatorProfile = creatorProfileRes?.data || null;
+    const squadMembers = squadMembersRes?.data || [];
+
+    // Build Profile Cache for all candidate roster members
+    const profileMap = new Map<string, any>();
+    if (creatorProfile) {
+      profileMap.set(creatorProfile.id, creatorProfile);
+    }
+    (participants || []).forEach((p: any) => {
+      if (p.profile && p.user_id) {
+        profileMap.set(p.user_id, p.profile);
+      }
+    });
+
+    // Check for any unpopulated profiles from squad members or logged in user
+    const candidateUserIds = new Set<string>();
+    if (event.created_by) candidateUserIds.add(event.created_by);
+    if (user.id) candidateUserIds.add(user.id);
+    squadMembers.forEach((sm: any) => {
+      if (sm.user_id) candidateUserIds.add(sm.user_id);
+    });
+    (participants || []).forEach((p: any) => {
+      if (p.user_id) candidateUserIds.add(p.user_id);
+    });
+
+    const missingProfileIds = Array.from(candidateUserIds).filter(id => !profileMap.has(id));
+    if (missingProfileIds.length > 0) {
+      const { data: fetchedProfiles } = await supabase
+        .from('profiles')
+        .select('id, email, full_name, avatar_url')
+        .in('id', missingProfileIds);
+
+      (fetchedProfiles || []).forEach((p: any) => {
+        profileMap.set(p.id, p);
+      });
+    }
+
+    // Deduplicate roster by user_id
+    const teamMembersMap = new Map<string, any>();
+
+    const addOrUpdateMember = (
+      userId: string,
+      details: {
+        id?: string;
+        role?: string;
+        joined_at?: string;
+        profile?: any;
+      }
+    ) => {
+      if (!userId) return;
+      const existing = teamMembersMap.get(userId);
+      const profile = details.profile || profileMap.get(userId) || existing?.profile || null;
+      const email = profile?.email || (userId === user.id ? user.email : '') || '';
+      const fullName = profile?.full_name || profile?.email?.split('@')[0] || (userId === user.id ? (user.user_metadata?.full_name || user.email?.split('@')[0]) : '') || 'Team Member';
+      const isCreator = userId === event.created_by;
+      const isCurrentUser = userId === user.id;
+
+      // Determine role: creator/lead takes priority
+      let role = details.role || existing?.role || 'member';
+      if (isCreator || role === 'lead' || role === 'leader' || role === 'owner') {
+        role = 'lead';
+      } else {
+        role = 'member';
+      }
+
+      teamMembersMap.set(userId, {
+        id: details.id || existing?.id || userId,
+        event_id: eventId,
+        user_id: userId,
+        email,
+        full_name: fullName,
+        role,
+        is_lead: role === 'lead',
+        is_creator: isCreator,
+        is_current_user: isCurrentUser,
+        joined_at: details.joined_at || existing?.joined_at || event.created_at,
+        profile: {
+          id: userId,
+          email,
+          full_name: fullName,
+          avatar_url: profile?.avatar_url || existing?.profile?.avatar_url || null,
+        },
+      });
+    };
+
+    // a) The event creator
+    if (event.created_by) {
+      addOrUpdateMember(event.created_by, {
+        role: 'lead',
+        joined_at: event.created_at,
+        profile: creatorProfile,
+      });
+    }
+
+    // b) Squad members (if squad_id present)
+    (squadMembers || []).forEach((sm: any) => {
+      addOrUpdateMember(sm.user_id, {
+        id: sm.id,
+        role: sm.role === 'leader' ? 'lead' : 'member',
+        joined_at: sm.joined_at,
+      });
+    });
+
+    // c) Event participants
+    (participants || []).forEach((p: any) => {
+      addOrUpdateMember(p.user_id, {
+        id: p.id,
+        role: p.role === 'lead' ? 'lead' : 'member',
+        joined_at: p.joined_at,
+        profile: p.profile,
+      });
+    });
+
+    // Fallback: If still empty, add logged-in user so list is NEVER empty (0 MEMBERS)
+    if (teamMembersMap.size === 0 && user.id) {
+      addOrUpdateMember(user.id, {
+        role: user.id === event.created_by ? 'lead' : 'member',
+        joined_at: event.created_at,
+      });
+    }
+
+    const teamMembersList = Array.from(teamMembersMap.values());
+    teamMembersList.sort((a, b) => {
+      if (a.is_creator && !b.is_creator) return -1;
+      if (!a.is_creator && b.is_creator) return 1;
+      if (a.is_lead && !b.is_lead) return -1;
+      if (!a.is_lead && b.is_lead) return 1;
+      if (a.is_current_user && !b.is_current_user) return -1;
+      if (!a.is_current_user && b.is_current_user) return 1;
+      return (a.full_name || '').localeCompare(b.full_name || '');
+    });
 
     return { 
       success: true, 
       data: { 
         ...event, 
+        current_user_id: user.id,
         stages: stages || [], 
-        event_participants: participants || [],
+        event_participants: teamMembersList,
+        team_members: teamMembersList,
         squad: squad,
-        team_members: (participants || []).map((p: any) => ({
-          id: p.id,
-          event_id: p.event_id,
-          user_id: p.user_id,
-          email: p.profile?.email || '',
-          role: p.role === 'lead' ? 'owner' : 'member',
-          invited_at: p.joined_at,
-          joined_at: p.joined_at,
-          profile: p.profile,
-        })),
         current_stage_deliverables: deliverables,
         resources: resources || [],
         problem_statements: problemStatements || []
