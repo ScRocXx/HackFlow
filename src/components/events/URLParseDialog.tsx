@@ -921,7 +921,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                   <div className="flex items-center gap-2">
                     <span className="text-base">🎯</span>
                     <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d]">
-                      Mission Dossier
+                      Hackathon Brief
                     </span>
                   </div>
                   <span

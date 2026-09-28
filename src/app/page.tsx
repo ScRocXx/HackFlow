@@ -595,7 +595,7 @@ export default async function HomePage() {
                   a: 'HackFlow treats every hackathon as a step-by-step journey: Round 1 (Quiz) → Round 2 (PPT) → Round 3 (Prototype) → Round 4 (Demo). The dashboard counts down to the active round deadline, and completing a round spins up the task checklist for the next one.',
                 },
                 {
-                  q: 'How does multiplayer synchronization work?',
+                  q: 'How does shared team workspace synchronization work?',
                   a: 'HackFlow is built on Supabase with Realtime websockets. When someone checks off "Upload pitch deck PDF" or adds the GitHub repo link, it updates on everyone’s screen instantly.',
                 },
                 {

@@ -464,8 +464,8 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                   <div className="flex items-center gap-2.5">
                     <span className="text-xl">🎯</span>
                     <div>
-                      <h3 className="font-display text-xl font-bold tracking-tight text-[#f7f7f2]">Mission Dossier</h3>
-                      <p className="font-mono text-[11px] text-[#8bb2de]">Strategic Intelligence & Constraints</p>
+                      <h3 className="font-display text-xl font-bold tracking-tight text-[#f7f7f2]">Hackathon Brief</h3>
+                      <p className="font-mono text-[11px] text-[#8bb2de]">Key constraints & what to build</p>
                     </div>
                   </div>
                   <span

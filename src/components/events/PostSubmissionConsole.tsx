@@ -421,7 +421,7 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
               <FlaskConical className="h-5 w-5 text-[#f5b726]" />
               <div>
                 <h4 className="font-display text-base font-bold text-[#f7f7f2]">
-                  Pre-Submission Automated Smoke Test Suite
+                  Ready to submit? Check judge access
                 </h4>
                 <p className="font-mono text-[11px] text-[#8bb2de]">
                   Automated verification of GitHub repo visibility, Drive access permissions, and deliverable integrity.
@@ -436,11 +436,11 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
             >
               {runningSmokeTest ? (
                 <>
-                  <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Running Diagnostics...
+                  <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Checking Access...
                 </>
               ) : (
                 <>
-                  <ShieldCheck className="h-3.5 w-3.5 mr-1.5" /> Run Automated Smoke Test
+                  <ShieldCheck className="h-3.5 w-3.5 mr-1.5" /> Run Pre-Submission Check
                 </>
               )}
             </Button>

@@ -43,8 +43,8 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
 
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Squad Vault', href: '/vault', icon: FolderKanban },
-    { name: 'Squads & Friends', href: '/friends', icon: Users },
+    { name: 'Vault', href: '/vault', icon: FolderKanban },
+    { name: 'My Teams', href: '/friends', icon: Users },
     { name: 'Trophy Case', href: '/archive', icon: Trophy },
   ]
 
@@ -131,9 +131,9 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
 
             <h1 className="font-display text-base sm:text-2xl font-bold tracking-tight text-[#f7f7f2] truncate">
               {pathname === '/dashboard' ? 'Dashboard' : 
-               pathname === '/vault' ? 'Squad Vault' : 
+               pathname === '/vault' ? 'Vault' : 
                pathname === '/archive' ? 'Trophy Case' : 
-               pathname === '/friends' ? 'Squads & Friends' :
+               pathname === '/friends' ? 'My Teams' :
                pathname.startsWith('/events') ? 'Hackathon Workspace' : 'HackFlow'}
             </h1>
           </div>
@@ -177,8 +177,8 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
                   "text-[10px] font-bold uppercase tracking-tight truncate max-w-[70px]",
                   isActive ? "text-[#f5b726]" : "text-[#f7f7f2]"
                 )}>
-                  {item.name === 'Squad Vault' ? 'Vault' :
-                   item.name === 'Squads & Friends' ? 'Squads' :
+                  {item.name === 'Vault' ? 'Vault' :
+                   item.name === 'My Teams' ? 'Teams' :
                    item.name === 'Trophy Case' ? 'Trophies' :
                    'Tracker'}
                 </span>
