@@ -93,13 +93,13 @@ export function StatusPills({ eventId, currentStatus, onStatusChange }: StatusPi
         let colorClasses = ""
         if (isActive) {
           switch (status.color) {
-            case 'blue': colorClasses = 'bg-[#8bb2de] text-[#10201d] border-[#10201d] shadow-[2px_2px_0_#2e4742]'; break;
-            case 'indigo': colorClasses = 'bg-[#3d5f58] text-[#f7f7f2] border-[#10201d] shadow-[2px_2px_0_#10201d]'; break;
-            case 'orange': colorClasses = 'bg-[#f5b726] text-[#10201d] border-[#10201d] shadow-[2px_2px_0_#8a5d13]'; break;
-            case 'emerald': colorClasses = 'bg-[#e97b77] text-[#10201d] border-[#10201d] shadow-[2px_2px_0_#671912]'; break;
+            case 'blue': colorClasses = 'bg-hack-sky text-hack-ink border-hack-ink shadow-hack-chip'; break;
+            case 'indigo': colorClasses = 'bg-hack-teal text-hack-panel border-hack-ink shadow-hack-chip'; break;
+            case 'orange': colorClasses = 'bg-hack-gold text-hack-ink border-hack-ink shadow-hack-chip'; break;
+            case 'emerald': colorClasses = 'bg-hack-coral text-hack-ink border-hack-ink shadow-hack-chip'; break;
           }
         } else {
-          colorClasses = 'bg-[#f7f7f2] text-[#34433f]/70 border-[#10201d] opacity-60 hover:opacity-100 hover:bg-[#e4e5da]'
+          colorClasses = 'bg-hack-panel text-hack-subtext/70 border-hack-ink opacity-60 hover:opacity-100 hover:bg-hack-muted'
         }
 
         return (
@@ -138,11 +138,11 @@ export function StatusPills({ eventId, currentStatus, onStatusChange }: StatusPi
             "w-full flex flex-col items-center justify-center p-1 border-2 transition-all font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-wider",
             isOutcomeActive 
               ? activeStatus === 'winner'
-                ? "bg-[#f5b726] text-[#10201d] border-[#10201d] shadow-[2px_2px_0_#8a5d13]"
+                ? "bg-hack-gold text-hack-ink border-hack-ink shadow-hack-chip"
                 : activeStatus === 'finalist'
-                ? "bg-[#f6c4c1] text-[#10201d] border-[#10201d] shadow-[2px_2px_0_#671912]"
-                : "bg-[#8bb2de] text-[#10201d] border-[#10201d] shadow-[2px_2px_0_#2e4742]"
-              : "bg-[#f7f7f2] text-[#34433f]/70 border-[#10201d] opacity-60 hover:opacity-100 hover:bg-[#e4e5da]",
+                ? "bg-[#f6c4c1] text-hack-ink border-hack-ink shadow-hack-chip"
+                : "bg-hack-sky text-hack-ink border-hack-ink shadow-hack-chip"
+              : "bg-hack-panel text-hack-subtext/70 border-hack-ink opacity-60 hover:opacity-100 hover:bg-hack-muted",
             isLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
           )}
           title="Lifecycle & Outcome"
@@ -162,8 +162,8 @@ export function StatusPills({ eventId, currentStatus, onStatusChange }: StatusPi
 
         {/* Dropdown Menu */}
         {isDropdownOpen && (
-          <div className="absolute right-0 bottom-full mb-1 sm:bottom-auto sm:top-full sm:mt-1 w-44 bg-[#f7f7f2] border-2 border-[#10201d] shadow-[4px_4px_0_#10201d] z-50 p-1 space-y-1">
-            <div className="px-2 py-1 text-[9px] font-mono font-bold uppercase tracking-wider text-[#34433f] border-b border-[#10201d]/20">
+          <div className="absolute right-0 bottom-full mb-1 sm:bottom-auto sm:top-full sm:mt-1 w-44 bg-hack-panel border-2 border-hack-ink shadow-hack-card z-50 p-1 space-y-1">
+            <div className="px-2 py-1 text-[9px] font-mono font-bold uppercase tracking-wider text-hack-subtext border-b border-hack-ink/20">
               Evaluation & Outcome
             </div>
             {OUTCOME_STATUSES.map((status) => {
@@ -176,8 +176,8 @@ export function StatusPills({ eventId, currentStatus, onStatusChange }: StatusPi
                   className={cn(
                     "w-full flex items-center justify-between px-2 py-1.5 text-xs font-mono font-bold text-left transition-colors border",
                     isSelected 
-                      ? "bg-[#3d5f58] text-[#f7f7f2] border-[#10201d]" 
-                      : "bg-white text-[#10201d] border-transparent hover:bg-[#e4e5da] hover:border-[#10201d]"
+                      ? "bg-hack-teal text-hack-panel border-hack-ink" 
+                      : "bg-white text-hack-ink border-transparent hover:bg-hack-muted hover:border-hack-ink"
                   )}
                 >
                   <span className="flex items-center gap-1.5">

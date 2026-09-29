@@ -101,51 +101,56 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
         riskList.push({
           eventTitle: ev.title,
           eventId: ev.id,
-          message: `${stage.title} has ${incomplete.length} unfinished tasks (${Math.round(hoursLeft)}h left).`,
-          severity: hoursLeft < 12 ? 'critical' : 'warning'
-        })
-      }
-
-      // Case 2: Deadline within 72h but zero deliverables created at all
-      if (deliverables.length === 0 && hoursLeft < 72) {
-        riskList.push({
-          eventTitle: ev.title,
-          eventId: ev.id,
-          message: `${stage.title} checklist is empty (${Math.round(hoursLeft)}h left).`,
+          message: `${incomplete.length} deliverables pending with under 48h remaining (${Math.round(hoursLeft)}h left).`,
           severity: hoursLeft < 24 ? 'critical' : 'warning'
         })
       }
+
+      // Case 2: Extreme urgency (< 24h) with any deliverables pending
+      if (hoursLeft < 24 && incomplete.length > 0) {
+        // avoid duplicate if already caught
+        if (!riskList.some(r => r.eventId === ev.id)) {
+          riskList.push({
+            eventTitle: ev.title,
+            eventId: ev.id,
+            message: `Final freeze in ${Math.round(hoursLeft)}h! ${incomplete.length} deliverables remaining.`,
+            severity: 'critical'
+          })
+        }
+      }
     }
 
-    return riskList.slice(0, 3)
+    return riskList.sort((a, b) => (b.severity === 'critical' ? 1 : 0) - (a.severity === 'critical' ? 1 : 0)).slice(0, 3)
   }, [safeEvents])
 
-  // Filter events for the board
-  const filteredEvents = safeEvents.filter(ev => {
-    if (selectedSquad !== 'all' && ev.squad_name !== selectedSquad) return false
-    if (selectedFilter === 'all') return true
-    if (selectedFilter === 'active') return ev.status === 'registered' || ev.status === 'building'
-    if (selectedFilter === 'building') return ev.status === 'building'
-    if (selectedFilter === 'submitted') return ev.status === 'submitted'
-    if (selectedFilter === 'under_review') return ev.status === 'under_review'
-    if (selectedFilter === 'finalist') return ev.status === 'finalist'
-    if (selectedFilter === 'won') return ev.status === 'winner' || ev.status === 'runner_up'
-    return ev.status === selectedFilter
-  })
+  // Filter events
+  const filteredEvents = useMemo(() => {
+    return safeEvents.filter(event => {
+      // Squad filter
+      if (selectedSquad !== 'all' && event.squad_name !== selectedSquad) {
+        return false
+      }
 
-  const activeEventsCount = safeEvents.filter(e => e?.status === 'registered' || e?.status === 'building').length
-  
-  const totalDeliverables = safeEvents.reduce((acc, ev) => acc + (ev?.deliverable_progress?.total || 0), 0)
-  const doneDeliverables = safeEvents.reduce((acc, ev) => acc + (ev?.deliverable_progress?.done || 0), 0)
-  const completionRate = totalDeliverables ? Math.round((doneDeliverables / totalDeliverables) * 100) : 0
+      // Status filter
+      if (selectedFilter === 'all') return true
+      if (selectedFilter === 'active') {
+        return !['winner', 'runner_up', 'archived', 'submitted'].includes(event.status)
+      }
+      if (selectedFilter === 'submitted') return event.status === 'submitted'
+      if (selectedFilter === 'under_review') return event.status === 'under_review'
+      if (selectedFilter === 'finalist') return event.status === 'finalist'
+      if (selectedFilter === 'won') return ['winner', 'runner_up'].includes(event.status)
+      return true
+    })
+  }, [safeEvents, selectedFilter, selectedSquad])
 
-  const now = new Date()
-  const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
-  const upcomingDeadlinesCount = safeEvents.filter(ev => {
-    if (!ev?.active_stage?.deadline) return false
-    const d = new Date(ev.active_stage.actionable_deadline || ev.active_stage.deadline)
-    return !isNaN(d.getTime()) && d >= now && d <= in7Days
-  }).length
+  // Metrics
+  const activeEventsCount = safeEvents.filter(e => !['winner', 'runner_up', 'archived', 'submitted'].includes(e.status)).length
+  const upcomingDeadlinesCount = urgentItems.length
+
+  const totalDeliverables = safeEvents.reduce((acc, ev) => acc + (ev.deliverable_progress?.total || 0), 0)
+  const doneDeliverables = safeEvents.reduce((acc, ev) => acc + (ev.deliverable_progress?.done || 0), 0)
+  const completionRate = totalDeliverables > 0 ? Math.round((doneDeliverables / totalDeliverables) * 100) : 0
 
   const filters = [
     { id: 'all', label: 'All', count: safeEvents.length },
@@ -165,18 +170,18 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
       <AtRiskWarnings risks={risks} />
 
       {/* Compact Secondary Metrics Strip & Quick Ingest CTA */}
-      <div className="border-2 border-[#10201d] bg-[#f7f7f2] p-3 sm:p-4 shadow-[4px_4px_0_#10201d] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 sm:gap-4 flex-wrap font-mono text-xs text-[#34433f]">
-          <span className="font-bold text-[#10201d]">
-            <strong className="text-base text-[#10201d] font-black">{activeEventsCount}</strong> active
+      <div className="border-2 border-hack-ink bg-hack-panel p-3 sm:p-4 shadow-hack-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 sm:gap-4 flex-wrap font-mono text-xs text-hack-subtext">
+          <span className="font-bold text-hack-ink">
+            <strong className="text-base text-hack-ink font-black">{activeEventsCount}</strong> active
           </span>
-          <span className="text-[#10201d]/30 font-black">|</span>
-          <span className="font-bold text-[#10201d]">
-            <strong className="text-base text-[#10201d] font-black">{upcomingDeadlinesCount}</strong> deadlines this week
+          <span className="text-hack-ink/30 font-black">|</span>
+          <span className="font-bold text-hack-ink">
+            <strong className="text-base text-hack-ink font-black">{upcomingDeadlinesCount}</strong> deadlines this week
           </span>
-          <span className="text-[#10201d]/30 font-black">|</span>
-          <span className="font-bold text-[#10201d]">
-            <strong className="text-base text-[#10201d] font-black">{doneDeliverables}/{totalDeliverables}</strong> tasks done ({completionRate}%)
+          <span className="text-hack-ink/30 font-black">|</span>
+          <span className="font-bold text-hack-ink">
+            <strong className="text-base text-hack-ink font-black">{doneDeliverables}/{totalDeliverables}</strong> tasks done ({completionRate}%)
           </span>
         </div>
 
@@ -184,7 +189,7 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
           <Button 
             onClick={() => setIsDialogOpen(true)}
             size="sm"
-            className="w-full sm:w-auto border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] active:scale-[0.98] text-[#10201d] font-mono text-xs font-black uppercase tracking-wide shadow-[3px_3px_0_#671912] active:translate-x-[1px] active:translate-y-[1px] hover:translate-x-[1px] hover:translate-y-[1px] px-4 h-9 flex items-center justify-center gap-1.5 touch-manipulation"
+            className="w-full sm:w-auto border-2 border-hack-ink bg-hack-coral hover:bg-hack-pink active:scale-[0.98] text-hack-ink font-mono text-xs font-black uppercase tracking-wide shadow-[3px_3px_0_#671912] active:translate-x-[1px] active:translate-y-[1px] hover:translate-x-[1px] hover:translate-y-[1px] px-4 h-9 flex items-center justify-center gap-1.5 touch-manipulation"
           >
             <span className="text-base font-bold">+</span> Paste Hackathon Link
           </Button>
@@ -201,10 +206,10 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
                   key={f.id}
                   onClick={() => setSelectedFilter(f.id)}
                   className={cn(
-                    "font-mono text-xs font-bold uppercase tracking-wider px-2.5 sm:px-3 py-1.5 border-2 border-[#10201d] transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
+                    "font-mono text-xs font-bold uppercase tracking-wider px-2.5 sm:px-3 py-1.5 border-2 border-hack-ink transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
                     selectedFilter === f.id
-                      ? "bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#8a5d13]"
-                      : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"
+                      ? "bg-hack-yellow text-hack-ink shadow-[2px_2px_0_#8a5d13]"
+                      : "bg-hack-panel text-hack-subtext hover:bg-hack-muted active:bg-hack-muted"
                   )}
                 >
                   {f.label} ({f.count})
@@ -213,12 +218,12 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
             </div>
 
             {availableSquads.length > 0 && (
-              <div className="flex items-center gap-1.5 border-2 border-[#10201d] bg-[#f7f7f2] px-2 py-1 shadow-[2px_2px_0_#10201d] shrink-0">
-                <span className="font-mono text-xs font-bold text-[#10201d]">Squad:</span>
+              <div className="flex items-center gap-1.5 border-2 border-hack-ink bg-hack-panel px-2 py-1 shadow-hack-sm shrink-0">
+                <span className="font-mono text-xs font-bold text-hack-ink">Squad:</span>
                 <select
                   value={selectedSquad}
                   onChange={(e) => setSelectedSquad(e.target.value)}
-                  className="font-mono text-xs font-bold bg-white border border-[#10201d] px-1 py-0.5 focus:outline-none"
+                  className="font-mono text-xs font-bold bg-white border border-hack-ink px-1 py-0.5 focus:outline-none"
                 >
                   <option value="all">All Squads</option>
                   {availableSquads.map((sq) => (
@@ -231,28 +236,28 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
             )}
           </div>
 
-          <p className="font-mono text-xs text-[#34433f] shrink-0">
+          <p className="font-mono text-xs text-hack-subtext shrink-0">
             Showing {filteredEvents.length} of {safeEvents.length} total
           </p>
         </div>
 
         {/* Events Grid */}
         {filteredEvents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 px-4 text-center border-2 border-[#10201d] bg-[#f7f7f2] shadow-[7px_7px_0_#671912]">
-            <div className="h-16 w-16 bg-[#8bb2de] border-2 border-[#10201d] shadow-[3px_3px_0_#2e4742] flex items-center justify-center mb-4 text-[#10201d]">
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center border-2 border-hack-ink bg-hack-panel shadow-[7px_7px_0_#671912]">
+            <div className="h-16 w-16 bg-hack-sky border-2 border-hack-ink shadow-[3px_3px_0_#2e4742] flex items-center justify-center mb-4 text-hack-ink">
               <Trophy className="h-8 w-8" />
             </div>
-            <h3 className="font-display text-2xl font-bold text-[#10201d]">
+            <h3 className="font-display text-2xl font-bold text-hack-ink">
               {safeEvents.length === 0 ? 'Nothing here yet' : 'No competitions match this filter'}
             </h3>
-            <p className="mt-2 font-mono text-xs text-[#34433f] max-w-sm">
+            <p className="mt-2 font-mono text-xs text-hack-subtext max-w-sm">
               {safeEvents.length === 0 
                 ? "Paste your first hackathon link and we'll build the workspace for you."
                 : 'Try selecting a different filter above or add another hackathon.'}
             </p>
             <Button 
               onClick={() => setIsDialogOpen(true)}
-              className="mt-6 font-mono text-xs font-bold border-2 border-[#10201d] bg-[#e97b77] text-[#10201d] shadow-[3px_3px_0_#671912]"
+              className="mt-6 font-mono text-xs font-bold border-2 border-hack-ink bg-hack-coral text-hack-ink shadow-[3px_3px_0_#671912]"
             >
               + Paste Hackathon Link
             </Button>
