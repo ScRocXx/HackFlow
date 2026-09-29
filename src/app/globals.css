@@ -130,5 +130,21 @@ button, a, input, select, textarea {
   transform: translate(-2px, -2px);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .card-hover-lift:hover {
+    transform: none;
+  }
+}
+
 
 

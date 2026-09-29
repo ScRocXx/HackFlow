@@ -161,6 +161,7 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
                     isDone ? "bg-[#93C9B8]" : "bg-white hover:bg-hack-panel"
                   )}
                   title={isDone ? "Mark incomplete" : "Mark complete"}
+                  aria-label={isDone ? `Mark "${item.title}" incomplete` : `Mark "${item.title}" complete`}
                 >
                   {isLoading ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin text-hack-ink" />
@@ -187,6 +188,7 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
                   onClick={() => handleDelete(item.id)}
                   className="opacity-60 hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 shrink-0 text-hack-ink hover:text-hack-rust transition-opacity p-1 touch-manipulation"
                   title="Delete task"
+                  aria-label={`Delete task: ${item.title}`}
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -209,6 +211,7 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
             size="icon" 
             disabled={!newTask.trim()}
             className="border-2 border-hack-ink shadow-hack-chip"
+            aria-label="Add deliverable"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
           </Button>
