@@ -9,6 +9,7 @@ import { AtRiskWarnings, type RiskItem } from '@/components/events/AtRiskWarning
 import dynamic from 'next/dynamic'
 import { cn } from '@/lib/utils'
 import type { Event, EventStage } from '@/lib/supabase/types'
+import { computeActiveStage } from '@/lib/utils/active-stage'
 
 const URLParseDialog = dynamic(
   () => import('@/components/events/URLParseDialog').then(mod => mod.URLParseDialog),
@@ -49,7 +50,7 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
     for (const ev of safeEvents) {
       if (['winner', 'runner_up', 'archived'].includes(ev.status)) continue
 
-      const stage = ev.active_stage
+      const stage = (computeActiveStage(ev.stages, ev.active_stage_id || ev.active_stage?.id) || ev.active_stage) as typeof ev.active_stage
       if (!stage?.deadline) continue
 
       const dlStr = stage.actionable_deadline || stage.window_end || stage.deadline
@@ -82,7 +83,7 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
     for (const ev of safeEvents) {
       if (['winner', 'runner_up', 'archived', 'submitted'].includes(ev.status)) continue
 
-      const stage = ev.active_stage
+      const stage = (computeActiveStage(ev.stages, ev.active_stage_id || ev.active_stage?.id) || ev.active_stage) as typeof ev.active_stage
       if (!stage?.deadline) continue
 
       const dlStr = stage.actionable_deadline || stage.window_end || stage.deadline

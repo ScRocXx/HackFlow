@@ -8,6 +8,7 @@ import { sendTeamInviteEmail } from '@/lib/notifications/send-email';
 import { getServerBaseUrl } from '@/lib/utils/url-server';
 import { ensureExternalUrl } from '@/lib/utils/url';
 import type { MissionBrief } from '@/lib/supabase/types';
+import { computeActiveStage } from '@/lib/utils/active-stage';
 
 export type CreateEventInput = {
   title: string;
@@ -956,11 +957,8 @@ export async function getUserEvents() {
       const stagesForEvent = ((event.stages || []) as any[]).sort((a: any, b: any) => a.round_number - b.round_number);
       const resourcesForEvent = event.resources || [];
       
-      // Determine active stage: matching active_stage_id (validated!) or first non-completed stage or first stage
-      let activeStage = stagesForEvent.find((s: any) => s.id === event.active_stage_id);
-      if (!activeStage && stagesForEvent.length > 0) {
-        activeStage = stagesForEvent.find((s: any) => !s.is_completed) || stagesForEvent[0];
-      }
+      // Determine active stage using centralized computation
+      let activeStage = computeActiveStage(stagesForEvent, event.active_stage_id);
 
       // Calculate deliverables progress for active stage
       let deliverable_progress = { done: 0, total: 0 };

@@ -3,9 +3,10 @@
 import { Check, Clock, Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
+import type { EventStage } from '@/lib/supabase/types'
 
 interface StageTimelineProps {
-  stages: any[]
+  stages: EventStage[]
   activeStageId: string | null
   selectedStageId?: string | null
   onStageSelect?: (stageId: string) => void
@@ -45,9 +46,9 @@ export function StageTimeline({
             const isSelected = stage.id === currentFocusId
             const isCompleted = index < activeIndex || stage.is_completed || stage.status === 'completed'
             
-            const deliverables = stage.stage_deliverables || stage.deliverables || []
+            const deliverables = (stage as any).stage_deliverables || stage.deliverables || []
             const totalTasks = deliverables.length
-            const doneTasks = deliverables.filter((d: any) => d.is_done || d.completed).length
+            const doneTasks = deliverables.filter((d: { is_done?: boolean; completed?: boolean }) => d.is_done || d.completed).length
 
             // Format deadline date
             const dateDisplay = stage.raw_date_snippet || (stage.deadline ? (() => {
