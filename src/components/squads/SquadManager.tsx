@@ -9,7 +9,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { Users, Plus, Trash2, LogOut, FolderKanban, ShieldAlert, Check, UserPlus, Copy, Link as LinkIcon } from 'lucide-react'
+import { Users, Plus, Trash2, LogOut, FolderKanban, Check, UserPlus, Copy, Link as LinkIcon } from 'lucide-react'
 import Link from 'next/link'
 
 interface SquadManagerProps {
@@ -98,6 +98,8 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
       if (res.success) {
         setSquads(squads.filter((s) => s.id !== squadId))
         toast({ title: 'Squad deleted', variant: 'destructive' })
+      } else {
+        toast({ title: 'Delete failed', description: res.error, variant: 'destructive' })
       }
     } finally {
       setActionLoading(null)
@@ -105,13 +107,15 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
   }
 
   const handleLeaveSquad = async (squadId: string) => {
-    if (!confirm('Leave this squad? You will lose access to its vault.')) return
+    if (!confirm('Are you sure you want to leave this squad?')) return
     setActionLoading(squadId)
     try {
       const res = await removeSquadMember(squadId, currentUserId)
       if (res.success) {
         setSquads(squads.filter((s) => s.id !== squadId))
         toast({ title: 'Left squad' })
+      } else {
+        toast({ title: 'Failed to leave', description: res.error, variant: 'destructive' })
       }
     } finally {
       setActionLoading(null)
@@ -124,55 +128,75 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
     try {
       const res = await addSquadMember(activeSquadForAdd.id, selectedFriendToAdd)
       if (res.success) {
-        toast({ title: 'Member added to squad!', variant: 'success' })
-        // Update local squad member count
+        toast({ title: 'Teammate added to squad!', variant: 'success' })
+        // Update squad in local state
+        const addedFriend = friends.find(
+          (f) => f.sender_id === selectedFriendToAdd || f.receiver_id === selectedFriendToAdd
+        )
+        const newMember: SquadMember = {
+          id: Math.random().toString(),
+          squad_id: activeSquadForAdd.id,
+          user_id: selectedFriendToAdd,
+          role: 'member',
+          joined_at: new Date().toISOString(),
+          profile: addedFriend?.friend_profile,
+        }
+
         setSquads(
-          squads.map((s) =>
-            s.id === activeSquadForAdd.id ? { ...s, member_count: (s.member_count || 1) + 1 } : s
-          )
+          squads.map((s) => {
+            if (s.id === activeSquadForAdd.id) {
+              const currentMembers = s.members || []
+              return {
+                ...s,
+                members: [...currentMembers, newMember],
+                member_count: (s.member_count || currentMembers.length) + 1,
+              }
+            }
+            return s
+          })
         )
         setActiveSquadForAdd(null)
         setSelectedFriendToAdd('')
+      } else {
+        toast({ title: 'Could not add member', description: res.error, variant: 'destructive' })
       }
     } finally {
       setActionLoading(null)
     }
   }
 
-  // Get eligible friends with valid user IDs
-  const validFriends = friends.filter((f) => {
-    const friendId = f.sender_id === currentUserId ? f.receiver_id : f.sender_id
-    return !!friendId
-  })
+  // Pre-filter friends who are already connected
+  const validFriends = friends.filter((f) => f.status === 'accepted')
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-[#f7f7f2] border-2 border-[#10201d] shadow-[5px_5px_0_#10201d]">
+      {/* Squad Header & CTA */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-hack-panel border-2 border-hack-ink shadow-[5px_5px_0_#10201d]">
         <div>
-          <h2 className="font-display font-bold text-xl text-[#10201d]">Your Squads</h2>
-          <p className="font-mono text-xs text-[#57726d] mt-1">
+          <h2 className="font-display font-bold text-xl text-hack-ink">Your Squads</h2>
+          <p className="font-mono text-xs text-hack-subtext mt-1">
             Create teams to share vaults, manage teammates, and compete together.
           </p>
         </div>
         <Button
           onClick={() => setIsCreateOpen(true)}
-          className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#2e4742] text-[#f2f2eb] hover:bg-[#3d5f58] shadow-[3px_3px_0_#10201d] flex-shrink-0"
+          className="font-mono text-xs font-bold border-2 border-hack-ink bg-hack-forest text-hack-sand hover:bg-hack-teal shadow-hack-sm flex-shrink-0"
         >
-          <Plus className="h-4 w-4 mr-1 text-[#f5b726]" /> Create New Squad
+          <Plus className="h-4 w-4 mr-1 text-hack-yellow" /> Create New Squad
         </Button>
       </div>
 
       {/* Squad Cards Grid */}
       {squads.length === 0 ? (
-        <div className="text-center py-12 border-2 border-dashed border-[#57726d]/40 p-8 bg-[#f7f7f2]/50 shadow-[5px_5px_0_#10201d]">
-          <Users className="h-12 w-12 mx-auto text-[#57726d] mb-3 opacity-60" />
-          <h3 className="font-display font-bold text-lg text-[#10201d]">No Squads Formed Yet</h3>
-          <p className="font-mono text-xs text-[#57726d] mt-1 max-w-md mx-auto">
+        <div className="text-center py-12 border-2 border-dashed border-hack-subtext/40 p-8 bg-hack-panel/50 shadow-[5px_5px_0_#10201d]">
+          <Users className="h-12 w-12 mx-auto text-hack-subtext mb-3 opacity-60" />
+          <h3 className="font-display font-bold text-lg text-hack-ink">No Squads Formed Yet</h3>
+          <p className="font-mono text-xs text-hack-subtext mt-1 max-w-md mx-auto">
             Form your first squad with accepted friends to share master slide decks, Figma kits, and registration profile cards.
           </p>
           <Button
             onClick={() => setIsCreateOpen(true)}
-            className="mt-4 font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] hover:bg-[#faaf00] shadow-[3px_3px_0_#10201d]"
+            className="mt-4 font-mono text-xs font-bold border-2 border-hack-ink bg-hack-yellow text-hack-ink hover:bg-[#faaf00] shadow-hack-sm"
           >
             <Plus className="h-4 w-4 mr-1" /> Form a Squad Now
           </Button>
@@ -186,19 +210,19 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
             return (
               <Card
                 key={squad.id}
-                className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#10201d] flex flex-col justify-between"
+                className="border-2 border-hack-ink bg-hack-panel shadow-[5px_5px_0_#10201d] flex flex-col justify-between"
               >
                 <div>
-                  <CardHeader className="p-4 border-b-2 border-[#10201d] bg-[#2e4742] text-[#f2f2eb] flex flex-row items-center justify-between">
+                  <CardHeader className="p-4 border-b-2 border-hack-ink bg-hack-forest text-hack-sand flex flex-row items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="h-8 w-8 rounded-none border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] font-mono font-bold flex items-center justify-center text-xs">
+                      <div className="h-8 w-8 rounded-none border-2 border-hack-ink bg-hack-yellow text-hack-ink font-mono font-bold flex items-center justify-center text-xs">
                         {squad.name.substring(0, 2).toUpperCase()}
                       </div>
-                      <CardTitle className="font-display text-base text-[#f2f2eb]">{squad.name}</CardTitle>
+                      <CardTitle className="font-display text-base text-hack-sand">{squad.name}</CardTitle>
                     </div>
                     <Badge
-                      className={`font-mono text-xs border-2 border-[#10201d] ${
-                        isCreator ? 'bg-[#f5b726] text-[#10201d]' : 'bg-[#8bb2de] text-[#10201d]'
+                      className={`font-mono text-xs border-2 border-hack-ink ${
+                        isCreator ? 'bg-hack-yellow text-hack-ink' : 'bg-hack-sky text-hack-ink'
                       }`}
                     >
                       {isCreator ? 'Leader' : 'Member'}
@@ -209,7 +233,7 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
                     {/* Member Avatars & List */}
                     <div>
                       <div className="flex items-center justify-between mb-2">
-                        <span className="font-mono text-xs font-bold text-[#57726d] uppercase">
+                        <span className="font-mono text-xs font-bold text-hack-subtext uppercase">
                           Roster ({squad.member_count || members.length || 1})
                         </span>
                         {isCreator && (
@@ -218,7 +242,7 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
                               setActiveSquadForAdd(squad)
                               setSelectedFriendToAdd('')
                             }}
-                            className="font-mono text-xs text-[#2e4742] hover:underline flex items-center gap-1 font-bold"
+                            className="font-mono text-xs text-hack-forest hover:underline flex items-center gap-1 font-bold"
                           >
                             <UserPlus className="h-3 w-3" /> Add Friend
                           </button>
@@ -233,17 +257,17 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
                               <Badge
                                 key={m.id}
                                 variant="outline"
-                                className="font-mono text-xs border-2 border-[#10201d] bg-white text-[#10201d] py-1 px-2 flex items-center gap-1.5 shadow-[2px_2px_0_#10201d]"
+                                className="font-mono text-xs border-2 border-hack-ink bg-white text-hack-ink py-1 px-2 flex items-center gap-1.5 shadow-hack-sm"
                               >
                                 <span>{name}</span>
                                 {m.role === 'leader' && (
-                                  <span className="text-[10px] bg-[#f5b726] px-1 font-bold">L</span>
+                                  <span className="text-[10px] bg-hack-yellow px-1 font-bold">L</span>
                                 )}
                               </Badge>
                             )
                           })
                         ) : (
-                          <span className="font-mono text-xs text-[#57726d]">
+                          <span className="font-mono text-xs text-hack-subtext">
                             {squad.member_count || 1} active teammate(s)
                           </span>
                         )}
@@ -251,11 +275,11 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
                     </div>
 
                     {/* Shareable Team Invite Link */}
-                    <div className="pt-2 border-t border-[#10201d]/15">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-[#f2f2eb] p-2.5 border border-[#10201d]">
+                    <div className="pt-2 border-t border-hack-ink/15">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-hack-sand p-2.5 border border-hack-ink">
                         <div className="flex items-center gap-1.5 overflow-hidden">
-                          <LinkIcon className="h-3.5 w-3.5 text-[#57726d] shrink-0" />
-                          <span className="font-mono text-[11px] text-[#34433f] truncate">
+                          <LinkIcon className="h-3.5 w-3.5 text-hack-subtext shrink-0" />
+                          <span className="font-mono text-[11px] text-hack-subtext truncate">
                             {typeof window !== 'undefined'
                               ? `${window.location.host}/join/${squad.invite_code || squad.id.slice(0, 8).toUpperCase()}`
                               : `hackflow.app/join/${squad.invite_code || squad.id.slice(0, 8).toUpperCase()}`}
@@ -265,7 +289,7 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
                           type="button"
                           onClick={() => handleCopyInviteLink(squad)}
                           size="sm"
-                          className="font-mono text-xs font-bold border border-[#10201d] bg-white text-[#10201d] hover:bg-[#e4e5da] shadow-[1px_1px_0_#10201d] shrink-0 h-7 px-2.5"
+                          className="font-mono text-xs font-bold border border-hack-ink bg-white text-hack-ink hover:bg-hack-muted shadow-[1px_1px_0_#10201d] shrink-0 h-7 px-2.5"
                         >
                           {copiedSquadId === squad.id ? (
                             <>
@@ -283,11 +307,11 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
                 </div>
 
                 {/* Bottom Actions */}
-                <div className="p-4 border-t-2 border-[#10201d] bg-white/70 flex items-center justify-between gap-2">
+                <div className="p-4 border-t-2 border-hack-ink bg-white/70 flex items-center justify-between gap-2">
                   <Link href={`/vault?squad=${squad.id}`}>
                     <Button
                       size="sm"
-                      className="font-mono text-xs border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] hover:bg-[#faaf00] shadow-[2px_2px_0_#10201d]"
+                      className="font-mono text-xs border-2 border-hack-ink bg-hack-yellow text-hack-ink hover:bg-[#faaf00] shadow-hack-sm"
                     >
                       <FolderKanban className="h-3.5 w-3.5 mr-1" /> Open Squad Vault
                     </Button>
@@ -300,7 +324,7 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
                         variant="ghost"
                         onClick={() => handleDeleteSquad(squad.id)}
                         disabled={actionLoading === squad.id}
-                        className="text-[#e53927] hover:bg-[#fee2e2] font-mono text-xs"
+                        className="text-hack-red hover:bg-[#fee2e2] font-mono text-xs"
                       >
                         <Trash2 className="h-3.5 w-3.5 mr-1" /> Disband
                       </Button>
@@ -310,7 +334,7 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
                         variant="ghost"
                         onClick={() => handleLeaveSquad(squad.id)}
                         disabled={actionLoading === squad.id}
-                        className="text-[#e53927] hover:bg-[#fee2e2] font-mono text-xs"
+                        className="text-hack-red hover:bg-[#fee2e2] font-mono text-xs"
                       >
                         <LogOut className="h-3.5 w-3.5 mr-1" /> Leave
                       </Button>
@@ -325,17 +349,17 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
 
       {/* Create Squad Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[7px_7px_0_#671912] max-w-lg p-0">
-          <DialogHeader className="p-4 border-b-2 border-[#10201d] bg-[#2e4742] text-[#f2f2eb]">
+        <DialogContent className="border-2 border-hack-ink bg-hack-panel shadow-[7px_7px_0_#671912] max-w-lg p-0">
+          <DialogHeader className="p-4 border-b-2 border-hack-ink bg-hack-forest text-hack-sand">
             <DialogTitle className="font-display text-lg">Form a New Squad</DialogTitle>
-            <DialogDescription className="font-mono text-xs text-[#f2f2eb]/70">
+            <DialogDescription className="font-mono text-xs text-hack-sand/70">
               Create an isolated team workspace with its own quick-fill profile cards and shared decks.
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleCreateSquad} className="p-4 space-y-4">
             <div>
-              <label className="block font-mono text-xs font-bold text-[#10201d] uppercase mb-1">
+              <label className="block font-mono text-xs font-bold text-hack-ink uppercase mb-1">
                 Squad Name
               </label>
               <Input
@@ -343,20 +367,20 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
                 value={squadName}
                 onChange={(e) => setSquadName(e.target.value)}
                 required
-                className="font-mono text-sm border-2 border-[#10201d] bg-white"
+                className="font-mono text-sm border-2 border-hack-ink bg-white"
               />
             </div>
 
             <div>
-              <label className="block font-mono text-xs font-bold text-[#10201d] uppercase mb-2">
+              <label className="block font-mono text-xs font-bold text-hack-ink uppercase mb-2">
                 Select Squad Teammates ({selectedFriendIds.length} selected)
               </label>
               {validFriends.length === 0 ? (
-                <div className="p-3 bg-white border-2 border-[#10201d] font-mono text-xs text-[#57726d]">
+                <div className="p-3 bg-white border-2 border-hack-ink font-mono text-xs text-hack-subtext">
                   You have no connected friends yet. You can still form this squad now and invite teammates later!
                 </div>
               ) : (
-                <div className="max-h-48 overflow-y-auto space-y-2 border-2 border-[#10201d] bg-white p-2">
+                <div className="max-h-48 overflow-y-auto space-y-2 border-2 border-hack-ink bg-white p-2">
                   {validFriends.map((f) => {
                     const friendId = f.sender_id === currentUserId ? f.receiver_id! : f.sender_id
                     const profile = f.friend_profile
@@ -367,14 +391,14 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
                       <div
                         key={f.id}
                         onClick={() => handleToggleFriend(friendId)}
-                        className={`p-2 border-2 border-[#10201d] cursor-pointer flex items-center justify-between transition-colors ${
-                          isSelected ? 'bg-[#f5b726]/30 border-[#10201d]' : 'bg-[#f7f7f2] hover:bg-white'
+                        className={`p-2 border-2 border-hack-ink cursor-pointer flex items-center justify-between transition-colors ${
+                          isSelected ? 'bg-hack-yellow/30 border-hack-ink' : 'bg-hack-panel hover:bg-white'
                         }`}
                       >
-                        <div className="font-mono text-xs font-bold text-[#10201d]">{name}</div>
+                        <div className="font-mono text-xs font-bold text-hack-ink">{name}</div>
                         <div
-                          className={`h-5 w-5 border-2 border-[#10201d] flex items-center justify-center ${
-                            isSelected ? 'bg-[#2e4742] text-white' : 'bg-white'
+                          className={`h-5 w-5 border-2 border-hack-ink flex items-center justify-center ${
+                            isSelected ? 'bg-hack-forest text-white' : 'bg-white'
                           }`}
                         >
                           {isSelected && <Check className="h-3 w-3" />}
@@ -391,14 +415,14 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
                 type="button"
                 variant="outline"
                 onClick={() => setIsCreateOpen(false)}
-                className="font-mono text-xs border-2 border-[#10201d]"
+                className="font-mono text-xs border-2 border-hack-ink"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={creating || !squadName.trim()}
-                className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#2e4742] text-[#f2f2eb] hover:bg-[#3d5f58] shadow-[3px_3px_0_#10201d]"
+                className="font-mono text-xs font-bold border-2 border-hack-ink bg-hack-forest text-hack-sand hover:bg-hack-teal shadow-hack-sm"
               >
                 {creating ? 'Forming Squad...' : 'Create Squad & Vault'}
               </Button>
@@ -409,20 +433,20 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
 
       {/* Add Member to Squad Dialog */}
       <Dialog open={!!activeSquadForAdd} onOpenChange={(open) => !open && setActiveSquadForAdd(null)}>
-        <DialogContent className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[7px_7px_0_#671912] max-w-md p-0">
-          <DialogHeader className="p-4 border-b-2 border-[#10201d] bg-[#2e4742] text-[#f2f2eb]">
+        <DialogContent className="border-2 border-hack-ink bg-hack-panel shadow-[7px_7px_0_#671912] max-w-md p-0">
+          <DialogHeader className="p-4 border-b-2 border-hack-ink bg-hack-forest text-hack-sand">
             <DialogTitle className="font-display text-base">
               Add Teammate to {activeSquadForAdd?.name}
             </DialogTitle>
           </DialogHeader>
           <div className="p-4 space-y-3">
-            <label className="block font-mono text-xs font-bold text-[#10201d]">
+            <label className="block font-mono text-xs font-bold text-hack-ink">
               Select from Connected Friends:
             </label>
             <select
               value={selectedFriendToAdd}
               onChange={(e) => setSelectedFriendToAdd(e.target.value)}
-              className="w-full font-mono text-xs p-2 border-2 border-[#10201d] bg-white"
+              className="w-full font-mono text-xs p-2 border-2 border-hack-ink bg-white"
             >
               <option value="">-- Choose a friend --</option>
               {validFriends.map((f) => {
@@ -436,12 +460,12 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
               })}
             </select>
           </div>
-          <DialogFooter className="p-4 border-t-2 border-[#10201d] gap-2">
+          <DialogFooter className="p-4 border-t-2 border-hack-ink gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => setActiveSquadForAdd(null)}
-              className="font-mono text-xs border-2 border-[#10201d]"
+              className="font-mono text-xs border-2 border-hack-ink"
             >
               Cancel
             </Button>
@@ -449,7 +473,7 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
               size="sm"
               disabled={!selectedFriendToAdd || actionLoading === 'add-member'}
               onClick={handleAddMemberToSquad}
-              className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#2e4742] text-[#f2f2eb]"
+              className="font-mono text-xs font-bold border-2 border-hack-ink bg-hack-forest text-hack-sand"
             >
               Add to Squad
             </Button>

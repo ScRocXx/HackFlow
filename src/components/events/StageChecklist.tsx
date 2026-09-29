@@ -135,7 +135,7 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
     <div className="flex flex-col h-full max-h-[500px]">
       <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
         {items.length === 0 ? (
-          <div className="text-center font-mono text-[#34433f] py-8 text-xs font-bold">
+          <div className="text-center font-mono text-hack-subtext py-8 text-xs font-bold">
             No deliverables for this round yet. Add what needs to get done.
           </div>
         ) : (
@@ -147,45 +147,45 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
               <div 
                 key={item.id} 
                 className={cn(
-                  "flex items-center gap-3 p-3 sm:p-3.5 border-2 border-[#10201d] transition-all group font-mono text-xs min-h-[46px]",
+                  "flex items-center gap-3 p-3 sm:p-3.5 border-2 border-hack-ink transition-all group font-mono text-xs min-h-[46px]",
                   isDone 
-                    ? "bg-[#e4e5da] text-[#34433f] opacity-80" 
-                    : "bg-[#f7f7f2] text-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-white"
+                    ? "bg-hack-muted text-hack-subtext opacity-80" 
+                    : "bg-hack-panel text-hack-ink shadow-hack-chip hover:bg-white"
                 )}
               >
                 <button 
                   disabled={isLoading}
                   onClick={() => handleToggle(item.id, isDone)}
                   className={cn(
-                    "shrink-0 w-6 h-6 border-2 border-[#10201d] flex items-center justify-center transition-all touch-manipulation select-none",
-                    isDone ? "bg-[#93C9B8]" : "bg-white hover:bg-[#f7f7f2]"
+                    "shrink-0 w-6 h-6 border-2 border-hack-ink flex items-center justify-center transition-all touch-manipulation select-none",
+                    isDone ? "bg-[#93C9B8]" : "bg-white hover:bg-hack-panel"
                   )}
                   title={isDone ? "Mark incomplete" : "Mark complete"}
                 >
                   {isLoading ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-[#10201d]" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-hack-ink" />
                   ) : isDone ? (
-                    <span className="w-2.5 h-2.5 bg-[#10201d] inline-block" />
+                    <span className="w-2.5 h-2.5 bg-hack-ink inline-block" />
                   ) : null}
                 </button>
                 
                 <span className={cn(
                   "flex-1 font-mono text-xs sm:text-sm font-bold transition-all select-none",
-                  isDone ? "deliverable-done text-[#34433f]/70" : "text-[#10201d]"
+                  isDone ? "deliverable-done text-hack-subtext/70" : "text-hack-ink"
                 )}>
                   {item.title}
                 </span>
 
                 <span className={cn(
-                  "font-mono text-[9px] font-black uppercase px-1.5 py-0.5 border border-[#10201d] shrink-0",
-                  isDone ? "bg-[#93C9B8] text-[#10201d]" : "bg-[#f5b726] text-[#10201d]"
+                  "font-mono text-[9px] font-black uppercase px-1.5 py-0.5 border border-hack-ink shrink-0",
+                  isDone ? "bg-[#93C9B8] text-hack-ink" : "bg-hack-gold text-hack-ink"
                 )}>
                   {isDone ? 'Cleared' : 'Pending'}
                 </span>
 
                 <button 
                   onClick={() => handleDelete(item.id)}
-                  className="opacity-60 hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 shrink-0 text-[#10201d] hover:text-[#e53927] transition-opacity p-1 touch-manipulation"
+                  className="opacity-60 hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 shrink-0 text-hack-ink hover:text-hack-rust transition-opacity p-1 touch-manipulation"
                   title="Delete task"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -196,19 +196,19 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
         )}
       </div>
 
-      <div className="p-4 border-t-2 border-[#10201d] bg-[#f7f7f2]">
+      <div className="p-4 border-t-2 border-hack-ink bg-hack-panel">
         <form onSubmit={handleAdd} className="flex gap-2">
           <Input 
             placeholder="Add new deliverable..." 
             value={newTask}
             onChange={(e) => setNewTask(e.target.value)}
-            className="flex-1 font-mono text-xs border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
+            className="flex-1 font-mono text-xs border-2 border-hack-ink shadow-hack-chip"
           />
           <Button 
             type="submit" 
             size="icon" 
             disabled={!newTask.trim()}
-            className="border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
+            className="border-2 border-hack-ink shadow-hack-chip"
           >
             <Plus className="w-4 h-4 stroke-[3]" />
           </Button>

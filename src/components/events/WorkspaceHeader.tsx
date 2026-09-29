@@ -62,32 +62,32 @@ export function WorkspaceHeader({
   }
 
   return (
-    <div className="border-2 border-[#10201d] bg-[#f7f7f2] p-4 sm:p-6 shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912] space-y-4">
+    <div className="border-2 border-hack-ink bg-hack-panel p-4 sm:p-6 shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912] space-y-4">
       <div className="flex flex-col md:flex-row justify-between md:items-start gap-4">
         <div className="space-y-1.5 flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
             <span
               className={cn(
-                "font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 border-2 border-[#10201d] shadow-[2px_2px_0_#2e4742]",
+                "font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 border-2 border-hack-ink shadow-hack-sm",
                 platformBadge.className
               )}
             >
               {platformBadge.label}
             </span>
             {event.mode && (
-              <span className="font-mono text-xs font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-[#10201d] bg-[#f7f7f2] text-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center">
+              <span className="font-mono text-xs font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-hack-ink bg-hack-panel text-hack-ink shadow-hack-sm flex items-center">
                 {event.mode === 'in-person' ? <MapPin className="w-3 h-3 mr-1" /> : <Globe className="w-3 h-3 mr-1" />}
                 <span className="capitalize">{event.mode}</span>
               </span>
             )}
             {(event.prize_display_summary || event.prize_pool) && (
-              <span className="font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center gap-1">
+              <span className="font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 border-2 border-hack-ink bg-hack-yellow text-hack-ink shadow-hack-sm flex items-center gap-1">
                 🏆 {event.prize_display_summary || event.prize_pool}
               </span>
             )}
           </div>
-          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#10201d] tracking-tight">{event.title}</h1>
-          <p className="font-mono text-xs text-[#34433f] font-bold">{event.organizer || 'Independent Hackathon'}</p>
+          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-extrabold text-hack-ink tracking-tight">{event.title}</h1>
+          <p className="font-mono text-xs text-hack-subtext font-bold">{event.organizer || 'Independent Hackathon'}</p>
         </div>
 
         <div className="flex items-center gap-2.5 shrink-0 self-start">
@@ -101,24 +101,24 @@ export function WorkspaceHeader({
               <button
                 type="button"
                 title="Hackathon options"
-                className="p-2 border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#e4e5da] active:scale-95 text-[#10201d] shadow-[2px_2px_0_#10201d] transition-all touch-manipulation h-10 w-10 flex items-center justify-center shrink-0"
+                className="p-2 border-2 border-hack-ink bg-hack-panel hover:bg-hack-muted active:scale-95 text-hack-ink shadow-hack-sm transition-all touch-manipulation h-10 w-10 flex items-center justify-center shrink-0"
               >
                 <MoreHorizontal className="w-4 h-4" />
                 <span className="sr-only">More options</span>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[3px_3px_0_#10201d] font-mono text-xs w-48">
+            <DropdownMenuContent className="border-2 border-hack-ink bg-hack-panel shadow-hack-sm font-mono text-xs w-48">
               <DropdownMenuItem
                 onClick={onEditClick}
-                className="cursor-pointer font-bold text-[#10201d] hover:bg-[#e4e5da]"
+                className="cursor-pointer font-bold text-hack-ink hover:bg-hack-muted"
               >
-                <Edit3 className="w-3.5 h-3.5 mr-2 text-[#34433f]" /> Edit Hackathon
+                <Edit3 className="w-3.5 h-3.5 mr-2 text-hack-subtext" /> Edit Hackathon
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={onDeleteClick}
-                className="cursor-pointer font-bold text-[#e53927] hover:bg-[#f6c4c1]"
+                className="cursor-pointer font-bold text-hack-red hover:bg-hack-pink"
               >
-                <Trash2 className="w-3.5 h-3.5 mr-2 text-[#e53927]" /> Delete Hackathon
+                <Trash2 className="w-3.5 h-3.5 mr-2 text-hack-red" /> Delete Hackathon
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -126,19 +126,19 @@ export function WorkspaceHeader({
       </div>
 
       {/* Prominent Next Actionable Deadline Strip */}
-      <div className="border-2 border-[#10201d] bg-[#f2f2eb] p-3 sm:p-4 shadow-[3px_3px_0_#10201d] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="border-2 border-hack-ink bg-hack-sand p-3 sm:p-4 shadow-hack-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <span className="font-mono text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-[#34433f] block">
+          <span className="font-mono text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-hack-subtext block">
             Next Actionable Deadline
           </span>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className="font-mono text-sm sm:text-base font-extrabold text-[#e53927]">
+            <span className="font-mono text-sm sm:text-base font-extrabold text-hack-red">
               {(activeStage?.actionable_deadline || activeStage?.deadline)
                 ? format(new Date((activeStage.actionable_deadline || activeStage.deadline)!), 'dd MMM yyyy · HH:mm')
                 : (activeStage?.raw_date_snippet || 'TBA')}
             </span>
             {activeStage?.title && (
-              <span className="font-mono text-xs text-[#34433f] font-bold">
+              <span className="font-mono text-xs text-hack-subtext font-bold">
                 ({activeStage.title})
               </span>
             )}
@@ -151,7 +151,7 @@ export function WorkspaceHeader({
               href={ensureExternalUrl(event.source_url)}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-mono text-xs font-bold px-3 py-1.5 border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#10201d] inline-flex items-center gap-1.5 transition-all"
+              className="font-mono text-xs font-bold px-3 py-1.5 border-2 border-hack-ink bg-hack-panel hover:bg-hack-sky text-hack-ink shadow-hack-sm inline-flex items-center gap-1.5 transition-all"
             >
               <ExternalLink className="w-3.5 h-3.5" /> Open Portal
             </a>
@@ -160,7 +160,7 @@ export function WorkspaceHeader({
             href={getGoogleCalLink()}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-mono text-xs font-bold px-3 py-1.5 border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[2px_2px_0_#10201d] inline-flex items-center gap-1.5 transition-all"
+            className="font-mono text-xs font-bold px-3 py-1.5 border-2 border-hack-ink bg-hack-yellow hover:bg-[#ffcf66] text-hack-ink shadow-hack-sm inline-flex items-center gap-1.5 transition-all"
           >
             <Calendar className="w-3.5 h-3.5" /> + Calendar
           </a>
@@ -169,7 +169,7 @@ export function WorkspaceHeader({
             size="sm"
             variant="outline"
             onClick={handleDownloadIcs}
-            className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#93C9B8] text-[#10201d] shadow-[2px_2px_0_#10201d] h-8 px-2.5"
+            className="font-mono text-xs font-bold border-2 border-hack-ink bg-hack-panel hover:bg-hack-mint text-hack-ink shadow-hack-sm h-8 px-2.5"
           >
             ⚡ Alarm (.ics)
           </Button>

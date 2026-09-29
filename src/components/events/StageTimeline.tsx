@@ -26,15 +26,15 @@ export function StageTimeline({
   const currentFocusId = selectedStageId || activeStageId || stages[0]?.id
 
   return (
-    <div className="border-2 border-[#10201d] bg-[#f7f7f2] p-4 sm:p-5 shadow-[5px_5px_0_#10201d] space-y-3">
-      <div className="flex items-center justify-between border-b-2 border-[#10201d]/15 pb-2.5">
+    <div className="border-2 border-hack-ink bg-hack-panel p-4 sm:p-5 shadow-hack-panel space-y-3">
+      <div className="flex items-center justify-between border-b-2 border-hack-ink/15 pb-2.5">
         <div className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 bg-[#e53927] inline-block" />
-          <h3 className="font-display text-lg sm:text-xl font-bold uppercase tracking-tight text-[#10201d]">
+          <span className="w-2.5 h-2.5 bg-hack-rust inline-block" />
+          <h3 className="font-display text-lg sm:text-xl font-bold uppercase tracking-tight text-hack-ink">
             Stage Journey
           </h3>
         </div>
-        <span className="font-mono text-[10px] sm:text-[11px] font-bold text-[#34433f] uppercase">
+        <span className="font-mono text-[10px] sm:text-[11px] font-bold text-hack-subtext uppercase">
           Click any round to navigate deliverables
         </span>
       </div>
@@ -65,16 +65,16 @@ export function StageTimeline({
                 type="button"
                 onClick={() => onStageSelect?.(stage.id)}
                 className={cn(
-                  "flex-1 min-w-[190px] sm:min-w-[220px] p-3 sm:p-3.5 border-2 border-[#10201d] text-left transition-all relative flex flex-col justify-between group touch-manipulation select-none",
+                  "flex-1 min-w-[190px] sm:min-w-[220px] p-3 sm:p-3.5 border-2 border-hack-ink text-left transition-all relative flex flex-col justify-between group touch-manipulation select-none",
                   isSelected
-                    ? "bg-[#f2f2eb] shadow-[4px_4px_0_#10201d] -translate-y-0.5 border-[#10201d]"
-                    : "bg-white hover:bg-[#f7f7f2] shadow-[2px_2px_0_#10201d] opacity-90 hover:opacity-100",
-                  isChronologicallyActive && !isSelected && "ring-2 ring-[#e53927]/40"
+                    ? "bg-hack-sand shadow-hack-card -translate-y-0.5 border-hack-ink"
+                    : "bg-white hover:bg-hack-panel shadow-hack-chip opacity-90 hover:opacity-100",
+                  isChronologicallyActive && !isSelected && "ring-2 ring-hack-rust/40"
                 )}
               >
                 {/* Active Indicator Pin */}
                 {isChronologicallyActive && (
-                  <div className="absolute -top-3 left-3 bg-[#e53927] text-white border border-[#10201d] font-mono text-[9px] font-black uppercase px-1.5 py-0.2 shadow-[1px_1px_0_#10201d] tracking-wider z-20">
+                  <div className="absolute -top-3 left-3 bg-hack-rust text-white border border-hack-ink font-mono text-[9px] font-black uppercase px-1.5 py-0.2 shadow-[1px_1px_0_#10201d] tracking-wider z-20">
                     You Are Here
                   </div>
                 )}
@@ -82,19 +82,19 @@ export function StageTimeline({
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className={cn(
-                      "w-7 h-7 border-2 border-[#10201d] flex items-center justify-center font-mono text-xs font-black shrink-0 transition-transform group-hover:scale-105",
-                      isCompleted ? "bg-[#8bb2de] text-[#10201d]" :
-                      isChronologicallyActive ? "bg-[#e97b77] text-[#10201d]" :
-                      "bg-[#f7f7f2] text-[#34433f]"
+                      "w-7 h-7 border-2 border-hack-ink flex items-center justify-center font-mono text-xs font-black shrink-0 transition-transform group-hover:scale-105",
+                      isCompleted ? "bg-hack-sky text-hack-ink" :
+                      isChronologicallyActive ? "bg-hack-coral text-hack-ink" :
+                      "bg-hack-panel text-hack-subtext"
                     )}>
                       {isCompleted ? <Check className="w-4 h-4 stroke-[3]" /> : <span>{index + 1}</span>}
                     </div>
 
                     <span className={cn(
-                      "font-mono text-[9px] font-black uppercase px-1.5 py-0.5 border border-[#10201d]",
-                      isCompleted ? "bg-[#93C9B8] text-[#10201d]" :
-                      isChronologicallyActive ? "bg-[#f5b726] text-[#10201d]" :
-                      "bg-[#e4e5da] text-[#34433f]"
+                      "font-mono text-[9px] font-black uppercase px-1.5 py-0.5 border border-hack-ink",
+                      isCompleted ? "bg-[#93C9B8] text-hack-ink" :
+                      isChronologicallyActive ? "bg-hack-gold text-hack-ink" :
+                      "bg-hack-muted text-hack-subtext"
                     )}>
                       {isCompleted ? 'Cleared' : isChronologicallyActive ? 'Active' : 'Upcoming'}
                     </span>
@@ -102,13 +102,13 @@ export function StageTimeline({
 
                   <h4 className={cn(
                     "font-display text-sm sm:text-base font-bold uppercase line-clamp-1 leading-tight",
-                    isSelected ? "text-[#e53927]" : "text-[#10201d]"
+                    isSelected ? "text-hack-rust" : "text-hack-ink"
                   )}>
                     {stage.title}
                   </h4>
 
                   {dateDisplay && (
-                    <p className="font-mono text-[10px] text-[#34433f] font-semibold flex items-center gap-1 mt-1 truncate">
+                    <p className="font-mono text-[10px] text-hack-subtext font-semibold flex items-center gap-1 mt-1 truncate">
                       <Calendar className="w-3 h-3 shrink-0" />
                       {dateDisplay}
                     </p>
@@ -116,20 +116,20 @@ export function StageTimeline({
                 </div>
 
                 {/* Progress bar and task metrics */}
-                <div className="mt-3 pt-2 border-t border-[#10201d]/15">
-                  <div className="flex justify-between items-center font-mono text-[10px] font-bold text-[#34433f] mb-1">
+                <div className="mt-3 pt-2 border-t border-hack-ink/15">
+                  <div className="flex justify-between items-center font-mono text-[10px] font-bold text-hack-subtext mb-1">
                     <span>Deliverables</span>
                     <span>{totalTasks > 0 ? `${doneTasks}/${totalTasks}` : 'No checklist'}</span>
                   </div>
                   {totalTasks > 0 ? (
-                    <div className="w-full h-1.5 border border-[#10201d] bg-[#e4e5da] overflow-hidden">
+                    <div className="w-full h-1.5 border border-hack-ink bg-hack-muted overflow-hidden">
                       <div 
-                        className={cn("h-full transition-all", isCompleted ? "bg-[#93C9B8]" : "bg-[#e97b77]")}
+                        className={cn("h-full transition-all", isCompleted ? "bg-[#93C9B8]" : "bg-hack-coral")}
                         style={{ width: `${(doneTasks / totalTasks) * 100}%` }}
                       />
                     </div>
                   ) : (
-                    <div className="w-full h-1.5 border border-[#10201d]/30 bg-transparent" />
+                    <div className="w-full h-1.5 border border-hack-ink/30 bg-transparent" />
                   )}
                 </div>
               </button>
