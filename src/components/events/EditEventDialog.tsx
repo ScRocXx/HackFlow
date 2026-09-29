@@ -34,7 +34,7 @@ interface EditEventDialogProps {
   onOpenChange: (open: boolean) => void
   event: Event & {
     stages?: EventStage[]
-    active_stage?: EventStage
+    active_stage?: EventStage | null
   }
   onSuccess?: () => void
 }

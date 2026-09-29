@@ -23,14 +23,16 @@ import { IdeaSandbox } from '@/components/events/IdeaSandbox'
 import { SubmissionReadiness } from '@/components/events/SubmissionReadiness'
 import { PostSubmissionConsole } from '@/components/events/PostSubmissionConsole'
 import { downloadIcsFile, getGoogleCalendarUrl } from '@/lib/calendar/calendar-sync'
-import type { EventResource, Friendship } from '@/lib/supabase/types'
+import type { EventResource, Friendship, EventWithRelations, EventStage } from '@/lib/supabase/types'
 import { ensureExternalUrl } from '@/lib/utils/url'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
+import { computeActiveStage } from '@/lib/utils/active-stage'
+import { getPlatformBadge } from '@/lib/utils/platform'
 
 interface EventDetailContentProps {
-  event: any // type would be Event with joined stages, deliverables, resources, etc
-  initialStages?: any[]
+  event: EventWithRelations
+  initialStages?: EventStage[]
 }
 
 const RESOURCE_TYPES = [
@@ -46,8 +48,8 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
   const router = useRouter()
   const initialStages = propInitialStages || event?.stages || []
 
-  const [currentEvent, setCurrentEvent] = useState(event)
-  const [stages, setStages] = useState<any[]>(initialStages)
+  const [currentEvent, setCurrentEvent] = useState<EventWithRelations>(event)
+  const [stages, setStages] = useState<EventStage[]>(initialStages)
 
   // Fix Stale State on Edit: update internal state when router.refresh() runs after an edit
   useEffect(() => {
@@ -58,17 +60,12 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
     }
   }, [event, initialStages])
 
-  // Dynamically compute activeStage using:
-  // stages.find(s => s.id === currentEvent.active_stage_id) || stages.find(s => !s.is_completed && new Date(s.deadline).getTime() > Date.now()) || stages[0]
-  const activeStage = stages && stages.length > 0
-    ? (stages.find((s: any) => s.id === currentEvent.active_stage_id) ||
-       stages.find((s: any) => !s.is_completed && s.deadline && new Date(s.deadline).getTime() > Date.now()) ||
-       stages[0])
-    : null
+  // Centralized activeStage computation (synchronous with dashboard and cards)
+  const activeStage = computeActiveStage(stages, currentEvent.active_stage_id)
 
   // Interactive Stage Journey Focus (Allows clicking any stage rail node to view its deliverables)
   const [focusedStageId, setFocusedStageId] = useState<string | null>(null)
-  const currentDisplayStage = (focusedStageId && stages.find((s: any) => s.id === focusedStageId)) || activeStage
+  const currentDisplayStage = (focusedStageId && stages.find((s) => s.id === focusedStageId)) || activeStage
 
   const [isCompleting, setIsCompleting] = useState(false)
   const [mobileWorkspaceTab, setMobileWorkspaceTab] = useState<'sprint' | 'pitch' | 'team'>('sprint')
@@ -302,8 +299,8 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
         <div className="flex flex-col md:flex-row justify-between md:items-start gap-4">
           <div className="space-y-1.5 flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className="font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#2e4742]">
-                {event.source_platform || 'Hackathon'}
+              <span className={cn("font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 border-2 border-[#10201d] shadow-[2px_2px_0_#2e4742]", getPlatformBadge(event.source_platform).className)}>
+                {getPlatformBadge(event.source_platform).label}
               </span>
               {event.mode && (
                 <span className="font-mono text-xs font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-[#10201d] bg-[#f7f7f2] text-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center">
@@ -364,8 +361,8 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
             </span>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="font-mono text-sm sm:text-base font-extrabold text-[#e53927]">
-                {activeStage?.actionable_deadline || activeStage?.deadline
-                  ? format(new Date(activeStage.actionable_deadline || activeStage.deadline), 'dd MMM yyyy · HH:mm')
+                {(activeStage?.actionable_deadline || activeStage?.deadline)
+                  ? format(new Date((activeStage.actionable_deadline || activeStage.deadline)!), 'dd MMM yyyy · HH:mm')
                   : (activeStage?.raw_date_snippet || 'TBA')}
               </span>
               {activeStage?.title && (

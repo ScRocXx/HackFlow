@@ -7,15 +7,16 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useEventRoom } from '@/lib/supabase/event-channel'
 import { cn } from '@/lib/utils'
+import type { StageDeliverable } from '@/lib/supabase/types'
 
 interface StageChecklistProps {
   stageId: string
   eventId: string
-  deliverables: any[]
+  deliverables: StageDeliverable[]
 }
 
 export function StageChecklist({ stageId, eventId, deliverables: initialDeliverables }: StageChecklistProps) {
-  const [items, setItems] = useState(initialDeliverables)
+  const [items, setItems] = useState<StageDeliverable[]>(initialDeliverables)
   const [newTask, setNewTask] = useState('')
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set())
 
@@ -83,12 +84,15 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
     if (!title) return
 
     const tempId = `temp-${Date.now()}`
-    const optimisticItem = {
+    const optimisticItem: StageDeliverable = {
       id: tempId,
       stage_id: stageId,
       title: title,
       is_done: false,
+      done_by: null,
+      done_at: null,
       sort_order: items.length + 1,
+      created_at: new Date().toISOString(),
     }
 
     setNewTask('')

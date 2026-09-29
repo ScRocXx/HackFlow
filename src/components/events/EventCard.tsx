@@ -35,12 +35,11 @@ import {
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast'
 import { deleteEvent } from '@/app/actions/events'
-import type { Event, EventStage, EventResource } from '@/lib/supabase/types'
+import type { Event, EventStage, EventResource, EventWithRelations } from '@/lib/supabase/types'
+import { computeActiveStage } from '@/lib/utils/active-stage'
+import { getPlatformBadge } from '@/lib/utils/platform'
 
-type ExtendedEvent = Event & {
-  active_stage?: EventStage
-  stages?: EventStage[]
-  deliverable_progress?: { done: number; total: number }
+type ExtendedEvent = EventWithRelations & {
   team_count?: number
   resources?: EventResource[]
   squad_name?: string | null
@@ -61,51 +60,6 @@ export function EventCard({ event }: EventCardProps) {
   const progressPercent = event.deliverable_progress?.total 
     ? (event.deliverable_progress.done / event.deliverable_progress.total) * 100 
     : 0
-
-  const getPlatformBadge = (platform: string) => {
-    switch (platform?.toLowerCase()) {
-      case 'unstop':
-        return {
-          className: 'bg-[#ff9800] text-[#10201d] border-[#10201d]',
-          label: 'Unstop'
-        }
-      case 'devfolio':
-        return {
-          className: 'bg-[#3770ff] text-[#f7f7f2] border-[#10201d]',
-          label: 'Devfolio'
-        }
-      case 'devpost':
-        return {
-          className: 'bg-[#0086bf] text-[#f7f7f2] border-[#10201d]',
-          label: 'Devpost'
-        }
-      case 'mlh':
-        return {
-          className: 'bg-[#e53927] text-[#f7f7f2] border-[#10201d]',
-          label: 'MLH'
-        }
-      case 'hackerearth':
-        return {
-          className: 'bg-[#2c3454] text-[#29c5b6] border-[#10201d]',
-          label: 'HackerEarth'
-        }
-      case 'kaggle':
-        return {
-          className: 'bg-[#20beff] text-[#10201d] border-[#10201d]',
-          label: 'Kaggle'
-        }
-      case 'internshala':
-        return {
-          className: 'bg-[#8bb2de] text-[#10201d] border-[#10201d]',
-          label: 'Internshala'
-        }
-      default:
-        return {
-          className: 'bg-[#f7f7f2] text-[#10201d] border-[#10201d]',
-          label: platform || 'Hackathon'
-        }
-    }
-  }
 
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -139,37 +93,8 @@ export function EventCard({ event }: EventCardProps) {
   const platformBadge = getPlatformBadge(event.source_platform || 'other')
   const prizeDisplay = event.prize_display_summary || event.prize_pool
 
-  // Dynamic Stage Auto-Roll: if active stage cutoff has passed, roll forward to next upcoming stage
-  const computedActiveStage = (() => {
-    if (!event.stages || event.stages.length === 0) return event.active_stage
-    const now = Date.now()
-
-    if (event.active_stage) {
-      const activeDlStr = event.active_stage.actionable_deadline || event.active_stage.window_end || event.active_stage.deadline
-      if (activeDlStr) {
-        const activeDl = new Date(activeDlStr).getTime()
-        if (!isNaN(activeDl) && activeDl > now) {
-          return event.active_stage
-        }
-      }
-    }
-
-    const upcoming = event.stages
-      .filter((s) => {
-        const dlStr = s.actionable_deadline || s.window_end || s.deadline
-        if (!dlStr) return false
-        const dl = new Date(dlStr).getTime()
-        return !isNaN(dl) && dl > now
-      })
-      .sort((a, b) => {
-        const dlA = new Date(a.actionable_deadline || a.window_end || a.deadline || 0).getTime()
-        const dlB = new Date(b.actionable_deadline || b.window_end || b.deadline || 0).getTime()
-        return dlA - dlB
-      })
-
-    if (upcoming.length > 0) return upcoming[0]
-    return event.active_stage || event.stages[event.stages.length - 1]
-  })()
+  // Unified stage computation: consistent with workspace and dashboard
+  const computedActiveStage = computeActiveStage(event.stages, event.active_stage_id || event.active_stage?.id)
 
   return (
     <>
