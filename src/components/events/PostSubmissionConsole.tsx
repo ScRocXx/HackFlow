@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { 
   CheckCircle2, AlertTriangle, ExternalLink, Calendar, Trophy, 
   ShieldAlert, Award, FileText, Check, Loader2, RefreshCw,
-  FlaskConical, ShieldCheck, XCircle, AlertCircle, ChevronDown, ChevronUp,
+  AlertCircle, ChevronDown, ChevronUp,
   Video, Edit3
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -13,16 +13,10 @@ import { Card, CardContent } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
 import { updatePostSubmissionDetails } from '@/app/actions/events'
 import { CountdownTimer } from '@/components/events/CountdownTimer'
+import { SubmissionReadiness } from '@/components/events/SubmissionReadiness'
 import { PdfUpload } from '@/components/ui/pdf-upload'
 import type { Event } from '@/lib/supabase/types'
 import { cn } from '@/lib/utils'
-
-interface SmokeTestResult {
-  id: string
-  name: string
-  status: 'passed' | 'failed' | 'warning' | 'pending'
-  detail: string
-}
 
 interface PostSubmissionConsoleProps {
   event: Event
@@ -62,13 +56,7 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
 
   // GitHub Permission Checker State
   const [githubStatus, setGithubStatus] = useState<'checking' | 'public' | 'private_or_missing' | 'rate_limited' | 'idle'>('idle')
-  // Drive verification manual checkbox
   const [driveVerified, setDriveVerified] = useState(false)
-
-  // Smoke Test State
-  const [runningSmokeTest, setRunningSmokeTest] = useState(false)
-  const [smokeTestResults, setSmokeTestResults] = useState<SmokeTestResult[] | null>(null)
-
   const [isSaving, setIsSaving] = useState(false)
   const { toast } = useToast()
 
@@ -117,219 +105,6 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
       verifyGitHubRepo(githubUrl)
     }
   }, [githubUrl])
-
-  const runPreSubmissionSmokeTest = async () => {
-    setRunningSmokeTest(true)
-    const results: SmokeTestResult[] = []
-
-    // Test 1: GitHub Repository Visibility
-    if (!githubUrl.trim()) {
-      results.push({
-        id: 'github',
-        name: 'GitHub Repository Public Visibility',
-        status: 'failed',
-        detail: 'No GitHub repository URL provided. Code submission required by most hackathons.',
-      })
-    } else {
-      const match = githubUrl.match(/github\.com\/([^/]+)\/([^/]+)/)
-      if (!match) {
-        results.push({
-          id: 'github',
-          name: 'GitHub Repository Public Visibility',
-          status: 'failed',
-          detail: 'Invalid GitHub URL format.',
-        })
-      } else {
-        try {
-          const owner = match[1]
-          const repo = match[2].replace(/\.git$/, '')
-          const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`)
-          if (res.ok) {
-            const data = await res.json()
-            if (data.private === false) {
-              results.push({
-                id: 'github',
-                name: 'GitHub Repository Public Visibility',
-                status: 'passed',
-                detail: `Public repo verified (${data.stargazers_count} stars, default branch: ${data.default_branch}). Judges can clone.`,
-              })
-            } else {
-              results.push({
-                id: 'github',
-                name: 'GitHub Repository Public Visibility',
-                status: 'failed',
-                detail: 'Repository is PRIVATE. Evaluators will receive a 404 error.',
-              })
-            }
-          } else if (res.status === 403) {
-            results.push({
-              id: 'github',
-              name: 'GitHub Repository Public Visibility',
-              status: 'warning',
-              detail: '⚠️ Rate limit reached (Verify manually in incognito)',
-            })
-          } else {
-            results.push({
-              id: 'github',
-              name: 'GitHub Repository Public Visibility',
-              status: 'failed',
-              detail: `Repository returned HTTP ${res.status}. Ensure it is set to public.`,
-            })
-          }
-        } catch {
-          results.push({
-            id: 'github',
-            name: 'GitHub Repository Public Visibility',
-            status: 'warning',
-            detail: 'Could not connect to GitHub API to verify repo.',
-          })
-        }
-      }
-    }
-
-    // Test 2: Live Demo URL Protocol & Host
-    if (!demoUrl.trim()) {
-      results.push({
-        id: 'demo',
-        name: 'Live Demo URL Deployment',
-        status: 'warning',
-        detail: 'No live demo URL provided. Strongly recommended for product evaluation.',
-      })
-    } else if (!demoUrl.startsWith('https://')) {
-      results.push({
-        id: 'demo',
-        name: 'Live Demo URL Deployment',
-        status: 'failed',
-        detail: 'Demo URL must use secure HTTPS protocol.',
-      })
-    } else {
-      try {
-        const parsedUrl = new URL(demoUrl)
-        results.push({
-          id: 'demo',
-          name: 'Live Demo URL Deployment',
-          status: 'passed',
-          detail: `Valid HTTPS deployment link provided (${parsedUrl.hostname}).`,
-        })
-      } catch {
-        results.push({
-          id: 'demo',
-          name: 'Live Demo URL Deployment',
-          status: 'failed',
-          detail: 'Invalid Demo URL structure.',
-        })
-      }
-    }
-
-    // Test 3: Pitch Deck PDF File Size & Portal Limit Check (3-Tier Cascade)
-    if (!pitchDeckUrl.trim()) {
-      results.push({
-        id: 'deck',
-        name: 'Pitch Deck Deliverable',
-        status: 'warning',
-        detail: 'No pitch deck uploaded or linked.',
-      })
-    } else if (uploadedPdfSize !== null && uploadedPdfSize > pdfLimitMb * 1024 * 1024) {
-      results.push({
-        id: 'deck',
-        name: `Pitch Deck Size Check (Limit: ${pdfLimitMb}MB)`,
-        status: 'failed',
-        detail: `❌ File size (${(uploadedPdfSize / (1024 * 1024)).toFixed(1)}MB) exceeds the ${pdfLimitMb}MB limit for ${event.source_platform || 'portal'}. High risk of upload rejection! Compress immediately.`,
-      })
-    } else if (pitchDeckUrl.includes('drive.google.com')) {
-      if (driveVerified) {
-        results.push({
-          id: 'deck',
-          name: 'Pitch Deck & Cloud Permissions',
-          status: 'passed',
-          detail: 'Google Drive link verified with public read permissions (no request-access gate).',
-        })
-      } else {
-        results.push({
-          id: 'deck',
-          name: 'Pitch Deck & Cloud Permissions',
-          status: 'warning',
-          detail: 'Google Drive link provided. Ensure "Anyone with the link can view" is active in Drive!',
-        })
-      }
-    } else if (pitchDeckUrl.toLowerCase().endsWith('.pdf') || pitchDeckUrl.includes('supabase.co/storage')) {
-      results.push({
-        id: 'deck',
-        name: `Pitch Deck Size & Format (${pdfLimitMb}MB Guard)`,
-        status: 'passed',
-        detail: uploadedPdfSize
-          ? `PDF size verified at ${(uploadedPdfSize / (1024 * 1024)).toFixed(1)}MB — clean pass under the ${pdfLimitMb}MB portal cutoff.`
-          : `PDF format detected. Hosted on CDN within the ${pdfLimitMb}MB portal limit.`,
-      })
-    } else {
-      results.push({
-        id: 'deck',
-        name: 'Pitch Deck Deliverable',
-        status: 'passed',
-        detail: `External presentation deck URL configured: ${pitchDeckUrl.slice(0, 45)}...`,
-      })
-    }
-
-    // Test 4: Pitch / Demo Video Permissions (YouTube & Drive)
-    if (videoUrl.trim()) {
-      if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
-        results.push({
-          id: 'video',
-          name: 'Demo Video (YouTube Permissions)',
-          status: 'warning',
-          detail: 'YouTube video detected. Verify visibility is "Unlisted" or "Public" (NOT "Private"). Private links fail for judges.',
-        })
-      } else if (videoUrl.includes('drive.google.com')) {
-        results.push({
-          id: 'video',
-          name: 'Demo Video (Google Drive Permissions)',
-          status: 'warning',
-          detail: 'Drive video link detected. Verify "Anyone with the link can view" is enabled to avoid locked screens.',
-        })
-      } else {
-        results.push({
-          id: 'video',
-          name: 'Demo Video Deliverable',
-          status: 'passed',
-          detail: `Video demo URL provided (${videoUrl.slice(0, 40)}...).`,
-        })
-      }
-    }
-
-    // Test 5: Submission Confirmation Proof
-    if (!submissionReceipt.trim()) {
-      results.push({
-        id: 'receipt',
-        name: 'Submission Proof & Confirmation',
-        status: 'warning',
-        detail: 'No receipt ID or confirmation URL recorded yet.',
-      })
-    } else {
-      results.push({
-        id: 'receipt',
-        name: 'Submission Proof & Confirmation',
-        status: 'passed',
-        detail: `Proof recorded: ${submissionReceipt.slice(0, 30)}`,
-      })
-    }
-
-    setSmokeTestResults(results)
-    setRunningSmokeTest(false)
-
-    const hasFailures = results.some(r => r.status === 'failed')
-    if (hasFailures) {
-      toast({
-        title: 'Smoke Test Warnings Detected',
-        description: 'Review failed checks before concluding submission.',
-        variant: 'destructive',
-      })
-    } else {
-      toast({
-        title: 'Smoke Test Passed!',
-        description: 'All judge accessibility and deliverable smoke tests passed successfully!',
-      })
-    }
-  }
 
   const handleSaveDetails = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -414,73 +189,8 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
 
       {isExpanded && (
         <CardContent className="p-6 space-y-6">
-        {/* Pre-Submission Automated Smoke Test Suite */}
-        <div className="p-4 bg-[#10201d] text-[#f7f7f2] border-2 border-[#10201d] shadow-[5px_5px_0_#10201d] space-y-3">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b border-[#2e4742] pb-3">
-            <div className="flex items-center gap-2">
-              <FlaskConical className="h-5 w-5 text-[#f5b726]" />
-              <div>
-                <h4 className="font-display text-base font-bold text-[#f7f7f2]">
-                  Ready to submit? Check judge access
-                </h4>
-                <p className="font-mono text-[11px] text-[#8bb2de]">
-                  Automated verification of GitHub repo visibility, Drive access permissions, and deliverable integrity.
-                </p>
-              </div>
-            </div>
-            <Button
-              type="button"
-              disabled={runningSmokeTest}
-              onClick={runPreSubmissionSmokeTest}
-              className="font-mono text-xs font-bold bg-[#e53927] hover:bg-[#c82717] text-white border-2 border-white shadow-[2px_2px_0_#000000] shrink-0"
-            >
-              {runningSmokeTest ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Checking Access...
-                </>
-              ) : (
-                <>
-                  <ShieldCheck className="h-3.5 w-3.5 mr-1.5" /> Run Pre-Submission Check
-                </>
-              )}
-            </Button>
-          </div>
-
-          {smokeTestResults && (
-            <div className="space-y-2 pt-1">
-              {smokeTestResults.map((test) => (
-                <div
-                  key={test.id}
-                  className={cn(
-                    "p-2.5 border font-mono text-xs flex items-start gap-2.5",
-                    test.status === 'passed' && "bg-[#142622] border-[#52b788] text-[#c4d4d0]",
-                    test.status === 'failed' && "bg-[#280c0a] border-[#e53927] text-[#f7f7f2]",
-                    test.status === 'warning' && "bg-[#251f0b] border-[#f5b726] text-[#f2f2eb]"
-                  )}
-                >
-                  {test.status === 'passed' && <CheckCircle2 className="h-4 w-4 text-[#52b788] shrink-0 mt-0.5" />}
-                  {test.status === 'failed' && <XCircle className="h-4 w-4 text-[#e53927] shrink-0 mt-0.5" />}
-                  {test.status === 'warning' && <AlertTriangle className="h-4 w-4 text-[#f5b726] shrink-0 mt-0.5" />}
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-[#f7f7f2]">{test.name}</span>
-                      <span className={cn(
-                        "font-extrabold uppercase text-[10px] px-1.5 py-0.5",
-                        test.status === 'passed' && "text-[#52b788]",
-                        test.status === 'failed' && "text-[#e53927]",
-                        test.status === 'warning' && "text-[#f5b726]"
-                      )}>
-                        [{test.status}]
-                      </span>
-                    </div>
-                    <p className="text-[11px] opacity-90 mt-0.5">{test.detail}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Pre-Submission Automated Smoke Test Suite (Powered by SubmissionReadiness) */}
+        <SubmissionReadiness event={event} isSubmissionStage={true} />
 
         {/* Row 1: Submission Proof & Permission Checker */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
