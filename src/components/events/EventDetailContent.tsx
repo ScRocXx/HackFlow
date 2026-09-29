@@ -541,6 +541,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                         disabled={deletingId === res.id}
                         className="text-[#10201d] hover:bg-[#e97b77] hover:text-white border-2 border-transparent hover:border-[#10201d] h-8 w-8 transition-colors"
                         title="Delete resource"
+                        aria-label={`Delete resource: ${res.title}`}
                       >
                         {deletingId === res.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />

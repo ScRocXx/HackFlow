@@ -400,6 +400,7 @@ export function VaultProfiles({
                   {hasVal && (
                     <button
                       type="button"
+                      aria-label={`Copy ${f.label}`}
                       className={cn(
                         "p-1.5 border border-hack-ink shrink-0 transition-colors",
                         isCopied ? "bg-hack-sky text-hack-ink" : "bg-hack-sand text-hack-ink group-hover:bg-hack-yellow"

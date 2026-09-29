@@ -64,6 +64,8 @@ export function StageTimeline({
                 key={stage.id}
                 type="button"
                 onClick={() => onStageSelect?.(stage.id)}
+                aria-label={`Select stage: ${stage.title}`}
+                aria-current={isChronologicallyActive ? 'step' : undefined}
                 className={cn(
                   "flex-1 min-w-[190px] sm:min-w-[220px] p-3 sm:p-3.5 border-2 border-hack-ink text-left transition-all relative flex flex-col justify-between group touch-manipulation select-none",
                   isSelected

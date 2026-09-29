@@ -385,6 +385,7 @@ export function EditEventDialog({ open, onOpenChange, event, onSuccess }: EditEv
                       onClick={() => handleRemoveStage(idx)}
                       disabled={stages.length <= 1}
                       title="Remove this round"
+                      aria-label="Remove this round"
                       className="p-1 border border-[#10201d] bg-white hover:bg-[#e53927] hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />

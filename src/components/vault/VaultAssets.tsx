@@ -202,6 +202,7 @@ export function VaultAssets({
                         onClick={() => handleDeleteAsset(asset.id)}
                         className="text-hack-ink hover:text-hack-rust"
                         title="Delete asset"
+                        aria-label={`Delete asset: ${asset.title}`}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -309,6 +310,7 @@ export function VaultAssets({
                       onClick={() => handleDeleteAsset(asset.id)}
                       className="text-hack-ink hover:text-hack-rust"
                       title="Delete boilerplate"
+                      aria-label={`Delete boilerplate: ${asset.title}`}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>

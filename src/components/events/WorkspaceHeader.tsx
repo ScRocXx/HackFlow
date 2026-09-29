@@ -101,6 +101,7 @@ export function WorkspaceHeader({
               <button
                 type="button"
                 title="Hackathon options"
+                aria-label="Hackathon options"
                 className="p-2 border-2 border-hack-ink bg-hack-panel hover:bg-hack-muted active:scale-95 text-hack-ink shadow-hack-sm transition-all touch-manipulation h-10 w-10 flex items-center justify-center shrink-0"
               >
                 <MoreHorizontal className="w-4 h-4" />

@@ -138,6 +138,7 @@ export function EventCard({ event }: EventCardProps) {
                       e.stopPropagation()
                     }}
                     title="Hackathon options"
+                    aria-label="Hackathon options"
                     className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center border-2 border-hack-ink bg-hack-panel hover:bg-hack-muted active:scale-90 text-hack-ink shadow-hack-sm transition-all touch-manipulation"
                   >
                     <MoreHorizontal className="w-4 h-4" />

@@ -232,6 +232,7 @@ export function SquadScratchpad({
                         onClick={() => handleCopy('meet-url', formData.meet_url, 'Meeting Link')}
                         className="p-1 border border-[#10201d] bg-[#f2f2eb] hover:bg-[#f5b726] text-[#10201d]"
                         title="Copy Meet Link"
+                        aria-label="Copy Meet Link"
                       >
                         {copiedKey === 'meet-url' ? <Check className="w-3 h-3 text-emerald-800" /> : <Copy className="w-3 h-3" />}
                       </button>
@@ -268,6 +269,7 @@ export function SquadScratchpad({
                         onClick={() => handleCopy('chat-url', formData.chat_channel_url, 'Squad Chat Link')}
                         className="p-1 border border-[#10201d] bg-[#f2f2eb] hover:bg-[#8bb2de] text-[#10201d]"
                         title="Copy Chat Link"
+                        aria-label="Copy Chat Link"
                       >
                         {copiedKey === 'chat-url' ? <Check className="w-3 h-3 text-emerald-800" /> : <Copy className="w-3 h-3" />}
                       </button>
@@ -316,6 +318,7 @@ export function SquadScratchpad({
                         onClick={() => handleCopy('staging-url', formData.staging_url, 'Staging URL')}
                         className="p-1 border border-[#10201d] bg-[#f2f2eb] hover:bg-[#8bb2de] text-[#10201d]"
                         title="Copy Staging Link"
+                        aria-label="Copy Staging Link"
                       >
                         {copiedKey === 'staging-url' ? <Check className="w-3 h-3 text-emerald-800" /> : <Copy className="w-3 h-3" />}
                       </button>

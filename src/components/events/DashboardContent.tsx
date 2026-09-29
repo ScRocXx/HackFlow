@@ -200,10 +200,12 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
       <div className="space-y-3 sm:space-y-4">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2.5 sm:gap-3">
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 sm:flex-wrap">
-            <div className="flex items-center gap-1.5 shrink-0 sm:shrink sm:flex-wrap">
+            <div className="flex items-center gap-1.5 shrink-0 sm:shrink sm:flex-wrap" role="tablist" aria-label="Hackathon status filter">
               {filters.map((f) => (
                 <button
                   key={f.id}
+                  role="tab"
+                  aria-selected={selectedFilter === f.id}
                   onClick={() => setSelectedFilter(f.id)}
                   className={cn(
                     "font-mono text-xs font-bold uppercase tracking-wider px-2.5 sm:px-3 py-1.5 border-2 border-hack-ink transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",

@@ -92,6 +92,7 @@ export function URLParseIntake({
         <button
           type="button"
           onClick={onToggleTextInput}
+          aria-expanded={showTextInput}
           className="w-full p-3 font-mono text-xs font-bold text-[#10201d] flex items-center justify-between hover:bg-[#e4e5da] transition-colors"
         >
           <span className="flex items-center gap-2">

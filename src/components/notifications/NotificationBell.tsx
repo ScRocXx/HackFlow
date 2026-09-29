@@ -201,6 +201,7 @@ export function NotificationBell({ userId }: { userId: string }) {
         <Button 
           variant="ghost" 
           size="icon" 
+          aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : "Notifications"}
           className="relative border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#e97b77] text-[#10201d] shadow-[2px_2px_0_#10201d] transition-transform active:translate-x-[1px] active:translate-y-[1px]"
         >
           <Bell className="h-5 w-5" />
@@ -284,6 +285,7 @@ export function NotificationBell({ userId }: { userId: string }) {
                       onClick={(e) => handleDeleteNotification(e, notification.id)}
                       className="opacity-0 group-hover:opacity-100 text-[#34433f] hover:text-[#e53927] p-0.5 transition-opacity"
                       title="Dismiss notification"
+                      aria-label="Dismiss notification"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
