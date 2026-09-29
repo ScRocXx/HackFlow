@@ -27,9 +27,6 @@ export function NextUpStrip({ userName, items }: NextUpStripProps) {
     <div className="border-2 border-[#10201d] bg-[#f7f7f2] p-4 sm:p-5 shadow-[5px_5px_0_#10201d] space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b-2 border-[#10201d]/15 pb-3">
         <div>
-          <span className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-[#34433f] block">
-            Command Center
-          </span>
           <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-[#10201d]">
             Hey, {firstName}.
           </h2>
@@ -51,7 +48,7 @@ export function NextUpStrip({ userName, items }: NextUpStripProps) {
 
       {items.length === 0 ? (
         <div className="p-4 border-2 border-dashed border-[#10201d]/30 bg-[#f2f2eb] text-center font-mono text-xs text-[#34433f]">
-          No imminent deadlines within the next 72 hours. Keep building or explore next stages below.
+          Nothing due in the next 72 hours. You&apos;re good. Keep building or explore next stages below.
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

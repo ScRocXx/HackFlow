@@ -425,7 +425,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
               : "text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"
           )}
         >
-          ⚡ Sprint & Tasks
+          ⚡ Tasks
         </button>
         <button
           type="button"
@@ -437,7 +437,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
               : "text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"
           )}
         >
-          💡 Pitch & Blurb
+          💡 Ideas
         </button>
         <button
           type="button"
@@ -449,7 +449,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
               : "text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"
           )}
         >
-          👥 Team & Links
+          👥 Team
         </button>
       </div>
 
@@ -1013,11 +1013,11 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
               <div className="p-4 space-y-3">
                 {loadingFriends ? (
                   <div className="py-8 text-center font-mono text-xs text-[#57726d] flex items-center justify-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" /> Loading friends network...
+                    <Loader2 className="h-4 w-4 animate-spin" /> Loading friends...
                   </div>
                 ) : friends.length === 0 ? (
                   <div className="p-4 text-center border-2 border-dashed border-[#57726d]/40 font-mono text-xs text-[#57726d]">
-                    No connected friends found. Go to "Squads & Friends" to send friend requests first!
+                    No connected friends found. Go to "My Teams" to send friend requests first!
                   </div>
                 ) : (
                   <div className="max-h-60 overflow-y-auto space-y-2">

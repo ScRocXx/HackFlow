@@ -28,7 +28,7 @@ export function AtRiskWarnings({ risks }: AtRiskWarningsProps) {
           </h3>
         </div>
         <span className="font-mono text-[10px] sm:text-[11px] font-bold text-[#e53927] uppercase">
-          Action Required
+          {risks.length === 1 ? '1 issue needs review' : `${risks.length} issues need review`}
         </span>
       </div>
 
