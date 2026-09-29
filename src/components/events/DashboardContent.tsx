@@ -157,7 +157,7 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* 1.1 Next Up Urgency Strip (Control Room Command Center) */}
+      {/* 1.1 Next Up Urgency Strip (Control Room) */}
       <NextUpStrip userName={userName} items={urgentItems} />
 
       {/* 1.2 At-Risk Warning Callouts (Rendered conditionally when blockers exist) */}

@@ -149,9 +149,9 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-[#f7f7f2] border-2 border-[#10201d] shadow-[5px_5px_0_#10201d]">
         <div>
-          <h2 className="font-display font-bold text-xl text-[#10201d]">Multi-Squad Units</h2>
+          <h2 className="font-display font-bold text-xl text-[#10201d]">Your Squads</h2>
           <p className="font-mono text-xs text-[#57726d] mt-1">
-            Group your friends into specialized hackathon units (e.g., AI Core, Frontend Sprinters). Each squad enjoys an isolated Asset Vault.
+            Create teams to share vaults, manage teammates, and compete together.
           </p>
         </div>
         <Button

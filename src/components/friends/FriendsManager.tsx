@@ -221,7 +221,7 @@ export function FriendsManager({
         </Card>
       )}
 
-      {/* Friends Network List */}
+      {/* Friends List */}
       <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#10201d]">
         <CardHeader className="p-4 border-b-2 border-[#10201d] bg-[#3d5f58] text-[#f2f2eb] flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
@@ -236,7 +236,7 @@ export function FriendsManager({
               <Users className="h-10 w-10 mx-auto text-[#57726d] mb-2 opacity-60" />
               <p className="font-display font-bold text-sm text-[#10201d]">No friends connected yet</p>
               <p className="font-mono text-xs text-[#57726d] mt-1">
-                Enter your teammates' email above to build your hackathon network.
+                Enter your teammates' email above to connect with them directly.
               </p>
             </div>
           ) : (
