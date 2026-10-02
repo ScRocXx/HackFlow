@@ -1,6 +1,6 @@
 'use client'
 
-import { MapPin, Globe, MoreHorizontal, Edit3, Trash2, ExternalLink, Calendar } from 'lucide-react'
+import { MapPin, Globe, MoreHorizontal, Edit3, Trash2, ExternalLink, Calendar, ChevronDown, Download } from 'lucide-react'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import { StatusPills } from '@/components/events/StatusPills'
@@ -63,7 +63,7 @@ export function WorkspaceHeader({
 
   return (
     <div className="border border-hack-muted/60 bg-hack-surface p-4 sm:p-6 rounded-xl shadow-hack-card space-y-4">
-      {/* Top Bar: Back Link, Title, Countdown, and Options */}
+      {/* Top Bar: Platform, Title, Status Selector, and Options */}
       <div className="flex flex-col md:flex-row justify-between md:items-start gap-4">
         <div className="space-y-1.5 flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
@@ -88,7 +88,7 @@ export function WorkspaceHeader({
             )}
           </div>
 
-          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-hack-ink tracking-tight">
+          <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-hack-ink tracking-tight break-words">
             {event.title}
           </h1>
 
@@ -103,10 +103,12 @@ export function WorkspaceHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0 self-start flex-wrap">
-          <div className="w-full sm:w-auto">
-            <StatusPills eventId={event.id} currentStatus={event.status || 'registered'} />
-          </div>
+        <div className="flex items-center gap-2 shrink-0 self-start">
+          <StatusPills 
+            eventId={event.id} 
+            currentStatus={event.status || 'registered'} 
+            variant="selector"
+          />
 
           {/* Overflow Options Menu (...) */}
           <DropdownMenu>
@@ -115,13 +117,13 @@ export function WorkspaceHeader({
                 type="button"
                 title="Hackathon options"
                 aria-label="Hackathon options"
-                className="p-2 border border-hack-muted rounded-lg bg-hack-surface hover:bg-hack-sand active:scale-95 text-hack-ink shadow-hack-sm transition-all touch-manipulation h-9 w-9 flex items-center justify-center shrink-0"
+                className="p-1.5 border border-hack-muted/60 rounded-lg bg-hack-surface hover:bg-hack-sand active:scale-95 text-hack-ink shadow-hack-sm transition-all touch-manipulation h-8 w-8 flex items-center justify-center shrink-0"
               >
                 <MoreHorizontal className="w-4 h-4" />
                 <span className="sr-only">More options</span>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-dialog font-mono text-xs w-52 p-1.5">
+            <DropdownMenuContent align="end" className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-dialog font-mono text-xs w-52 p-1.5">
               <DropdownMenuItem
                 onClick={onEditClick}
                 className="cursor-pointer font-bold text-hack-ink hover:bg-hack-sand rounded-lg px-2.5 py-2"
@@ -148,12 +150,12 @@ export function WorkspaceHeader({
       </div>
 
       {/* Actionable Deadline & Fast Sync Strip */}
-      <div className="border border-hack-muted/60 bg-hack-sand/60 rounded-lg p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
+      <div className="border border-hack-muted/60 bg-hack-sand/60 rounded-lg p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="min-w-0">
           <span className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-hack-subtext block">
             Next Actionable Deadline
           </span>
-          <div className="flex items-center gap-2 mt-0.5">
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
             <span className="font-mono text-sm sm:text-base font-bold text-hack-coral-dark">
               {(activeStage?.actionable_deadline || activeStage?.deadline)
                 ? format(new Date((activeStage.actionable_deadline || activeStage.deadline)!), 'dd MMM yyyy · HH:mm')
@@ -167,40 +169,54 @@ export function WorkspaceHeader({
           </div>
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap shrink-0">
           {event.source_url && (
             <a
               href={ensureExternalUrl(event.source_url)}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-mono text-xs font-semibold px-3 py-1.5 rounded-lg border border-hack-muted bg-hack-surface hover:bg-hack-sand text-hack-ink shadow-hack-sm inline-flex items-center gap-1.5 transition-all"
+              className="font-mono text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-hack-muted/60 bg-hack-surface hover:bg-hack-sand text-hack-ink shadow-hack-sm inline-flex items-center gap-1.5 transition-all h-8 active:scale-95"
             >
-              <ExternalLink className="w-3.5 h-3.5 text-hack-subtext" /> Open Portal
+              <ExternalLink className="w-3.5 h-3.5 text-hack-subtext shrink-0" />
+              <span>Portal</span>
             </a>
           )}
-          <a
-            href={getGoogleCalLink()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-mono text-xs font-semibold px-3 py-1.5 rounded-lg border border-hack-gold/40 bg-hack-gold/20 hover:bg-hack-gold/30 text-hack-ink shadow-hack-sm inline-flex items-center gap-1.5 transition-all"
-          >
-            <Calendar className="w-3.5 h-3.5 text-hack-gold-dark" /> + Calendar
-          </a>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={handleDownloadIcs}
-            className="font-mono text-xs font-semibold rounded-lg border border-hack-muted bg-hack-surface hover:bg-hack-mint/30 text-hack-ink shadow-hack-sm h-8 px-2.5"
-          >
-            ⚡ Alarm (.ics)
-          </Button>
-        </div>
-      </div>
 
-      {/* Collapsible/Compact MeetCompanionBar */}
-      <div className="pt-0.5">
-        <MeetCompanionBar eventId={event.id} meetUrl={event.meet_url} />
+          {/* Consolidated Sync Schedule Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="font-mono text-xs font-semibold rounded-lg border border-hack-muted/60 bg-hack-surface hover:bg-hack-sand text-hack-ink shadow-hack-sm h-8 px-2.5 flex items-center gap-1.5 active:scale-95"
+              >
+                <Calendar className="w-3.5 h-3.5 text-hack-gold-dark shrink-0" />
+                <span>Sync Schedule</span>
+                <ChevronDown className="w-3 h-3 text-hack-subtext shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-dialog font-mono text-xs w-48 p-1.5">
+              <DropdownMenuItem
+                onClick={() => window.open(getGoogleCalLink(), '_blank', 'noopener,noreferrer')}
+                className="cursor-pointer font-semibold text-hack-ink hover:bg-hack-sand rounded-lg px-2.5 py-2 flex items-center gap-2"
+              >
+                <Calendar className="w-3.5 h-3.5 text-hack-gold-dark shrink-0" />
+                <span>Google Calendar</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleDownloadIcs}
+                className="cursor-pointer font-semibold text-hack-ink hover:bg-hack-sand rounded-lg px-2.5 py-2 flex items-center gap-2"
+              >
+                <Download className="w-3.5 h-3.5 text-hack-mint-dark shrink-0" />
+                <span>Apple / Outlook (.ics)</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Integrated Meet Companion */}
+          <MeetCompanionBar eventId={event.id} meetUrl={event.meet_url} />
+        </div>
       </div>
     </div>
   )
