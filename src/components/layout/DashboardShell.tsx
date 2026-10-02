@@ -117,7 +117,12 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
             <Link
               href="/dashboard?action=add"
               prefetch={true}
-              onClick={() => setIsMobileMenuOpen(false)}
+              onClick={() => {
+                setIsMobileMenuOpen(false)
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('hackflow:open-add-hack'))
+                }
+              }}
               className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg bg-hack-coral text-hack-ink font-mono text-xs font-bold uppercase tracking-wider shadow-hack-hero hover:brightness-105 active:scale-[0.98] transition-all"
             >
               <span>+ Add Hackathon</span>
@@ -168,7 +173,12 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
             <Link
               href="/dashboard?action=add"
               prefetch={true}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-hack-coral text-hack-ink font-mono text-xs font-bold uppercase tracking-wider shadow-hack-hero hover:brightness-105 active:scale-[0.98] transition-all"
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  window.dispatchEvent(new CustomEvent('hackflow:open-add-hack'))
+                }
+              }}
+              className="inline-flex lg:hidden items-center gap-1.5 px-3 py-1.5 rounded-lg bg-hack-coral text-hack-ink font-mono text-xs font-bold uppercase tracking-wider shadow-hack-hero hover:brightness-105 active:scale-[0.98] transition-all"
             >
               <span>+ Add Hack</span>
             </Link>

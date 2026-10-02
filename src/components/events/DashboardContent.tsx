@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Trophy } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EventCard } from '@/components/events/EventCard'
 import { NextUpStrip, type UrgentItem } from '@/components/events/NextUpStrip'
 import { AtRiskWarnings, type RiskItem } from '@/components/events/AtRiskWarnings'
+import { useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { cn } from '@/lib/utils'
 import type { Event, EventStage } from '@/lib/supabase/types'
@@ -37,6 +38,28 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedFilter, setSelectedFilter] = useState<string>('all')
   const [selectedSquad, setSelectedSquad] = useState<string>('all')
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    if (searchParams?.get('action') === 'add') {
+      setIsDialogOpen(true)
+    }
+  }, [searchParams])
+
+  useEffect(() => {
+    const handleOpen = () => setIsDialogOpen(true)
+    window.addEventListener('hackflow:open-add-hack', handleOpen)
+    return () => window.removeEventListener('hackflow:open-add-hack', handleOpen)
+  }, [])
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsDialogOpen(open)
+    if (!open && searchParams?.get('action') === 'add') {
+      const url = new URL(window.location.href)
+      url.searchParams.delete('action')
+      window.history.replaceState({}, '', url.pathname + (url.search ? url.search : ''))
+    }
+  }
 
   const safeEvents = Array.isArray(events) ? events : []
   const availableSquads = Array.from(new Set(safeEvents.map(e => e.squad_name).filter(Boolean))) as string[]
@@ -169,32 +192,20 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
       {/* 1.2 At-Risk Warning Callouts (Rendered conditionally when blockers exist) */}
       <AtRiskWarnings risks={risks} />
 
-      {/* Compact Secondary Summary Chips & Add Action */}
-      <div className="border border-hack-muted/60 bg-hack-surface p-3.5 sm:p-4 rounded-xl shadow-hack-card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap font-mono text-xs text-hack-subtext">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-hack-sand border border-hack-muted/40 font-semibold text-hack-ink">
-            <span className="w-2 h-2 rounded-full bg-hack-coral inline-block" />
-            <strong className="text-hack-ink font-bold">{activeEventsCount}</strong> active
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-hack-sand border border-hack-muted/40 font-semibold text-hack-ink">
-            <span className="w-2 h-2 rounded-full bg-hack-gold inline-block" />
-            <strong className="text-hack-ink font-bold">{upcomingDeadlinesCount}</strong> due soon
-          </span>
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-hack-sand border border-hack-muted/40 font-semibold text-hack-ink">
-            <span className="w-2 h-2 rounded-full bg-hack-mint inline-block" />
-            <strong className="text-hack-ink font-bold">{completionRate}%</strong> team progress
-          </span>
-        </div>
-
-        <div className="shrink-0">
-          <Button 
-            onClick={() => setIsDialogOpen(true)}
-            size="sm"
-            className="w-full sm:w-auto rounded-lg border border-hack-coral bg-hack-coral hover:brightness-105 active:scale-[0.98] text-hack-ink font-mono text-xs font-bold uppercase tracking-wider shadow-hack-hero px-4 h-9 flex items-center justify-center gap-1.5 touch-manipulation transition-all"
-          >
-            <span className="text-base font-bold">+</span> Add Hackathon
-          </Button>
-        </div>
+      {/* Compact Secondary Summary Chips */}
+      <div className="border border-hack-muted/60 bg-hack-surface p-3 sm:p-3.5 rounded-xl shadow-hack-card flex items-center gap-2 sm:gap-3 flex-wrap font-mono text-xs text-hack-subtext">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-hack-sand border border-hack-muted/40 font-semibold text-hack-ink">
+          <span className="w-2 h-2 rounded-full bg-hack-coral inline-block" />
+          <strong className="text-hack-ink font-bold">{activeEventsCount}</strong> active
+        </span>
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-hack-sand border border-hack-muted/40 font-semibold text-hack-ink">
+          <span className="w-2 h-2 rounded-full bg-hack-gold inline-block" />
+          <strong className="text-hack-ink font-bold">{upcomingDeadlinesCount}</strong> due soon
+        </span>
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-hack-sand border border-hack-muted/40 font-semibold text-hack-ink">
+          <span className="w-2 h-2 rounded-full bg-hack-mint inline-block" />
+          <strong className="text-hack-ink font-bold">{completionRate}%</strong> team progress
+        </span>
       </div>
 
       {/* Filter Tabs & Section Header with Horizontal Scroll on Mobile */}
@@ -276,7 +287,7 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
 
       <URLParseDialog 
         open={isDialogOpen} 
-        onOpenChange={setIsDialogOpen}
+        onOpenChange={handleDialogOpenChange}
       />
     </div>
   )
