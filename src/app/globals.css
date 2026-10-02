@@ -48,42 +48,42 @@
 
 html {
   scroll-behavior: smooth;
-  background: #2e4742;
+  background: #172522;
 }
 
 body {
   position: relative;
   margin: 0;
-  color: #10201d;
-  background-color: #f2f2eb;
+  color: #172522;
+  background-color: #F6F1E7;
   line-height: 1.55;
   isolation: isolate;
 }
 
-/* Authentic Hacktoberfest 2026 dot matrix grain texture overlay */
+/* Authentic HackFlow refined war-room dot matrix grain texture overlay */
 body::after {
   position: fixed;
   z-index: 1000;
   inset: 0;
-  background-image: radial-gradient(circle, rgba(24, 37, 34, 0.6) 0 0.45px, transparent 0.65px),
-    radial-gradient(circle, rgba(247, 247, 242, 0.6) 0 0.35px, transparent 0.55px);
+  background-image: radial-gradient(circle, rgba(23, 37, 34, 0.5) 0 0.35px, transparent 0.55px),
+    radial-gradient(circle, rgba(255, 253, 252, 0.5) 0 0.25px, transparent 0.45px);
   background-position: 0 0, 4px 5px;
   background-size: 7px 7px, 11px 11px;
   content: '';
-  opacity: 0.075;
+  opacity: 0.04;
   pointer-events: none;
   mix-blend-mode: multiply;
 }
 
 ::selection {
-  color: #10201d;
-  background: #e97b77;
+  color: #172522;
+  background: #F16D67;
 }
 
 :focus-visible {
-  outline: 3px solid #f7f7f2;
+  outline: 2px solid #F16D67;
   outline-offset: 2px;
-  box-shadow: 0 0 0 5px #10201d;
+  box-shadow: 0 0 0 4px rgba(241, 109, 103, 0.25);
 }
 
 * {
@@ -107,27 +107,52 @@ button, a, input, select, textarea {
 /* Task completion strikethrough */
 .deliverable-done {
   text-decoration: line-through;
-  text-decoration-thickness: 2px;
-  text-decoration-color: #e97b77;
-  opacity: 0.6;
-  transition: all 200ms ease-out;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: #55635F;
+  opacity: 0.65;
+  transition: all 180ms ease-out;
 }
 
-/* Subtle pulse for critical deadlines */
-@keyframes pulse-subtle {
+/* Subtle pulse for critical countdown digits (< 3h) */
+@keyframes digit-pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  50% { opacity: 0.5; }
 }
-.animate-pulse-subtle {
-  animation: pulse-subtle 2s ease-in-out infinite;
+.countdown-critical {
+  animation: digit-pulse 2s ease-in-out infinite;
 }
 
 /* Card hover lift */
-.card-hover-lift {
-  transition: transform 150ms ease, box-shadow 150ms ease;
+.card-hover-lift, .card-lift {
+  transition: transform 180ms ease, box-shadow 180ms ease;
 }
-.card-hover-lift:hover {
-  transform: translate(-2px, -2px);
+.card-hover-lift:hover, .card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 0 rgba(23,37,34,.16);
+}
+
+/* Checkbox fill */
+.checkbox-fill {
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+/* Stage dot entrance */
+@keyframes stage-pulse-once {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+.stage-active-entrance {
+  animation: stage-pulse-once 400ms ease-out;
+}
+
+/* Page enter transition */
+.page-enter {
+  animation: page-fade-in 180ms ease-out;
+}
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -143,6 +168,10 @@ button, a, input, select, textarea {
 
   .card-hover-lift:hover {
     transform: none;
+  }
+
+  .countdown-critical {
+    animation: none;
   }
 }
 

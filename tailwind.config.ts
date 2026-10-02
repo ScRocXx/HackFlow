@@ -10,7 +10,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        display: ['var(--font-barlow)', 'Barlow Semi Condensed', 'sans-serif'],
+        display: ['var(--font-space)', 'var(--font-barlow)', 'Space Grotesk', 'Barlow Semi Condensed', 'sans-serif'],
         mono: ['var(--font-martian)', 'Martian Mono', 'monospace'],
         sans: ['var(--font-inter)', 'Inter', 'sans-serif'],
       },
@@ -21,72 +21,81 @@ const config: Config = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         primary: {
-          DEFAULT: "#e97b77",
-          foreground: "#10201d",
+          DEFAULT: "#F16D67",
+          foreground: "#172522",
         },
         secondary: {
-          DEFAULT: "#f7f7f2",
-          foreground: "#10201d",
+          DEFAULT: "#FFFDFC",
+          foreground: "#172522",
         },
         destructive: {
           DEFAULT: "#e53927",
-          foreground: "#f7f7f2",
+          foreground: "#FFFDFC",
         },
         muted: {
-          DEFAULT: "#e4e5da",
-          foreground: "#34433f",
+          DEFAULT: "#CBD0C8",
+          foreground: "#55635F",
         },
         accent: {
-          DEFAULT: "#8bb2de",
-          foreground: "#10201d",
+          DEFAULT: "#79AEE8",
+          foreground: "#172522",
         },
         popover: {
-          DEFAULT: "#f7f7f2",
-          foreground: "#10201d",
+          DEFAULT: "#FFFDFC",
+          foreground: "#172522",
         },
         card: {
-          DEFAULT: "#f7f7f2",
-          foreground: "#10201d",
+          DEFAULT: "#FFFDFC",
+          foreground: "#172522",
         },
-        // Hacktoberfest retro-brutalist theme tokens
+        // HackFlow refined war-room design tokens
         hack: {
-          forest: "#2e4742",
-          teal: "#3d5f58",
-          sand: "#f2f2eb",
-          panel: "#f7f7f2",
-          surface: "#f7f7f2",
-          canvas: "#f2f2eb",
-          muted: "#e4e5da",
-          ink: "#10201d",
-          coral: "#e97b77",
-          'coral-shadow': "#671912",
-          rust: "#e53927",
-          red: "#e53927",
-          blue: "#8bb2de",
-          sky: "#8bb2de",
-          gold: "#f5b726",
-          yellow: "#f5b726",
-          'gold-shadow': "#8a5d13",
-          pink: "#f6c4c1",
-          subtext: "#34433f",
-          mint: "#93C9B8",
-          'muted-text': "#6F7873",
+          ink: "#172522", // Primary text, dark panels
+          navy: "#203A52", // Navigation, secondary dark surfaces
+          sand: "#F6F1E7", // Warm paper page background
+          canvas: "#F6F1E7",
+          panel: "#FFFDFC", // Cards, surfaces, inputs
+          surface: "#FFFDFC",
+          muted: "#CBD0C8", // Subtle dividers and borders
+          coral: "#F16D67", // Primary action + deadline state
+          'coral-dark': "#D94841", // Accessible coral for text on light backgrounds
+          'coral-shadow': "#671912", // Kept for legacy shadow compatibility
+          rust: "#E53927", // Critical urgency, destructive
+          red: "#E53927",
+          blue: "#79AEE8", // Links, info, active state
+          'blue-dark': "#2D6BB5", // Accessible blue text on light backgrounds
+          sky: "#79AEE8",
+          gold: "#F6C344", // Warning, attention, trophies
+          'gold-dark': "#946C00", // Accessible gold/amber text on light backgrounds
+          yellow: "#F6C344",
+          'gold-shadow': "#8a5d13", // Kept for legacy compatibility
+          mint: "#B8DCCB", // Success / completed state
+          'mint-dark': "#1D684D", // Accessible mint text
+          subtext: "#55635F", // Secondary text (WCAG AA compliant: 5.6:1 on paper, 6.2:1 on white)
+          'muted-text': "#55635F",
+          pink: "#f6c4c1", // Kept for legacy compatibility
+          forest: "#2e4742", // Kept for dark container backwards compatibility
+          teal: "#3d5f58", // Kept for header backwards compatibility
         },
       },
       boxShadow: {
-        'hack-btn': '5px 5px 0 #671912',
-        'hack-btn-hover': '3px 3px 0 #671912',
-        'hack-card': '4px 4px 0 #671912',
-        'hack-card-quiet': '4px 4px 0 #671912',
-        'hack-card-hero': '7px 7px 0 #671912',
-        'hack-card-gold': '7px 7px 0 #8a5d13',
-        'hack-chip': '5px 5px 0 #2e4742',
-        'hack-nav': '4px 4px 0 #671912',
-        'hack-panel': '6px 6px 0 #10201d',
-        'hack-sm': '2px 2px 0 #10201d',
-        'hack-md': '4px 4px 0 #10201d',
-        'hack-lg': '6px 6px 0 #10201d',
-        'hack-xl': '8px 8px 0 #10201d',
+        // Signature HackFlow shadow
+        'hack-hero': '0 5px 0 rgba(23,37,34,.16)',
+        'hack-btn': '0 5px 0 rgba(23,37,34,.16)',
+        'hack-btn-hover': '0 2px 0 rgba(23,37,34,.16)',
+        // Clean elevation scale
+        'hack-card': '0 2px 8px rgba(23,37,34,.08)',
+        'hack-card-quiet': '0 1px 4px rgba(23,37,34,.06)',
+        'hack-card-hero': '0 5px 0 rgba(23,37,34,.16)',
+        'hack-card-gold': '0 5px 0 rgba(148,108,0,.2)',
+        'hack-chip': '0 1px 3px rgba(23,37,34,.08)',
+        'hack-nav': '0 2px 6px rgba(23,37,34,.06)',
+        'hack-panel': '0 4px 16px rgba(23,37,34,.06)',
+        'hack-dialog': '0 12px 40px rgba(23,37,34,.15)',
+        'hack-sm': '0 1px 2px rgba(23,37,34,.06)',
+        'hack-md': '0 2px 6px rgba(23,37,34,.08)',
+        'hack-lg': '0 4px 12px rgba(23,37,34,.10)',
+        'hack-xl': '0 8px 24px rgba(23,37,34,.12)',
       },
       borderRadius: {
         lg: "var(--radius)",
