@@ -180,9 +180,9 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
                 </button>
                 
                 <span className={cn(
-                  "flex-1 font-mono text-xs sm:text-sm font-medium transition-all select-none truncate",
+                  "flex-1 font-mono text-xs sm:text-sm font-medium transition-all select-none line-clamp-2 break-words",
                   isDone ? "deliverable-done text-hack-subtext/70" : "text-hack-ink font-semibold"
-                )}>
+                )} title={item.title}>
                   {item.title}
                 </span>
 

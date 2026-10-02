@@ -62,11 +62,17 @@ export function ProfileSidebarWidget({ user }: UserProfileSidebarWidgetProps) {
               {userInitials}
             </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col min-w-0 flex-1">
-            <span className="truncate text-xs font-bold text-hack-ink font-mono tracking-tight">
+          <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
+            <span 
+              className="truncate text-xs font-bold text-hack-ink font-mono tracking-tight block"
+              title={user?.full_name || 'Hacker'}
+            >
               {user?.full_name || 'Hacker'}
             </span>
-            <span className="truncate text-[10px] font-mono text-hack-subtext font-medium">
+            <span 
+              className="truncate text-[10px] font-mono text-hack-subtext font-medium tracking-tight block"
+              title={user?.email || ''}
+            >
               {user?.email}
             </span>
           </div>

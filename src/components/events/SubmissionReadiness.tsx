@@ -28,7 +28,7 @@ export function SubmissionReadiness({ event, isSubmissionStage = true }: Submiss
   const [isExpanded, setIsExpanded] = useState(true)
   const { toast } = useToast()
 
-  const runDiagnostics = async () => {
+  const runDiagnostics = async (silent = false) => {
     setRunning(true)
     const checks: SmokeTestItem[] = []
 
@@ -176,25 +176,27 @@ export function SubmissionReadiness({ event, isSubmissionStage = true }: Submiss
     setResults(checks)
     setRunning(false)
 
-    const failedCount = checks.filter(c => c.status === 'failed').length
-    if (failedCount > 0) {
-      toast({
-        title: 'Submission Issues Found',
-        description: `${failedCount} pre-flight check(s) need your attention before submitting.`,
-        variant: 'destructive',
-      })
-    } else {
-      toast({
-        title: 'Pre-Flight Checks Passed',
-        description: 'Key deliverables and judge accessibility checks look solid!',
-      })
+    if (!silent) {
+      const failedCount = checks.filter(c => c.status === 'failed').length
+      if (failedCount > 0) {
+        toast({
+          title: 'Submission Issues Found',
+          description: `${failedCount} pre-flight check(s) need your attention before submitting.`,
+          variant: 'destructive',
+        })
+      } else {
+        toast({
+          title: 'Pre-Flight Checks Passed',
+          description: 'Key deliverables and judge accessibility checks look solid!',
+        })
+      }
     }
   }
 
-  // Auto-run once if in submission phase
+  // Auto-run silently once if in submission phase
   useEffect(() => {
     if (isSubmissionStage && !results) {
-      runDiagnostics()
+      runDiagnostics(true)
     }
   }, [isSubmissionStage, event.id])
 
@@ -206,18 +208,18 @@ export function SubmissionReadiness({ event, isSubmissionStage = true }: Submiss
     <div className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
       <div 
         onClick={() => setIsExpanded(!isExpanded)}
-        className="bg-hack-surface p-4 text-hack-ink flex flex-col sm:flex-row justify-between sm:items-center gap-3 cursor-pointer select-none border-b border-hack-muted/30"
+        className="bg-hack-surface p-4 text-hack-ink flex flex-col gap-3 cursor-pointer select-none border-b border-hack-muted/30"
       >
         <div className="flex items-center gap-2.5 min-w-0">
           <FlaskConical className="h-5 w-5 text-hack-gold-dark shrink-0" />
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext">
                 SUBMISSION CHECK
               </span>
               {results && (
                 <span className={cn(
-                  "font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border",
+                  "font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border shrink-0",
                   failedCount > 0 
                     ? "bg-hack-red/15 border-hack-red/30 text-hack-red" 
                     : "bg-hack-mint/30 border-hack-mint text-hack-mint-dark"
@@ -234,16 +236,16 @@ export function SubmissionReadiness({ event, isSubmissionStage = true }: Submiss
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+        <div className="flex items-center gap-2 pt-1 border-t border-hack-muted/20 w-full">
           <Button
             type="button"
             size="sm"
             disabled={running}
             onClick={(e) => {
               e.stopPropagation()
-              runDiagnostics()
+              runDiagnostics(false)
             }}
-            className="font-mono text-xs font-bold bg-hack-coral hover:brightness-105 text-hack-ink shadow-hack-hero h-8 px-3 rounded-lg"
+            className="font-mono text-xs font-bold bg-hack-coral hover:brightness-105 text-hack-ink shadow-hack-hero h-8 px-3 rounded-lg flex-1 justify-center"
           >
             {running ? (
               <>
@@ -258,11 +260,12 @@ export function SubmissionReadiness({ event, isSubmissionStage = true }: Submiss
 
           <button
             type="button"
-            className="p-1 text-hack-subtext hover:text-hack-ink"
+            className="p-1.5 text-hack-subtext hover:text-hack-ink rounded-lg border border-hack-muted/40 hover:bg-hack-sand/50 transition-colors"
             onClick={(e) => {
               e.stopPropagation()
               setIsExpanded(!isExpanded)
             }}
+            aria-label={isExpanded ? "Collapse pre-flight checks" : "Expand pre-flight checks"}
           >
             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>

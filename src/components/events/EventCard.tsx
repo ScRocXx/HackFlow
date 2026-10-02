@@ -165,7 +165,7 @@ export function EventCard({ event }: EventCardProps) {
 
           {/* Card Body: Title, Organizer, Prize */}
           <div className="mb-3">
-            <h3 className="font-display text-lg sm:text-xl font-bold text-hack-ink line-clamp-1 group-hover:text-hack-coral-dark transition-colors">
+            <h3 className="font-display text-lg sm:text-xl font-bold text-hack-ink line-clamp-2 break-words group-hover:text-hack-coral-dark transition-colors" title={event.title}>
               {event.title}
             </h3>
             <div className="flex items-center justify-between gap-2 mt-0.5">

@@ -103,9 +103,9 @@ export function StageTimeline({
                   </div>
 
                   <h4 className={cn(
-                    "font-display text-sm sm:text-base font-bold line-clamp-1 leading-tight",
+                    "font-display text-sm sm:text-base font-bold line-clamp-2 leading-tight break-words",
                     isSelected ? "text-hack-coral-dark" : "text-hack-ink"
-                  )}>
+                  )} title={stage.title}>
                     {stage.title}
                   </h4>
 

@@ -13,7 +13,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { StageTimeline } from '@/components/events/StageTimeline'
 import { EditEventDialog } from '@/components/events/EditEventDialog'
 import { completeStage } from '@/app/actions/stages'
-import { addEventResource, deleteEventResource, addEventParticipant, deleteEvent } from '@/app/actions/events'
+import { addEventResource, deleteEventResource, addEventParticipant, removeEventParticipant, deleteEvent } from '@/app/actions/events'
 import { getFriendsList } from '@/app/actions/friends'
 import { IdeaSandbox } from '@/components/events/IdeaSandbox'
 import { SubmissionReadiness } from '@/components/events/SubmissionReadiness'
@@ -76,6 +76,44 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
   const [friends, setFriends] = useState<Friendship[]>([])
   const [loadingFriends, setLoadingFriends] = useState(false)
   const [invitingId, setInvitingId] = useState<string | null>(null)
+  
+  // Teammate removal state
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null)
+  const [memberToRemove, setMemberToRemove] = useState<{ id: string; name: string } | null>(null)
+
+  const handleRemoveMember = async (userId: string, name: string) => {
+    setRemovingMemberId(userId)
+    try {
+      const res = await removeEventParticipant(currentEvent.id, userId)
+      if (res.success) {
+        toast({
+          title: 'Member Removed',
+          description: `${name} has been removed from this hackathon.`,
+        })
+        setCurrentEvent((prev) => ({
+          ...prev,
+          event_participants: (prev.event_participants || []).filter((p: any) => p.user_id !== userId && p.id !== userId),
+          team_members: (prev.team_members || []).filter((m: any) => m.user_id !== userId && m.id !== userId),
+        }))
+        router.refresh()
+      } else {
+        toast({
+          title: 'Could not remove member',
+          description: res.error || 'Failed to remove participant.',
+          variant: 'destructive',
+        })
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err.message,
+        variant: 'destructive',
+      })
+    } finally {
+      setRemovingMemberId(null)
+      setMemberToRemove(null)
+    }
+  }
   
   // Resources state
   const [resources, setResources] = useState<EventResource[]>(event.resources || [])
@@ -678,17 +716,24 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                 </div>
 
                 {/* Squad Badge if present */}
-                {(currentEvent.squad?.name || currentEvent.squad_name || event.squad?.name || event.squad_name) && (
-                  <div className="mb-3 p-2.5 bg-hack-gold/15 border border-hack-gold/40 rounded-lg flex items-center justify-between font-mono text-xs font-bold text-hack-ink shadow-hack-sm">
-                    <span className="flex items-center gap-1.5 truncate">
-                      <Shield className="h-3.5 w-3.5 text-hack-gold-dark shrink-0" />
-                      ⚡ SQUAD: {currentEvent.squad?.name || currentEvent.squad_name || event.squad?.name || event.squad_name}
-                    </span>
-                    <Badge variant="outline" className="text-[10px] border-hack-muted bg-white font-mono shrink-0 rounded-md">
-                      Synced Vault
-                    </Badge>
-                  </div>
-                )}
+                {(() => {
+                  const squadName = currentEvent.squad?.name || currentEvent.squad_name || event.squad?.name || event.squad_name
+                  if (!squadName) return null
+                  return (
+                    <div className="mb-3 p-2.5 bg-hack-gold/15 border border-hack-gold/40 rounded-lg flex flex-wrap items-center justify-between gap-2 font-mono text-xs font-bold text-hack-ink shadow-hack-sm">
+                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <Shield className="h-3.5 w-3.5 text-hack-gold-dark shrink-0" />
+                        <span className="text-[10px] uppercase font-bold text-hack-gold-dark shrink-0">SQUAD:</span>
+                        <span className="font-bold text-hack-ink truncate max-w-[140px] sm:max-w-[160px]" title={squadName}>
+                          {squadName}
+                        </span>
+                      </div>
+                      <Badge variant="outline" className="text-[10px] border-hack-gold/40 bg-white/90 text-hack-ink font-mono shrink-0 rounded-md px-1.5 py-0.5">
+                        ⚡ Synced Vault
+                      </Badge>
+                    </div>
+                  )
+                })()}
                 
                 <div className="space-y-2">
                   {(currentEvent.team_members || currentEvent.event_participants || event.team_members || event.event_participants || []).map((member: any) => {
@@ -697,50 +742,74 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                     const name = member.full_name || member.profile?.full_name || (isCurrentUser ? 'You' : 'Team Member')
                     const email = member.email || member.profile?.email || ''
                     const initial = (name.charAt(0) || 'U').toUpperCase()
+                    const memberUserId = member.user_id || member.id
+                    const canRemove = !isLead && memberUserId
 
                     return (
-                      <div key={member.id || member.user_id} className="p-2.5 bg-hack-surface border border-hack-muted/60 rounded-lg shadow-hack-sm flex items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5 min-w-0">
+                      <div key={member.id || member.user_id} className="p-2.5 bg-hack-surface border border-hack-muted/60 rounded-lg shadow-hack-sm flex items-center justify-between gap-2.5">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
                           <div className={cn(
                             "w-8 h-8 rounded-full border border-hack-muted/40 flex items-center justify-center font-mono text-xs font-bold text-hack-ink shrink-0",
                             isLead ? 'bg-hack-gold' : 'bg-hack-blue'
                           )}>
                             {initial}
                           </div>
-                          <div className="min-w-0">
-                            <p className="font-display text-sm font-bold text-hack-ink truncate">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-display text-sm font-bold text-hack-ink truncate" title={name}>
                               {name}
-                              {isCurrentUser && !name.toLowerCase().includes('you') && (
-                                <span className="font-mono text-xs text-hack-subtext ml-1.5">(YOU)</span>
-                              )}
                             </p>
-                            <p className="font-mono text-[10px] text-hack-subtext truncate">{email || (isLead ? 'Team Lead' : 'Collaborator')}</p>
+                            <p className="font-mono text-[10px] text-hack-subtext truncate" title={email}>
+                              {email || (isLead ? 'Team Lead' : 'Collaborator')}
+                            </p>
                           </div>
                         </div>
+
                         <div className="flex items-center gap-1.5 shrink-0">
-                          {isLead && (
+                          {isLead && isCurrentUser ? (
                             <Badge
                               variant="outline"
-                              className="font-mono text-[10px] font-bold uppercase border-hack-gold/40 bg-hack-gold/20 text-hack-gold-dark rounded-md"
+                              className="font-mono text-[10px] font-bold uppercase border-hack-gold/40 bg-hack-gold/20 text-hack-gold-dark rounded-md px-1.5 py-0.5"
+                            >
+                              LEAD · YOU
+                            </Badge>
+                          ) : isLead ? (
+                            <Badge
+                              variant="outline"
+                              className="font-mono text-[10px] font-bold uppercase border-hack-gold/40 bg-hack-gold/20 text-hack-gold-dark rounded-md px-1.5 py-0.5"
                             >
                               LEAD
                             </Badge>
-                          )}
-                          {isCurrentUser && (
+                          ) : isCurrentUser ? (
                             <Badge
                               variant="outline"
-                              className="font-mono text-[10px] font-bold uppercase border-hack-blue/40 bg-hack-blue/20 text-hack-blue-dark rounded-md"
+                              className="font-mono text-[10px] font-bold uppercase border-hack-blue/40 bg-hack-blue/20 text-hack-blue-dark rounded-md px-1.5 py-0.5"
                             >
                               YOU
                             </Badge>
-                          )}
-                          {!isLead && !isCurrentUser && (
+                          ) : (
                             <Badge
                               variant="outline"
-                              className="font-mono text-[10px] font-medium uppercase border-hack-muted bg-hack-sand text-hack-subtext rounded-md"
+                              className="font-mono text-[10px] font-medium uppercase border-hack-muted bg-hack-sand text-hack-subtext rounded-md px-1.5 py-0.5"
                             >
                               MEMBER
                             </Badge>
+                          )}
+
+                          {canRemove && (
+                            <button
+                              type="button"
+                              onClick={() => setMemberToRemove({ id: memberUserId, name })}
+                              disabled={removingMemberId === memberUserId}
+                              title={`Remove ${name} from this hackathon`}
+                              aria-label={`Remove ${name} from this hackathon`}
+                              className="p-1 rounded-md text-hack-subtext hover:text-hack-red hover:bg-hack-red/10 transition-colors shrink-0"
+                            >
+                              {removingMemberId === memberUserId ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-3.5 h-3.5" />
+                              )}
+                            </button>
                           )}
                         </div>
                       </div>
@@ -913,6 +982,43 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                   className="w-full sm:w-auto font-mono text-xs bg-hack-red hover:bg-hack-red/90 text-white rounded-lg shadow-hack-hero font-bold"
                 >
                   {isDeletingEvent ? 'Deleting...' : 'Delete Permanently'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          {/* Remove Member Confirmation Dialog */}
+          <Dialog open={!!memberToRemove} onOpenChange={(open) => !open && setMemberToRemove(null)}>
+            <DialogContent className="max-w-sm border border-hack-muted/60 bg-hack-surface rounded-xl p-6 shadow-hack-dialog">
+              <DialogHeader>
+                <div className="flex items-center gap-2 text-hack-red">
+                  <Trash2 className="w-5 h-5" />
+                  <DialogTitle className="font-display text-lg font-bold text-hack-ink">
+                    Remove Team Member?
+                  </DialogTitle>
+                </div>
+                <DialogDescription className="font-sans text-xs text-hack-subtext mt-2 leading-relaxed">
+                  Are you sure you want to remove <strong className="text-hack-ink font-semibold">{memberToRemove?.name}</strong> from this hackathon workspace?
+                </DialogDescription>
+              </DialogHeader>
+
+              <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-hack-muted/30 mt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setMemberToRemove(null)}
+                  disabled={!!removingMemberId}
+                  className="w-full sm:w-auto font-mono text-xs border border-hack-muted rounded-lg"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => memberToRemove && handleRemoveMember(memberToRemove.id, memberToRemove.name)}
+                  disabled={!!removingMemberId}
+                  className="w-full sm:w-auto font-mono text-xs bg-hack-red hover:bg-hack-red/90 text-white rounded-lg shadow-hack-hero font-bold"
+                >
+                  {removingMemberId ? 'Removing...' : 'Remove Member'}
                 </Button>
               </DialogFooter>
             </DialogContent>

@@ -46,16 +46,16 @@ export function AtRiskWarnings({ risks }: AtRiskWarningsProps) {
             )}
           >
             <div>
-              <div className="flex items-center justify-between gap-2 mb-1.5">
+              <div className="flex items-center gap-2 mb-1.5 flex-wrap min-w-0">
                 <span className={cn(
-                  "font-mono text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full border",
+                  "font-mono text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full border shrink-0",
                   risk.severity === 'critical' 
                     ? "bg-hack-red/20 border-hack-red/40 text-hack-red" 
                     : "bg-hack-gold/25 border-hack-gold/40 text-hack-gold-dark"
                 )}>
                   {risk.severity === 'critical' ? 'CRITICAL' : 'WARNING'}
                 </span>
-                <span className="font-mono text-[11px] font-bold text-hack-ink truncate">
+                <span className="font-mono text-[11px] font-bold text-hack-ink truncate min-w-0 flex-1" title={risk.eventTitle}>
                   {risk.eventTitle}
                 </span>
               </div>
