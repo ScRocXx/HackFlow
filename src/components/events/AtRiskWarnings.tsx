@@ -19,16 +19,16 @@ export function AtRiskWarnings({ risks }: AtRiskWarningsProps) {
   if (!risks || risks.length === 0) return null
 
   return (
-    <div className="border-2 border-hack-ink bg-hack-panel p-4 sm:p-5 shadow-hack-panel space-y-3" role="region" aria-label="At risk warnings">
-      <div className="flex items-center justify-between gap-2 border-b-2 border-hack-ink/15 pb-2.5">
-        <div className="flex items-center gap-2 text-hack-rust">
-          <ShieldAlert className="w-5 h-5 shrink-0" />
-          <h3 className="font-display text-lg sm:text-xl font-bold uppercase tracking-tight text-hack-ink">
-            At Risk ({risks.length})
+    <div className="border border-hack-muted/60 bg-hack-surface p-4 sm:p-5 rounded-xl shadow-hack-card space-y-3" role="region" aria-label="At risk warnings">
+      <div className="flex items-center justify-between gap-2 border-b border-hack-muted/30 pb-2.5">
+        <div className="flex items-center gap-2">
+          <ShieldAlert className="w-5 h-5 text-hack-gold-dark shrink-0" />
+          <h3 className="font-display text-base sm:text-lg font-bold tracking-tight text-hack-ink">
+            {risks.length} {risks.length === 1 ? 'thing could bite you later' : 'things could bite you later'}
           </h3>
         </div>
-        <span className="font-mono text-[10px] sm:text-[11px] font-bold text-hack-rust uppercase">
-          {risks.length === 1 ? '1 issue needs review' : `${risks.length} issues need review`}
+        <span className="font-mono text-[10px] sm:text-[11px] font-semibold text-hack-subtext uppercase">
+          Review & Unblock
         </span>
       </div>
 
@@ -39,15 +39,19 @@ export function AtRiskWarnings({ risks }: AtRiskWarningsProps) {
             role={risk.severity === 'critical' ? 'alert' : undefined}
             aria-live={risk.severity === 'critical' ? 'assertive' : undefined}
             className={cn(
-              "p-3.5 border-2 border-hack-ink flex flex-col justify-between shadow-hack-chip",
-              risk.severity === 'critical' ? "bg-[#f6c4c1]" : "bg-[#fef9e7]"
+              "p-3.5 rounded-xl border flex flex-col justify-between shadow-hack-sm transition-all hover:shadow-hack-hero",
+              risk.severity === 'critical' 
+                ? "bg-hack-red/10 border-l-4 border-l-hack-red border-y-hack-muted/60 border-r-hack-muted/60" 
+                : "bg-hack-sand/50 border-l-4 border-l-hack-gold border-y-hack-muted/60 border-r-hack-muted/60"
             )}
           >
             <div>
               <div className="flex items-center justify-between gap-2 mb-1.5">
                 <span className={cn(
-                  "font-mono text-[9px] font-black uppercase px-1.5 py-0.5 border border-hack-ink",
-                  risk.severity === 'critical' ? "bg-hack-rust text-white" : "bg-hack-gold text-hack-ink"
+                  "font-mono text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-full border",
+                  risk.severity === 'critical' 
+                    ? "bg-hack-red/20 border-hack-red/40 text-hack-red" 
+                    : "bg-hack-gold/25 border-hack-gold/40 text-hack-gold-dark"
                 )}>
                   {risk.severity === 'critical' ? 'CRITICAL' : 'WARNING'}
                 </span>
@@ -55,18 +59,18 @@ export function AtRiskWarnings({ risks }: AtRiskWarningsProps) {
                   {risk.eventTitle}
                 </span>
               </div>
-              <p className="font-mono text-xs text-hack-ink font-semibold leading-snug">
+              <p className="font-mono text-xs text-hack-ink font-medium leading-snug">
                 {risk.message}
               </p>
             </div>
 
-            <div className="mt-3 pt-2 border-t border-hack-ink/20 flex justify-end">
+            <div className="mt-3 pt-2 border-t border-hack-muted/30 flex justify-end">
               <Link
                 href={`/events/${risk.eventId}`}
                 prefetch={true}
-                className="inline-flex items-center gap-1 font-mono text-[11px] font-black uppercase text-hack-ink hover:text-hack-rust transition-colors"
+                className="inline-flex items-center gap-1 font-mono text-[11px] font-bold uppercase text-hack-ink hover:text-hack-coral-dark transition-colors"
               >
-                Resolve Now <ArrowRight className="w-3.5 h-3.5" />
+                Fix this <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </div>
           </div>
