@@ -97,70 +97,64 @@ export function EventCard({ event }: EventCardProps) {
 
   return (
     <>
-      <div className="border-2 border-hack-ink bg-hack-panel shadow-[6px_6px_0_#671912] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[3px_3px_0_#671912] transition-all flex flex-col group h-full overflow-hidden relative">
+      <div className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-card hover:shadow-hack-hero hover:-translate-y-1 transition-all flex flex-col group h-full overflow-hidden relative">
         <Link 
           href={`/events/${event.id}`}
           prefetch={true}
-          className="flex flex-col h-full flex-1"
+          className="flex flex-col h-full flex-1 p-4 sm:p-5"
         >
-          {/* Banner Container */}
-          <div className="h-28 sm:h-32 w-full relative bg-hack-forest border-b-2 border-hack-ink overflow-hidden">
-            {event.banner_url ? (
-              <img src={event.banner_url} alt={event.title} className="w-full h-full object-cover" />
-            ) : (
-              <div className="absolute inset-0 bg-hack-teal flex items-center justify-center p-4">
-                <span className="font-display text-2xl font-extrabold text-hack-panel/30 tracking-wider uppercase">
-                  {platformBadge.label}
-                </span>
-              </div>
-            )}
-
-            {/* Badges on Top Left (Max 2 Badges) */}
-            <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 flex gap-1.5 flex-wrap max-w-[70%] z-10">
-              <span className={`inline-flex items-center px-2 py-0.5 border-2 font-mono text-[10px] font-black uppercase tracking-wider shadow-hack-sm ${platformBadge.className}`}>
+          {/* Card Top Header: Platform badge, mode, and overflow menu */}
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className={cn(
+                "inline-flex items-center px-2 py-0.5 rounded-md border font-mono text-[10px] font-bold uppercase tracking-wider",
+                platformBadge.className
+              )}>
                 {platformBadge.label}
               </span>
+              {event.mode && (
+                <span className="inline-flex items-center font-mono text-[10px] font-medium text-hack-subtext uppercase px-1.5 py-0.5 rounded-md bg-hack-sand border border-hack-muted/40">
+                  {event.mode === 'in-person' ? <MapPin className="w-3 h-3 mr-0.5" /> : <Globe className="w-3 h-3 mr-0.5" />}
+                  {event.mode}
+                </span>
+              )}
               {event.squad_name && (
-                <span className="inline-flex items-center px-2 py-0.5 border-2 border-hack-ink bg-hack-yellow text-hack-ink font-mono text-[10px] font-bold uppercase tracking-wider shadow-hack-sm">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md border border-hack-gold/40 bg-hack-gold/15 text-hack-gold-dark font-mono text-[10px] font-semibold">
                   👥 {event.squad_name}
                 </span>
               )}
             </div>
 
-            {/* Overflow Options Menu (Top Right) */}
-            <div className="absolute top-2 right-2 sm:top-2.5 sm:right-2.5 z-20">
+            {/* Overflow Options Menu */}
+            <div className="shrink-0" onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.preventDefault()
-                      e.stopPropagation()
-                    }}
                     title="Hackathon options"
                     aria-label="Hackathon options"
-                    className="p-1.5 min-w-[32px] min-h-[32px] flex items-center justify-center border-2 border-hack-ink bg-hack-panel hover:bg-hack-muted active:scale-90 text-hack-ink shadow-hack-sm transition-all touch-manipulation"
+                    className="p-1 min-w-[28px] min-h-[28px] rounded-lg flex items-center justify-center border border-hack-muted/50 bg-hack-surface hover:bg-hack-sand active:scale-95 text-hack-subtext hover:text-hack-ink transition-all touch-manipulation"
                   >
                     <MoreHorizontal className="w-4 h-4" />
                     <span className="sr-only">Options</span>
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="border-2 border-hack-ink bg-hack-panel shadow-hack-sm font-mono text-xs w-44">
+                <DropdownMenuContent className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-dialog font-mono text-xs w-44 p-1.5">
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation()
                       setEditOpen(true)
                     }}
-                    className="cursor-pointer font-bold text-hack-ink hover:bg-hack-muted"
+                    className="cursor-pointer font-semibold text-hack-ink hover:bg-hack-sand rounded-lg px-2.5 py-1.5"
                   >
-                    <Edit3 className="w-3.5 h-3.5 mr-2 text-hack-subtext" /> Edit Hackathon
+                    <Edit3 className="w-3.5 h-3.5 mr-2 text-hack-subtext" /> Edit Details
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={(e) => {
                       e.stopPropagation()
                       setDeleteOpen(true)
                     }}
-                    className="cursor-pointer font-bold text-hack-red hover:bg-hack-pink"
+                    className="cursor-pointer font-semibold text-hack-red hover:bg-hack-red/10 rounded-lg px-2.5 py-1.5"
                   >
                     <Trash2 className="w-3.5 h-3.5 mr-2 text-hack-red" /> Delete Hackathon
                   </DropdownMenuItem>
@@ -169,151 +163,83 @@ export function EventCard({ event }: EventCardProps) {
             </div>
           </div>
 
-          {/* Card Body */}
-          <div className="p-3.5 sm:p-5 flex-1 flex flex-col">
-            <div className="mb-3 sm:mb-4">
-              <h3 className="font-display text-lg sm:text-xl font-bold text-hack-ink line-clamp-1 group-hover:text-hack-red transition-colors">
-                {event.title}
-              </h3>
-              <div className="flex items-center justify-between gap-2 mt-0.5">
-                <p className="font-mono text-xs text-hack-subtext line-clamp-1">
-                  {event.organizer || 'Independent Hackathon'}
-                </p>
-                {event.mode && (
-                  <span className="inline-flex items-center font-mono text-[10px] font-bold text-hack-subtext uppercase shrink-0">
-                    {event.mode === 'in-person' ? <MapPin className="w-3 h-3 mr-0.5" /> : <Globe className="w-3 h-3 mr-0.5" />}
-                    {event.mode}
+          {/* Card Body: Title, Organizer, Prize */}
+          <div className="mb-3">
+            <h3 className="font-display text-lg sm:text-xl font-bold text-hack-ink line-clamp-1 group-hover:text-hack-coral-dark transition-colors">
+              {event.title}
+            </h3>
+            <div className="flex items-center justify-between gap-2 mt-0.5">
+              <p className="font-mono text-xs text-hack-subtext truncate">
+                {event.organizer || 'Independent Hackathon'}
+              </p>
+              {prizeDisplay && (
+                <span className="font-mono text-[10px] font-semibold text-hack-gold-dark truncate">
+                  🏆 {prizeDisplay}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Active Round & Countdown (Auto-Rolled) */}
+          {computedActiveStage ? (
+            <div className="mb-4 p-3 rounded-lg border border-hack-muted/60 bg-hack-sand/40 space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 truncate">
+                  <span className="w-2 h-2 rounded-full bg-hack-coral inline-block shrink-0" />
+                  <span className="font-mono text-xs font-bold text-hack-ink truncate">
+                    {computedActiveStage.title}
+                  </span>
+                </div>
+                {computedActiveStage.raw_date_snippet && (
+                  <span className="font-mono text-[10px] text-hack-subtext font-medium flex items-center gap-1 shrink-0">
+                    <Calendar className="w-3 h-3" />
+                    {computedActiveStage.raw_date_snippet}
                   </span>
                 )}
               </div>
-              {prizeDisplay && (
-                <div className="mt-1.5">
-                  <span className="inline-flex items-center font-mono text-[10px] font-bold text-hack-ink bg-hack-sky/30 px-1.5 py-0.5 border border-hack-ink/30 truncate max-w-full">
-                    🏆 {prizeDisplay}
-                  </span>
-                </div>
-              )}
+              <CountdownTimer 
+                deadline={computedActiveStage.actionable_deadline || computedActiveStage.deadline || ''} 
+                windowStart={computedActiveStage.window_start}
+                windowEnd={computedActiveStage.window_end}
+                showMilestoneLabel={true}
+                showTimezoneBadge={true}
+                className="text-xs" 
+              />
             </div>
+          ) : (
+            <div className="mb-4 p-3 rounded-lg border border-dashed border-hack-muted bg-hack-sand/20 flex items-center justify-center font-mono text-hack-subtext text-xs font-medium h-[64px]">
+              All clear.
+            </div>
+          )}
 
-            {/* Active Stage & Countdown (Auto-Rolled) */}
-            {computedActiveStage ? (
-              <div className="mb-4 p-3 border-2 border-hack-ink bg-hack-sand shadow-[3px_3px_0_#2e4742]">
-                <div className="flex items-center justify-between gap-2 mb-2">
-                  <div className="flex items-center gap-2 truncate">
-                    <span className="w-2 h-2 bg-hack-red inline-block shrink-0" />
-                    <span className="font-mono text-xs font-bold text-hack-ink truncate uppercase">
-                      {computedActiveStage.title}
-                    </span>
-                  </div>
-                  {computedActiveStage.raw_date_snippet && (
-                    <span className="font-mono text-[10px] text-hack-subtext font-semibold flex items-center gap-1 shrink-0">
-                      <Calendar className="w-3 h-3" />
-                      {computedActiveStage.raw_date_snippet}
-                    </span>
-                  )}
-                </div>
-                <CountdownTimer 
-                  deadline={computedActiveStage.actionable_deadline || computedActiveStage.deadline || ''} 
-                  windowStart={computedActiveStage.window_start}
-                  windowEnd={computedActiveStage.window_end}
-                  showMilestoneLabel={true}
-                  showTimezoneBadge={true}
-                  className="text-xs" 
+          {/* Progress & Team Count */}
+          <div className="mt-auto space-y-3 pt-2">
+            <div>
+              <div className="flex justify-between items-center font-mono text-xs text-hack-subtext mb-1.5">
+                <span className="flex items-center gap-1">
+                  <Users className="w-3.5 h-3.5" /> {event.team_count || 1} {event.team_count === 1 ? 'member' : 'members'}
+                </span>
+                <span className="font-medium">{event.deliverable_progress?.done || 0}/{event.deliverable_progress?.total || 0} tasks ({Math.round(progressPercent)}%)</span>
+              </div>
+              <div className="w-full h-1.5 rounded-full bg-hack-muted/50 overflow-hidden">
+                <div 
+                  className="h-full bg-hack-coral transition-all rounded-full" 
+                  style={{ width: `${progressPercent}%` }} 
                 />
               </div>
-            ) : (
-              <div className="mb-4 p-3 border-2 border-hack-ink bg-hack-muted flex items-center justify-center font-mono text-hack-subtext text-xs font-bold h-[76px]">
-                No active stage
-              </div>
-            )}
+            </div>
 
-            {/* Progress & Team Count */}
-            <div className="mt-auto space-y-3">
-              <div>
-                <div className="flex justify-between items-center font-mono text-xs font-bold text-hack-subtext mb-1.5">
-                  <span className="flex items-center gap-1">
-                    <Users className="w-3.5 h-3.5" /> {event.team_count || 1} members
-                  </span>
-                  <span>{event.deliverable_progress?.done || 0}/{event.deliverable_progress?.total || 0} tasks</span>
-                </div>
-                <div className="w-full h-2 border border-hack-ink bg-hack-muted overflow-hidden">
-                  <div 
-                    className="h-full bg-hack-coral transition-all" 
-                    style={{ width: `${progressPercent}%` }} 
-                  />
-                </div>
-              </div>
-
-              {/* State-Dependent Primary Action Button */}
-              {(() => {
-                const targetDl = computedActiveStage?.actionable_deadline || computedActiveStage?.deadline
-                const severity = getDeadlineSeverity(targetDl)
-                let cta = {
-                  label: 'Continue →',
-                  className: 'bg-hack-coral text-hack-ink hover:bg-hack-pink shadow-[2px_2px_0_#671912]'
-                }
-                if (severity.severity === 'critical') {
-                  cta = {
-                    label: '⏰ Due Soon — Open',
-                    className: 'bg-hack-red text-white hover:bg-[#c82717] shadow-hack-sm'
-                  }
-                } else if (event.status === 'winner' || event.status === 'runner_up') {
-                  cta = {
-                    label: '🏆 View in Trophy Case',
-                    className: 'bg-hack-yellow text-hack-ink hover:bg-[#e5a81e] shadow-[2px_2px_0_#8a5d13]'
-                  }
-                } else if (event.status === 'submitted') {
-                  cta = {
-                    label: 'Check Status',
-                    className: 'bg-hack-sky text-hack-ink hover:bg-[#7ba2ce] shadow-[2px_2px_0_#2e4742]'
-                  }
-                }
-                return (
-                  <div className="w-full">
-                    <span className={cn(
-                      "w-full py-2 px-3 border-2 border-hack-ink font-mono text-xs font-black uppercase tracking-wide flex items-center justify-center gap-1.5 transition-all group-hover:translate-x-[1px] group-hover:translate-y-[1px]",
-                      cta.className
-                    )}>
-                      {cta.label}
-                    </span>
-                  </div>
-                )
-              })()}
+            {/* Primary Action Button */}
+            <div className="w-full pt-1">
+              <span className="w-full py-2 px-3 rounded-lg font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 border border-hack-coral bg-hack-coral text-hack-ink shadow-hack-hero group-hover:brightness-105 transition-all">
+                Open Workspace →
+              </span>
             </div>
           </div>
         </Link>
 
-        {/* Resource Badges */}
-        {event.resources && event.resources.length > 0 && (
-          <div className="px-5 pb-3 flex flex-wrap gap-1.5 z-20 relative border-t border-hack-ink/20 pt-2.5">
-            {event.resources.slice(0, 3).map((res) => (
-              <a
-                key={res.id}
-                href={ensureExternalUrl(res.url)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 border border-hack-ink bg-hack-panel hover:bg-hack-sky text-hack-ink transition-colors max-w-[180px]"
-                title={res.title}
-              >
-                {res.resource_type === 'dataset' ? (
-                  <Database className="w-3 h-3 text-hack-ink shrink-0" />
-                ) : (
-                  <FileText className="w-3 h-3 text-hack-ink shrink-0" />
-                )}
-                <span className="truncate">{res.title}</span>
-                <ExternalLink className="w-2.5 h-2.5 opacity-60 shrink-0" />
-              </a>
-            ))}
-            {event.resources.length > 3 && (
-              <span className="font-mono text-[10px] text-hack-subtext font-bold self-center">
-                +{event.resources.length - 3}
-              </span>
-            )}
-          </div>
-        )}
-        
         {/* Status Pills */}
-        <div className="px-4 py-3 bg-hack-panel border-t-2 border-hack-ink relative z-10">
+        <div className="px-4 py-2.5 bg-hack-surface border-t border-hack-muted/30 relative z-10">
           <StatusPills 
             eventId={event.id} 
             currentStatus={event.status || 'bookmarked'} 

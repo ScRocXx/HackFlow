@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { CountdownTimer } from '@/components/events/CountdownTimer'
 import { StageChecklist } from '@/components/events/StageChecklist'
 import { downloadIcsFile, getGoogleCalendarUrl } from '@/lib/calendar/calendar-sync'
+import { cn } from '@/lib/utils'
 import type { EventStage, StageDeliverable } from '@/lib/supabase/types'
 
 interface ActiveStagePanelProps {
@@ -74,36 +75,39 @@ export function ActiveStagePanel({
 
   return (
     <div className={className}>
-      <Card className="border-2 border-hack-ink bg-hack-panel shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912] overflow-hidden">
-        <div className="bg-hack-teal p-4 sm:p-6 border-b-2 border-hack-ink text-hack-panel">
+      <Card className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
+        <div className="bg-hack-surface p-4 sm:p-6 border-b border-hack-muted/40 text-hack-ink">
           <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
             <div>
-              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-hack-ink bg-hack-yellow text-hack-ink shadow-hack-sm">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border border-hack-coral/40 bg-hack-coral/15 text-hack-coral-dark">
+                  WHAT MATTERS NOW
+                </span>
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border border-hack-gold/40 bg-hack-gold/15 text-hack-gold-dark">
                   {currentDisplayStage.stage_type}
                 </span>
                 {currentDisplayStage.raw_date_snippet && (
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border border-hack-ink bg-hack-panel text-hack-ink">
+                  <span className="font-mono text-[10px] font-medium tracking-wider px-2 py-0.5 rounded-md border border-hack-muted bg-hack-sand text-hack-subtext">
                     🗓️ {currentDisplayStage.raw_date_snippet}
                   </span>
                 )}
                 {focusedStageId && focusedStageId !== activeStage?.id && (
-                  <span className="font-mono text-[10px] font-black uppercase tracking-wider px-2 py-0.5 border border-hack-ink bg-hack-sky text-hack-ink">
-                    Browsing Round {currentDisplayStage.round_number || ''}
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border border-hack-blue/50 bg-hack-blue/15 text-hack-blue-dark">
+                    Viewing Round {currentDisplayStage.round_number || ''}
                   </span>
                 )}
               </div>
-              <h2 className="font-display text-xl sm:text-3xl font-extrabold text-hack-panel tracking-tight">
+              <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-bold text-hack-ink tracking-tight">
                 {currentDisplayStage.title}
               </h2>
               {currentDisplayStage.deliverables_description && (
-                <p className="font-mono text-xs text-hack-panel/80 mt-1 max-w-xl">
+                <p className="font-sans text-sm text-hack-subtext mt-1 max-w-xl leading-relaxed">
                   {currentDisplayStage.deliverables_description}
                 </p>
               )}
             </div>
 
-            <div className="text-left sm:text-right flex flex-col sm:items-end">
+            <div className="text-left sm:text-right flex flex-col sm:items-end shrink-0">
               <CountdownTimer 
                 deadline={currentDisplayStage.actionable_deadline || currentDisplayStage.deadline} 
                 windowStart={currentDisplayStage.window_start}
@@ -113,15 +117,15 @@ export function ActiveStagePanel({
               />
 
               {/* Calendar Sync: Google Calendar + Phone .ics Alarm */}
-              <div className="flex items-center justify-start sm:justify-end gap-1.5 mt-2 flex-wrap">
+              <div className="flex items-center justify-start sm:justify-end gap-1.5 mt-2.5 flex-wrap">
                 <a
                   href={getGoogleCalLink()}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-mono text-[10px] font-bold px-2 py-1 border-2 border-hack-ink bg-hack-yellow hover:bg-[#ffcf66] text-hack-ink shadow-hack-sm inline-flex items-center gap-1 transition-all"
+                  className="font-mono text-[10px] font-bold px-2.5 py-1 rounded-lg border border-hack-gold/40 bg-hack-gold/20 hover:bg-hack-gold/30 text-hack-ink shadow-hack-sm inline-flex items-center gap-1 transition-all"
                   title="Add cutoff to Google Calendar"
                 >
-                  <Calendar className="w-3 h-3" />
+                  <Calendar className="w-3 h-3 text-hack-gold-dark" />
                   + G-Calendar
                 </a>
                 <Button
@@ -129,7 +133,7 @@ export function ActiveStagePanel({
                   size="sm"
                   variant="outline"
                   onClick={handleDownloadIcs}
-                  className="font-mono text-[10px] font-bold border-2 border-hack-ink bg-hack-panel hover:bg-hack-sky text-hack-ink shadow-hack-sm h-7 px-2"
+                  className="font-mono text-[10px] font-bold rounded-lg border border-hack-muted bg-hack-surface hover:bg-hack-mint/30 text-hack-ink shadow-hack-sm h-7 px-2.5"
                   title="Download .ics alarm with -24h and -2h phone notifications"
                 >
                   ⚡ Phone Alarm (.ics)
@@ -146,13 +150,18 @@ export function ActiveStagePanel({
             eventId={eventId} 
           />
           
-          <div className="p-3 sm:p-4 bg-hack-panel border-t-2 border-hack-ink flex justify-end">
+          <div className="p-3 sm:p-4 bg-hack-sand/40 border-t border-hack-muted/40 flex justify-end">
             <Button 
               onClick={onCompleteStage} 
               disabled={isCompleting || currentDisplayStage.is_completed}
-              className="font-mono text-xs font-bold"
+              className={cn(
+                "font-mono text-xs font-bold rounded-lg transition-all",
+                currentDisplayStage.is_completed 
+                  ? "bg-hack-mint/30 text-hack-mint-dark border border-hack-mint" 
+                  : "bg-hack-coral text-hack-ink shadow-hack-hero hover:brightness-105"
+              )}
             >
-              {currentDisplayStage.is_completed ? 'Stage Completed' : 'Mark Stage Complete'}
+              {currentDisplayStage.is_completed ? 'Stage Completed ✓' : 'Mark Stage Complete'}
             </Button>
           </div>
         </CardContent>

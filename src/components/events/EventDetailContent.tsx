@@ -253,68 +253,69 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
       />
 
       {/* Mobile Workspace Segmented Controller (lg:hidden) */}
-      <div className="flex lg:hidden border-2 border-[#10201d] bg-[#f7f7f2] p-1 shadow-[4px_4px_0_#10201d] gap-1 overflow-x-auto no-scrollbar">
+      <div className="flex lg:hidden border border-hack-muted/60 bg-hack-surface p-1 rounded-xl shadow-hack-sm gap-1 overflow-x-auto no-scrollbar">
         <button
           type="button"
           onClick={() => setMobileWorkspaceTab('sprint')}
           className={cn(
-            "flex-1 py-2 px-2 text-center font-mono text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap select-none",
+            "flex-1 py-2 px-3 text-center font-mono text-xs font-bold uppercase tracking-wider rounded-lg transition-all whitespace-nowrap select-none",
             mobileWorkspaceTab === 'sprint'
-              ? "bg-[#f5b726] text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#8a5d13]"
-              : "text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"
+              ? "bg-hack-coral text-hack-ink shadow-hack-hero font-extrabold"
+              : "text-hack-subtext hover:bg-hack-sand"
           )}
         >
-          ⚡ Tasks
+          ⚡ Tasks & Stage
         </button>
         <button
           type="button"
           onClick={() => setMobileWorkspaceTab('pitch')}
           className={cn(
-            "flex-1 py-2 px-2 text-center font-mono text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap select-none",
+            "flex-1 py-2 px-3 text-center font-mono text-xs font-bold uppercase tracking-wider rounded-lg transition-all whitespace-nowrap select-none",
             mobileWorkspaceTab === 'pitch'
-              ? "bg-[#8bb2de] text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#2e4742]"
-              : "text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"
+              ? "bg-hack-blue text-hack-ink shadow-hack-sm font-extrabold"
+              : "text-hack-subtext hover:bg-hack-sand"
           )}
         >
-          💡 Ideas
+          💡 Ideas & Canvas
         </button>
         <button
           type="button"
           onClick={() => setMobileWorkspaceTab('team')}
           className={cn(
-            "flex-1 py-2 px-2 text-center font-mono text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap select-none",
+            "flex-1 py-2 px-3 text-center font-mono text-xs font-bold uppercase tracking-wider rounded-lg transition-all whitespace-nowrap select-none",
             mobileWorkspaceTab === 'team'
-              ? "bg-[#e97b77] text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#671912]"
-              : "text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"
+              ? "bg-hack-gold text-hack-ink shadow-hack-sm font-extrabold"
+              : "text-hack-subtext hover:bg-hack-sand"
           )}
         >
-          👥 Team
+          👥 Team & Shelf
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column (Main) */}
-        <div className="lg:col-span-2 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 items-start">
+        {/* Left Column (Dominant Workspace) */}
+        <div className="space-y-6 min-w-0">
           {/* Hackathon Brief Banner */}
           {event.mission_brief && (
             <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:block")}>
-              <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912] overflow-hidden">
-                <div className="bg-[#2e4742] p-4 border-b-2 border-[#10201d] text-[#f7f7f2] flex items-center justify-between gap-3 flex-wrap">
+              <Card className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
+                <div className="bg-hack-surface p-4 border-b border-hack-muted/30 text-hack-ink flex items-center justify-between gap-3 flex-wrap">
                   <div className="flex items-center gap-2.5">
                     <span className="text-xl">🎯</span>
                     <div>
-                      <h3 className="font-display text-xl font-bold tracking-tight text-[#f7f7f2]">Hackathon Brief</h3>
-                      <p className="font-mono text-[11px] text-[#8bb2de]">Key constraints & what to build</p>
+                      <h3 className="font-display text-lg font-bold tracking-tight text-hack-ink">Hackathon Brief</h3>
+                      <p className="font-mono text-[11px] text-hack-subtext">Key constraints & target deliverable</p>
                     </div>
                   </div>
                   <span
-                    className={`font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-1 border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] ${
+                    className={cn(
+                      "font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border",
                       event.mission_brief.hackathon_tier === 'tech_mandate'
-                        ? 'bg-[#f5b726] text-[#10201d]'
+                        ? 'bg-hack-gold/20 border-hack-gold text-hack-gold-dark'
                         : event.mission_brief.hackathon_tier === 'domain_focused'
-                        ? 'bg-[#8bb2de] text-[#10201d]'
-                        : 'bg-[#d8f3dc] text-[#10201d]'
-                    }`}
+                        ? 'bg-hack-blue/20 border-hack-blue text-hack-blue-dark'
+                        : 'bg-hack-mint/20 border-hack-mint text-hack-mint-dark'
+                    )}
                   >
                     {event.mission_brief.hackathon_tier === 'tech_mandate'
                       ? '🔧 Tech Mandated'
@@ -327,18 +328,18 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                 <CardContent className="p-4 sm:p-5 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
-                      <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                      <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
                         What to Build (Target Deliverable)
                       </span>
-                      <p className="font-mono text-sm text-[#10201d] font-bold bg-white p-3 border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
+                      <p className="font-mono text-xs sm:text-sm text-hack-ink font-semibold bg-hack-sand/50 p-3 rounded-lg border border-hack-muted/40">
                         {event.mission_brief.what_to_build}
                       </p>
                     </div>
                     <div className="space-y-1">
-                      <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                      <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
                         Why It Exists (Sponsor Motive)
                       </span>
-                      <p className="font-mono text-sm text-[#10201d] bg-white p-3 border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
+                      <p className="font-mono text-xs sm:text-sm text-hack-ink bg-hack-sand/50 p-3 rounded-lg border border-hack-muted/40">
                         {event.mission_brief.why_it_exists}
                       </p>
                     </div>
@@ -348,26 +349,26 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                   {event.mission_brief.tech_stack_mandate && (
                     <div className="space-y-1.5 pt-1">
                       <div className="flex items-center justify-between">
-                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
                           Tech Stack Rules
                         </span>
                         {event.mission_brief.tech_stack_mandate.is_stack_restricted && (
-                          <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-[#f6c4c1] text-[#671912] border border-[#e53927]">
+                          <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-hack-red/10 text-hack-red border border-hack-red/30 rounded-full">
                             ⚠️ Stack Restricted Challenge
                           </span>
                         )}
                       </div>
 
                       {event.mission_brief.tech_stack_mandate.is_stack_restricted ? (
-                        <div className="space-y-2 p-3 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
-                          <p className="font-mono text-xs text-[#34433f]">
+                        <div className="space-y-2 p-3 bg-hack-sand/40 border border-hack-muted/40 rounded-lg">
+                          <p className="font-mono text-xs text-hack-subtext">
                             {event.mission_brief.tech_stack_mandate.allowed_stack_summary}
                           </p>
                           <div className="flex flex-wrap gap-1.5 items-center">
                             {(event.mission_brief.tech_stack_mandate.mandatory_tools || []).map((tool: string, i: number) => (
                               <span
                                 key={i}
-                                className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-[#e53927] bg-[#f6c4c1] text-[#671912] shadow-[2px_2px_0_#671912] flex items-center gap-1"
+                                className="font-mono text-xs font-bold px-2.5 py-1 rounded-md border border-hack-red/40 bg-hack-red/15 text-hack-red flex items-center gap-1"
                               >
                                 <span>⚡</span> {tool}
                               </span>
@@ -375,7 +376,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                             {(event.mission_brief.tech_stack_mandate.bonus_sponsor_tools || []).map((tool: string, i: number) => (
                               <span
                                 key={`bonus-${i}`}
-                                className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center gap-1"
+                                className="font-mono text-xs font-bold px-2.5 py-1 rounded-md border border-hack-gold/40 bg-hack-gold/20 text-hack-gold-dark flex items-center gap-1"
                               >
                                 <span>⭐</span> {tool} (Bonus Points)
                               </span>
@@ -383,8 +384,8 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                           </div>
                         </div>
                       ) : (
-                        <div className="p-3 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
-                          <p className="font-mono text-xs text-[#2e4742] font-bold flex items-center gap-1.5">
+                        <div className="p-3 bg-hack-sand/40 border border-hack-muted/40 rounded-lg">
+                          <p className="font-mono text-xs text-hack-mint-dark font-semibold flex items-center gap-1.5">
                             <span>✨</span>
                             {event.mission_brief.tech_stack_mandate.allowed_stack_summary || 'Any tech stack permitted (Free Choice)'}
                           </p>
@@ -396,16 +397,16 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                   {/* Submission Deliverables */}
                   {event.mission_brief.submission_deliverables && event.mission_brief.submission_deliverables.length > 0 && (
                     <div className="space-y-1.5 pt-1">
-                      <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                      <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
                         Required Submission Deliverables
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {event.mission_brief.submission_deliverables.map((deliv: string, i: number) => (
                           <span
                             key={i}
-                            className="font-mono text-xs font-bold px-2.5 py-1 border-2 border-[#10201d] bg-white text-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center gap-1"
+                            className="font-mono text-xs font-semibold px-2.5 py-1 rounded-md border border-hack-muted bg-hack-surface text-hack-ink flex items-center gap-1 shadow-hack-sm"
                           >
-                            <span className="text-[#2e4742]">✓</span> {deliv}
+                            <span className="text-hack-mint-dark">✓</span> {deliv}
                           </span>
                         ))}
                       </div>
@@ -426,13 +427,6 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
             />
           </div>
 
-          {/* Submission Readiness Pre-Flight Diagnostic (Surfaced for immediate visibility) */}
-          {['registered', 'building', 'submitted', 'under_review'].includes(currentEvent.status) && (
-            <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:block")}>
-              <SubmissionReadiness event={currentEvent} />
-            </div>
-          )}
-
           {/* Focused Stage Panel & Deliverables Checklist */}
           {currentDisplayStage && (
             <ActiveStagePanel
@@ -451,6 +445,13 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
             />
           )}
 
+          {/* Submission Readiness Pre-Flight Diagnostic (Visible in mobile sprint tab directly under checklist) */}
+          {['registered', 'building', 'submitted', 'under_review'].includes(currentEvent.status) && (
+            <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:hidden", "block lg:hidden")}>
+              <SubmissionReadiness event={currentEvent} />
+            </div>
+          )}
+
           {/* Idea Sandbox & Solution Canvas */}
           <div className={cn(mobileWorkspaceTab !== 'pitch' && "hidden lg:block")}>
             <IdeaSandbox
@@ -462,227 +463,199 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
 
           {/* Resources & Attached Documents */}
           <div className={cn(mobileWorkspaceTab !== 'team' && "hidden lg:block")}>
-            <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912] overflow-hidden">
-            <div className="bg-[#2e4742] p-5 border-b-2 border-[#10201d] text-[#f7f7f2]">
-              <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-[#f5b726]" />
-                  <h3 className="font-display text-2xl font-bold tracking-tight text-[#f7f7f2]">Resources & Documents</h3>
-                  <span className="font-mono text-xs font-bold px-2 py-0.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d]">
-                    {resources.length}
-                  </span>
+            <Card className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
+              <div className="bg-hack-surface p-4 sm:p-5 border-b border-hack-muted/30 text-hack-ink">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-hack-gold-dark" />
+                    <h3 className="font-display text-xl font-bold tracking-tight text-hack-ink">Resources & Shelf</h3>
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-full border border-hack-muted bg-hack-sand text-hack-ink">
+                      {resources.length}
+                    </span>
+                  </div>
+                  <p className="font-mono text-xs text-hack-subtext">
+                    Problem statements, rulebooks, starter kits & links
+                  </p>
                 </div>
-                <p className="font-mono text-xs text-[#8bb2de]">
-                  Problem statements, rulebooks, starter templates & team links
-                </p>
               </div>
-            </div>
 
-            <CardContent className="p-5 space-y-5">
-              {/* Resources List */}
-              <div className="space-y-2.5">
-                {resources.map((res) => (
-                  <div
-                    key={res.id}
-                    className="p-3.5 bg-white border-2 border-[#10201d] shadow-[4px_4px_0_#10201d] flex items-center justify-between gap-3 text-sm transition-transform hover:translate-x-0.5 hover:translate-y-0.5"
-                  >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className="p-2 border-2 border-[#10201d] bg-[#f2f2eb] shrink-0 shadow-[1px_1px_0_#10201d]">
-                        {getResourceIcon(res.resource_type)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-display text-base font-bold text-[#10201d] truncate">
-                            {res.title}
-                          </span>
-                          <span className="font-mono text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider border-2 border-[#10201d] bg-[#f2f2eb] text-[#10201d] shrink-0">
-                            {res.resource_type.replace('_', ' ')}
-                          </span>
-                          {res.is_official ? (
-                            <span className="font-mono text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] shadow-[1px_1px_0_#10201d] shrink-0">
-                              Official
-                            </span>
-                          ) : (
-                            <span className="font-mono text-[10px] font-bold px-2 py-0.5 uppercase tracking-wider border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[1px_1px_0_#10201d] shrink-0">
-                              Team Link
-                            </span>
-                          )}
+              <CardContent className="p-4 sm:p-5 space-y-4">
+                {/* Resources List */}
+                <div className="space-y-2">
+                  {resources.map((res) => (
+                    <div
+                      key={res.id}
+                      className="p-3 bg-hack-surface border border-hack-muted/60 rounded-lg shadow-hack-sm flex items-center justify-between gap-3 text-sm transition-all hover:border-hack-muted"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="p-2 rounded-md border border-hack-muted/40 bg-hack-sand shrink-0 text-hack-ink">
+                          {getResourceIcon(res.resource_type)}
                         </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-display text-sm sm:text-base font-bold text-hack-ink truncate">
+                              {res.title}
+                            </span>
+                            <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-md uppercase tracking-wider border border-hack-muted bg-hack-sand text-hack-subtext shrink-0">
+                              {res.resource_type.replace('_', ' ')}
+                            </span>
+                            {res.is_official ? (
+                              <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-hack-blue/40 bg-hack-blue/15 text-hack-blue-dark shrink-0">
+                                Official
+                              </span>
+                            ) : (
+                              <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-hack-gold/40 bg-hack-gold/20 text-hack-gold-dark shrink-0">
+                                Team Link
+                              </span>
+                            )}
+                          </div>
+                          <a
+                            href={ensureExternalUrl(res.url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-mono text-xs text-hack-subtext hover:text-hack-coral flex items-center gap-1 mt-0.5 truncate group"
+                          >
+                            <span className="truncate">{res.url}</span>
+                            <ExternalLink className="h-3 w-3 shrink-0 opacity-70 group-hover:opacity-100" />
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
                         <a
                           href={ensureExternalUrl(res.url)}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="font-mono text-xs text-[#2e4742] hover:text-[#e53927] hover:underline flex items-center gap-1 mt-1 truncate group"
+                          className="hidden sm:inline-flex items-center gap-1 font-mono text-xs font-semibold text-hack-ink hover:bg-hack-sand px-2.5 py-1.5 rounded-lg border border-hack-muted bg-hack-surface shadow-hack-sm transition-all"
                         >
-                          <span className="truncate">{res.url}</span>
-                          <ExternalLink className="h-3 w-3 shrink-0 opacity-70 group-hover:opacity-100" />
+                          {(res.url.toLowerCase().endsWith('.pdf') || res.url.includes('hackflow_uploads') || res.url.includes('/uploads/')) ? (
+                            <>View PDF <ExternalLink className="h-3 w-3 text-hack-subtext" /></>
+                          ) : (
+                            <>Open <ExternalLink className="h-3 w-3 text-hack-subtext" /></>
+                          )}
                         </a>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteResource(res.id, res.title)}
+                          disabled={deletingId === res.id}
+                          className="text-hack-subtext hover:text-hack-red hover:bg-hack-red/10 rounded-lg h-8 w-8 transition-colors"
+                          title="Delete resource"
+                          aria-label={`Delete resource: ${res.title}`}
+                        >
+                          {deletingId === res.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
                       </div>
                     </div>
+                  ))}
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      <a
-                        href={ensureExternalUrl(res.url)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hidden sm:inline-flex items-center gap-1 font-mono text-xs font-bold text-[#10201d] hover:bg-[#e97b77] hover:text-white px-2.5 py-1.5 border-2 border-[#10201d] bg-[#f2f2eb] shadow-[2px_2px_0_#10201d] transition-all"
+                  {resources.length === 0 && (
+                    <div className="p-6 rounded-lg border border-dashed border-hack-muted text-center space-y-1 bg-hack-sand/30">
+                      <FileText className="h-7 w-7 text-hack-subtext mx-auto opacity-60" />
+                      <p className="font-display text-sm font-bold text-hack-ink">No attached resources yet</p>
+                      <p className="font-sans text-xs text-hack-subtext">
+                        Add your problem statement PDF, team Figma, GitHub repo, or slide deck below.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Add Custom Resource Form */}
+                <div className="p-4 bg-hack-sand/40 border border-hack-muted/60 rounded-xl space-y-3">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <span className="font-mono text-xs font-bold uppercase tracking-wider text-hack-ink block">
+                      Add Team Resource or Link
+                    </span>
+                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold uppercase border border-hack-gold/40 bg-hack-gold/20 hover:bg-hack-gold/30 text-hack-ink shadow-hack-sm transition-all">
+                      {uploadingDoc ? <Loader2 className="w-3 h-3 animate-spin" /> : <UploadCloud className="w-3 h-3 text-hack-gold-dark" />}
+                      <span>{uploadingDoc ? 'Uploading...' : 'Upload PDF / Deck'}</span>
+                      <input
+                        type="file"
+                        accept=".pdf,.ppt,.pptx"
+                        className="hidden"
+                        onChange={handleUploadResourceFile}
+                        disabled={uploadingDoc}
+                      />
+                    </label>
+                  </div>
+                  <form onSubmit={handleAddResource} className="space-y-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_170px_auto] gap-2 items-center">
+                      <Input
+                        placeholder="Title (e.g. Team Figma, Pitch Deck)"
+                        value={newTitle}
+                        onChange={(e) => setNewTitle(e.target.value)}
+                        disabled={addingResource}
+                        className="h-9 text-xs bg-white rounded-lg border border-hack-muted font-mono shadow-hack-sm min-w-0"
+                      />
+                      <Input
+                        placeholder="URL (e.g. https://figma.com/...)"
+                        value={newUrl}
+                        onChange={(e) => setNewUrl(e.target.value)}
+                        disabled={addingResource}
+                        className="h-9 text-xs bg-white rounded-lg border border-hack-muted font-mono shadow-hack-sm min-w-0"
+                      />
+                      <select
+                        value={newType}
+                        onChange={(e) => setNewType(e.target.value)}
+                        disabled={addingResource}
+                        className="h-9 px-2.5 rounded-lg border border-hack-muted bg-white font-mono text-xs shadow-hack-sm w-full min-w-0 focus:outline-none focus:ring-1 focus:ring-hack-coral/25"
                       >
-                        {(res.url.toLowerCase().endsWith('.pdf') || res.url.includes('hackflow_uploads') || res.url.includes('/uploads/')) ? (
-                          <>View PDF <ExternalLink className="h-3 w-3" /></>
-                        ) : (
-                          <>Open <ExternalLink className="h-3 w-3" /></>
-                        )}
-                      </a>
+                        {RESOURCE_TYPES.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
                       <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDeleteResource(res.id, res.title)}
-                        disabled={deletingId === res.id}
-                        className="text-[#10201d] hover:bg-[#e97b77] hover:text-white border-2 border-transparent hover:border-[#10201d] h-8 w-8 transition-colors"
-                        title="Delete resource"
-                        aria-label={`Delete resource: ${res.title}`}
+                        type="submit"
+                        disabled={addingResource || !newTitle.trim() || !newUrl.trim()}
+                        className="h-9 text-xs px-3 font-mono font-bold rounded-lg border border-hack-coral bg-hack-coral hover:brightness-105 text-hack-ink shadow-hack-hero shrink-0 whitespace-nowrap min-w-0"
                       >
-                        {deletingId === res.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                        {addingResource ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         ) : (
-                          <Trash2 className="h-4 w-4" />
+                          <>
+                            <Plus className="h-3.5 w-3.5 mr-1" /> Add
+                          </>
                         )}
                       </Button>
                     </div>
-                  </div>
-                ))}
-
-                {resources.length === 0 && (
-                  <div className="p-6 border-2 border-dashed border-[#10201d] text-center space-y-1 bg-[#f2f2eb]">
-                    <FileText className="h-8 w-8 text-[#34433f] mx-auto opacity-50" />
-                    <p className="font-display text-base font-bold text-[#10201d]">No attached resources yet</p>
-                    <p className="font-mono text-xs text-[#34433f]">
-                      Add your problem statement PDF, team Figma, GitHub repo, or slide deck below.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Add Custom Resource Form */}
-              <div className="p-4 bg-[#e4e5da] border-2 border-[#10201d] shadow-[4px_4px_0_#10201d] space-y-3">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">
-                    Add Team Resource or Custom Link
-                  </span>
-                  <label className="cursor-pointer inline-flex items-center gap-1 px-2.5 py-1 font-mono text-[10px] font-bold uppercase border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[1px_1px_0_#10201d] transition-all">
-                    {uploadingDoc ? <Loader2 className="w-3 h-3 animate-spin" /> : <UploadCloud className="w-3 h-3" />}
-                    <span>{uploadingDoc ? 'Uploading...' : 'Upload PDF / Slide Deck'}</span>
-                    <input
-                      type="file"
-                      accept=".pdf,.ppt,.pptx"
-                      className="hidden"
-                      onChange={handleUploadResourceFile}
-                      disabled={uploadingDoc}
-                    />
-                  </label>
+                  </form>
                 </div>
-                <form onSubmit={handleAddResource} className="space-y-2.5">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_170px_auto] gap-2 items-center">
-                    <Input
-                      placeholder="Title (e.g. Team Figma, Pitch Deck)"
-                      value={newTitle}
-                      onChange={(e) => setNewTitle(e.target.value)}
-                      disabled={addingResource}
-                      className="h-9 text-xs bg-white border-2 border-[#10201d] font-mono shadow-[2px_2px_0_#10201d] min-w-0"
-                    />
-                    <Input
-                      placeholder="URL (e.g. https://figma.com/...)"
-                      value={newUrl}
-                      onChange={(e) => setNewUrl(e.target.value)}
-                      disabled={addingResource}
-                      className="h-9 text-xs bg-white border-2 border-[#10201d] font-mono shadow-[2px_2px_0_#10201d] min-w-0"
-                    />
-                    <select
-                      value={newType}
-                      onChange={(e) => setNewType(e.target.value)}
-                      disabled={addingResource}
-                      className="h-9 px-2.5 border-2 border-[#10201d] bg-white font-mono text-xs shadow-[2px_2px_0_#10201d] w-full min-w-0 focus:outline-none focus:ring-0"
-                    >
-                      {RESOURCE_TYPES.map((type) => (
-                        <option key={type.value} value={type.value}>
-                          {type.label}
-                        </option>
-                      ))}
-                    </select>
-                    <Button
-                      type="submit"
-                      disabled={addingResource || !newTitle.trim() || !newUrl.trim()}
-                      className="h-9 text-xs px-3 font-mono font-bold border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[3px_3px_0_#671912] shrink-0 whitespace-nowrap min-w-0"
-                    >
-                      {addingResource ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <>
-                          <Plus className="h-3.5 w-3.5 mr-1" /> Add
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Complete Post-Submission Lifecycle Console */}
-        <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:block")}>
-          <PostSubmissionConsole event={event} />
-        </div>
-      </div>
-
-        {/* Right Column (Sidebar) */}
-        <div className="space-y-6">
-          {/* Metadata */}
-          <div className={cn(mobileWorkspaceTab !== 'team' && "hidden lg:block")}>
-            <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912]">
-              <CardContent className="p-4 sm:p-5 space-y-4">
-                <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#10201d] border-b-2 border-[#10201d] pb-2">
-                  Event Details
-                </h3>
-                
-                {event.source_url && (
-                  <a 
-                    href={ensureExternalUrl(event.source_url)} 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    className="flex items-center text-xs font-mono font-bold text-[#10201d] hover:text-[#e53927] p-2.5 border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d] transition-transform hover:translate-x-0.5 hover:translate-y-0.5"
-                  >
-                    <ExternalLink className="w-4 h-4 mr-2 text-[#2e4742]" />
-                    View Original Page
-                  </a>
-                )}
-                
-                <div className="flex items-center text-xs font-mono font-bold text-[#10201d] p-2.5 border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]">
-                  <Calendar className="w-4 h-4 mr-2 text-[#2e4742]" />
-                  {event.start_date ? format(new Date(event.start_date), 'MMM d, yyyy') : 'TBA'}
-                </div>
-
-                {event.prize_pool && (
-                  <div className="flex items-center text-xs font-mono font-bold text-[#10201d] p-2.5 border-2 border-[#10201d] bg-[#f5b726] shadow-[2px_2px_0_#8a5d13]">
-                    <Trophy className="w-4 h-4 mr-2 text-[#10201d]" />
-                    Prize: {event.prize_pool}
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>
 
+          {/* Complete Post-Submission Lifecycle Console */}
+          <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:block")}>
+            <PostSubmissionConsole event={event} />
+          </div>
+        </div>
+
+        {/* Right Column (Sidebar) */}
+        <div className="space-y-6">
+          {/* Submission Readiness Pre-Flight Diagnostic (Desktop) */}
+          {['registered', 'building', 'submitted', 'under_review'].includes(currentEvent.status) && (
+            <div className="hidden lg:block">
+              <SubmissionReadiness event={currentEvent} />
+            </div>
+          )}
+
           {/* Team Panel */}
           <div className={cn(mobileWorkspaceTab !== 'team' && "hidden lg:block")}>
-            <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912] sm:shadow-[7px_7px_0_#671912]">
+            <Card className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
               <CardContent className="p-4 sm:p-5">
-                <div className="flex items-center justify-between mb-3 border-b-2 border-[#10201d] pb-2">
-                  <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#10201d] flex items-center gap-2">
-                    <Users className="w-5 h-5 text-[#e53927]"/> Team
+                <div className="flex items-center justify-between mb-3 border-b border-hack-muted/30 pb-2">
+                  <h3 className="font-display text-lg sm:text-xl font-bold tracking-tight text-hack-ink flex items-center gap-2">
+                    <Users className="w-5 h-5 text-hack-coral-dark"/> Team
                   </h3>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-xs font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#2e4742]">
+                    <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded-full border border-hack-muted bg-hack-sand text-hack-ink">
                       {(currentEvent.team_members || currentEvent.event_participants || event.team_members || event.event_participants || []).length} {((currentEvent.team_members || currentEvent.event_participants || event.team_members || event.event_participants || []).length === 1) ? 'Member' : 'Members'}
                     </span>
                     <Button
@@ -697,7 +670,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                           setLoadingFriends(false)
                         }
                       }}
-                      className="font-mono text-xs font-bold px-2 py-1 h-auto border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] hover:bg-[#faaf00] shadow-[2px_2px_0_#10201d]"
+                      className="font-mono text-xs font-bold px-2.5 py-1 h-auto rounded-lg border border-hack-gold/40 bg-hack-gold hover:brightness-105 text-hack-ink shadow-hack-sm"
                     >
                       <UserPlus className="h-3.5 w-3.5 mr-1" /> Add
                     </Button>
@@ -706,18 +679,18 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
 
                 {/* Squad Badge if present */}
                 {(currentEvent.squad?.name || currentEvent.squad_name || event.squad?.name || event.squad_name) && (
-                  <div className="mb-3 p-2 bg-[#f5b726]/20 border-2 border-[#10201d] flex items-center justify-between font-mono text-xs font-bold text-[#10201d] shadow-[2px_2px_0_#10201d]">
+                  <div className="mb-3 p-2.5 bg-hack-gold/15 border border-hack-gold/40 rounded-lg flex items-center justify-between font-mono text-xs font-bold text-hack-ink shadow-hack-sm">
                     <span className="flex items-center gap-1.5 truncate">
-                      <Shield className="h-3.5 w-3.5 text-[#2e4742] shrink-0" />
+                      <Shield className="h-3.5 w-3.5 text-hack-gold-dark shrink-0" />
                       ⚡ SQUAD: {currentEvent.squad?.name || currentEvent.squad_name || event.squad?.name || event.squad_name}
                     </span>
-                    <Badge variant="outline" className="text-[10px] border-[#10201d] bg-white font-mono shrink-0">
+                    <Badge variant="outline" className="text-[10px] border-hack-muted bg-white font-mono shrink-0 rounded-md">
                       Synced Vault
                     </Badge>
                   </div>
                 )}
                 
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   {(currentEvent.team_members || currentEvent.event_participants || event.team_members || event.event_participants || []).map((member: any) => {
                     const isLead = member.is_lead || member.is_creator || member.role === 'lead' || member.role === 'owner' || member.role === 'leader'
                     const isCurrentUser = member.is_current_user || (member.user_id && (member.user_id === currentEvent.current_user_id || member.user_id === event.current_user_id))
@@ -726,26 +699,29 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                     const initial = (name.charAt(0) || 'U').toUpperCase()
 
                     return (
-                      <div key={member.id || member.user_id} className="p-2.5 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] flex items-center justify-between gap-3">
+                      <div key={member.id || member.user_id} className="p-2.5 bg-hack-surface border border-hack-muted/60 rounded-lg shadow-hack-sm flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2.5 min-w-0">
-                          <div className={`w-8 h-8 border-2 border-[#10201d] ${isLead ? 'bg-[#f5b726]' : 'bg-[#8bb2de]'} flex items-center justify-center font-mono text-xs font-bold text-[#10201d] shadow-[1px_1px_0_#10201d] shrink-0`}>
+                          <div className={cn(
+                            "w-8 h-8 rounded-full border border-hack-muted/40 flex items-center justify-center font-mono text-xs font-bold text-hack-ink shrink-0",
+                            isLead ? 'bg-hack-gold' : 'bg-hack-blue'
+                          )}>
                             {initial}
                           </div>
                           <div className="min-w-0">
-                            <p className="font-display text-sm font-bold text-[#10201d] truncate">
+                            <p className="font-display text-sm font-bold text-hack-ink truncate">
                               {name}
                               {isCurrentUser && !name.toLowerCase().includes('you') && (
-                                <span className="font-mono text-xs text-[#57726d] ml-1.5">(YOU)</span>
+                                <span className="font-mono text-xs text-hack-subtext ml-1.5">(YOU)</span>
                               )}
                             </p>
-                            <p className="font-mono text-[10px] text-[#57726d] truncate">{email || (isLead ? 'Team Lead' : 'Collaborator')}</p>
+                            <p className="font-mono text-[10px] text-hack-subtext truncate">{email || (isLead ? 'Team Lead' : 'Collaborator')}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
                           {isLead && (
                             <Badge
                               variant="outline"
-                              className="font-mono text-[10px] font-bold uppercase border-2 border-[#10201d] bg-[#f5b726] text-[#10201d]"
+                              className="font-mono text-[10px] font-bold uppercase border-hack-gold/40 bg-hack-gold/20 text-hack-gold-dark rounded-md"
                             >
                               LEAD
                             </Badge>
@@ -753,7 +729,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                           {isCurrentUser && (
                             <Badge
                               variant="outline"
-                              className="font-mono text-[10px] font-bold uppercase border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d]"
+                              className="font-mono text-[10px] font-bold uppercase border-hack-blue/40 bg-hack-blue/20 text-hack-blue-dark rounded-md"
                             >
                               YOU
                             </Badge>
@@ -761,7 +737,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                           {!isLead && !isCurrentUser && (
                             <Badge
                               variant="outline"
-                              className="font-mono text-[10px] font-bold uppercase border-2 border-[#10201d] bg-[#f7f7f2] text-[#34433f]"
+                              className="font-mono text-[10px] font-medium uppercase border-hack-muted bg-hack-sand text-hack-subtext rounded-md"
                             >
                               MEMBER
                             </Badge>
@@ -775,26 +751,61 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
             </Card>
           </div>
 
+          {/* Metadata */}
+          <div className={cn(mobileWorkspaceTab !== 'team' && "hidden lg:block")}>
+            <Card className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
+              <CardContent className="p-4 sm:p-5 space-y-3">
+                <h3 className="font-display text-lg font-bold tracking-tight text-hack-ink border-b border-hack-muted/30 pb-2">
+                  Event Details
+                </h3>
+                
+                {event.source_url && (
+                  <a 
+                    href={ensureExternalUrl(event.source_url)} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    className="flex items-center text-xs font-mono font-semibold text-hack-ink hover:text-hack-coral p-2.5 rounded-lg border border-hack-muted bg-hack-sand/40 shadow-hack-sm transition-all"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2 text-hack-subtext" />
+                    View Original Page
+                  </a>
+                )}
+                
+                <div className="flex items-center text-xs font-mono font-medium text-hack-ink p-2.5 rounded-lg border border-hack-muted bg-hack-sand/40 shadow-hack-sm">
+                  <Calendar className="w-4 h-4 mr-2 text-hack-subtext" />
+                  {event.start_date ? format(new Date(event.start_date), 'MMM d, yyyy') : 'TBA'}
+                </div>
+
+                {event.prize_pool && (
+                  <div className="flex items-center text-xs font-mono font-bold text-hack-gold-dark p-2.5 rounded-lg border border-hack-gold/40 bg-hack-gold/20 shadow-hack-sm">
+                    <Trophy className="w-4 h-4 mr-2 text-hack-gold-dark" />
+                    Prize: {event.prize_pool}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
           {/* Add Teammate Dialog */}
           <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
-            <DialogContent className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[7px_7px_0_#671912] max-w-md p-0">
-              <DialogHeader className="p-4 border-b-2 border-[#10201d] bg-[#2e4742] text-[#f2f2eb]">
-                <DialogTitle className="font-display text-base flex items-center gap-2">
-                  <UserPlus className="h-5 w-5 text-[#f5b726]" /> Invite Teammate to Event
+            <DialogContent className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-dialog max-w-md p-0 overflow-hidden">
+              <DialogHeader className="p-4 border-b border-hack-muted/40 bg-hack-sand/50 text-hack-ink">
+                <DialogTitle className="font-display text-base font-bold flex items-center gap-2">
+                  <UserPlus className="h-5 w-5 text-hack-coral-dark" /> Bring Teammates In
                 </DialogTitle>
-                <DialogDescription className="font-mono text-xs text-[#f2f2eb]/70">
-                  Select an accepted friend from your network to join this hackathon board.
+                <DialogDescription className="font-mono text-xs text-hack-subtext">
+                  Select a friend from your network to join this hackathon workspace.
                 </DialogDescription>
               </DialogHeader>
 
               <div className="p-4 space-y-3">
                 {loadingFriends ? (
-                  <div className="py-8 text-center font-mono text-xs text-[#57726d] flex items-center justify-center gap-2">
+                  <div className="py-8 text-center font-mono text-xs text-hack-subtext flex items-center justify-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin" /> Loading friends...
                   </div>
                 ) : friends.length === 0 ? (
-                  <div className="p-4 text-center border-2 border-dashed border-[#57726d]/40 font-mono text-xs text-[#57726d]">
-                    No connected friends found. Go to "My Teams" to send friend requests first!
+                  <div className="p-4 text-center border border-dashed border-hack-muted rounded-lg font-mono text-xs text-hack-subtext">
+                    No connected friends found. Go to "People" to add teammates first!
                   </div>
                 ) : (
                   <div className="max-h-60 overflow-y-auto space-y-2">
@@ -811,15 +822,15 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                       return (
                         <div
                           key={f.id}
-                          className="p-2.5 bg-white border-2 border-[#10201d] flex items-center justify-between gap-2 shadow-[2px_2px_0_#10201d]"
+                          className="p-2.5 bg-hack-surface border border-hack-muted/60 rounded-lg flex items-center justify-between gap-2 shadow-hack-sm"
                         >
                           <div className="truncate">
-                            <div className="font-display font-bold text-xs text-[#10201d] truncate">{friendName}</div>
-                            <div className="font-mono text-[10px] text-[#57726d] truncate">{friendEmail}</div>
+                            <div className="font-display font-bold text-xs text-hack-ink truncate">{friendName}</div>
+                            <div className="font-mono text-[10px] text-hack-subtext truncate">{friendEmail}</div>
                           </div>
 
                           {isAlreadyIn ? (
-                            <Badge variant="outline" className="font-mono text-[10px] border-[#10201d] bg-[#f7f7f2] text-[#57726d] shrink-0">
+                            <Badge variant="outline" className="font-mono text-[10px] border-hack-muted bg-hack-sand text-hack-subtext shrink-0 rounded-md">
                               Enrolled
                             </Badge>
                           ) : (
@@ -833,8 +844,8 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                                   const res = await addEventParticipant(event.id, friendUserId, 'collaborator')
                                   if (res.success) {
                                     toast({
-                                      title: 'Teammate Added!',
-                                      description: `${friendName} is now added to the event board.`,
+                                      title: 'Teammate Added',
+                                      description: `${friendName} is now in the workspace.`,
                                     })
                                     setIsInviteOpen(false)
                                     window.location.reload()
@@ -849,7 +860,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                                   setInvitingId(null)
                                 }
                               }}
-                              className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#2e4742] text-[#f2f2eb] hover:bg-[#3d5f58] shrink-0"
+                              className="font-mono text-xs font-bold rounded-lg border border-hack-coral bg-hack-coral hover:brightness-105 text-hack-ink shadow-hack-sm shrink-0"
                             >
                               {invitingId === friendUserId ? <Loader2 className="h-3 w-3 animate-spin" /> : '+ Add'}
                             </Button>
@@ -872,26 +883,26 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
 
           {/* Delete Confirmation Dialog */}
           <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-            <DialogContent className="max-w-md border-2 border-[#10201d] bg-[#f7f7f2] p-6 shadow-[8px_8px_0_#671912]">
+            <DialogContent className="max-w-md border border-hack-muted/60 bg-hack-surface rounded-xl p-6 shadow-hack-dialog">
               <DialogHeader>
-                <div className="flex items-center gap-2 text-[#e53927]">
+                <div className="flex items-center gap-2 text-hack-red">
                   <AlertTriangle className="w-5 h-5" />
-                  <DialogTitle className="font-display text-xl font-black uppercase text-[#10201d]">
+                  <DialogTitle className="font-display text-xl font-bold text-hack-ink">
                     Delete Hackathon?
                   </DialogTitle>
                 </div>
-                <DialogDescription className="font-mono text-xs text-[#34433f] mt-2">
-                  Are you sure you want to permanently delete <strong className="text-[#10201d] font-bold">"{event.title}"</strong>? All associated rounds, tasks, and resources will be removed. This action cannot be undone.
+                <DialogDescription className="font-sans text-xs text-hack-subtext mt-2 leading-relaxed">
+                  Are you sure you want to permanently delete <strong className="text-hack-ink font-semibold">"{event.title}"</strong>? All associated rounds, tasks, and resources will be removed. This cannot be undone.
                 </DialogDescription>
               </DialogHeader>
 
-              <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-4 border-t-2 border-[#10201d] mt-2">
+              <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-hack-muted/30 mt-2">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setDeleteDialogOpen(false)}
                   disabled={isDeletingEvent}
-                  className="w-full sm:w-auto font-mono text-xs border-2 border-[#10201d]"
+                  className="w-full sm:w-auto font-mono text-xs border border-hack-muted rounded-lg"
                 >
                   Cancel
                 </Button>
@@ -899,7 +910,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                   type="button"
                   onClick={handleDeleteEvent}
                   disabled={isDeletingEvent}
-                  className="w-full sm:w-auto font-mono text-xs bg-[#e53927] hover:bg-[#b02213] text-[#f7f7f2] border-2 border-[#10201d] shadow-[3px_3px_0_#10201d] font-bold"
+                  className="w-full sm:w-auto font-mono text-xs bg-hack-red hover:bg-hack-red/90 text-white rounded-lg shadow-hack-hero font-bold"
                 >
                   {isDeletingEvent ? 'Deleting...' : 'Delete Permanently'}
                 </Button>
