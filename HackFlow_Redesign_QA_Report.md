@@ -197,23 +197,23 @@ Branded, distraction-free auth screens matching the editorial war-room aesthetic
 
 ## 10. Prioritized Final Recommendations
 
-### Priority 0: Critical Fixes (Deploy Immediately)
+### Priority 0: Critical Fixes (Resolved ✓)
 
 1. **Fix Sidebar Collision in `SubmissionReadiness.tsx`:**
-   * Remove `sm:flex-row` and enforce `flex-col sm:flex-col lg:flex-col` or use container queries so the button never overlaps the header text in the sidebar.
+   * **Status:** Resolved in `dc8533e`. Converted `sm:flex-row` to `flex-col`, and placed the `[Check Everything]` button on its own full-width bottom strip so button and title never collide inside narrow containers.
 2. **Prevent Auto-Toasts on Mount:**
-   * Add a `silent: true` parameter to `runDiagnostics(silent = false)`. When invoked from `useEffect`, perform the check silently without invoking `toast()`. Only fire `toast()` when the user explicitly clicks `[Check Everything]`.
+   * **Status:** Resolved in `dc8533e`. Added `silent = true` argument to `runDiagnostics(true)` on `useEffect` mount. Toast notifications now strictly fire upon explicit manual user interaction.
 3. **Add Mobile Bottom Spacer:**
-   * Add `pb-24` to `DashboardShell` content container so the fixed bottom navigation bar never covers interactive buttons on mobile screens.
+   * **Status:** Resolved in `b1159c5`. Added `pb-24 lg:pb-8` to `<main>` in `DashboardShell.tsx`, ensuring the floating mobile bottom dock never overlaps action buttons.
 
-### Priority 1: High-Value Polish
+### Priority 1: High-Value Polish (Resolved ✓)
 
 1. **Remove Duplicate "+ Add Hackathon" CTAs:**
-   * Keep the primary "+ Add Hackathon" in the Sidebar. Remove the duplicate button next to the summary pills on the dashboard.
+   * **Status:** Resolved in `c496d2a`. Removed the duplicate button from the secondary summary strip in `DashboardContent.tsx`. In `DashboardShell.tsx`, set the header CTA to `inline-flex lg:hidden` (visible only on mobile/tablet when sidebar is collapsed). On desktop, only the sidebar button exists. Wired up custom event listeners so clicks instantly trigger the modal.
 2. **Streamline Workspace Header:**
-   * Collapse `+ Calendar` and `⚡ Alarm (.ics)` into an "Export Schedule" dropdown to reduce visual clutter on 13-inch laptop displays.
-3. **Lifecycle Pill Strip Responsive Scroll:**
-   * Make the `Bookmark -> Result` stage strip horizontally scrollable with `overflow-x-auto no-scrollbar` on mobile viewports rather than breaking onto multiple lines.
+   * **Status:** Resolved in `7ef0a86`. Consolidated `+ Calendar` and `⚡ Alarm (.ics)` into a single `📅 Sync Schedule ▾` dropdown menu (Google Calendar + Apple/Outlook .ics). Modernized and integrated the `MeetCompanionBar` directly into the deadline action bar, eliminating an entire redundant row.
+3. **Lifecycle Pill Strip Responsive Scroll & Selector:**
+   * **Status:** Resolved in `7ef0a86`. Implemented `variant="selector"` in `StatusPills.tsx` for workspace headers (compact `[ 🔨 Building ▾ ]` dropdown taking ~110px instead of 400px), and added `overflow-x-auto no-scrollbar` to `variant="pills"` so mobile cards never break pills into two staggered rows.
 
 ### Priority 2: Future Hardening
 
@@ -225,6 +225,7 @@ Branded, distraction-free auth screens matching the editorial war-room aesthetic
 ---
 
 ### Audit Sign-Off
-* **Visual Identity:** Clean, memorable, authentically hacker-focused.
+* **Visual Identity:** Clean, memorable, authentically hacker-focused monochrome paper blueprint aesthetic.
 * **Architecture:** Stable, decomposed, 0 build errors.
-* **Ready for `main` Merge:** **Yes**, after applying the 3 Priority 0 fixes above.
+* **Production Status:** Fully passing Next.js production build (`npm run build`). All P0 and P1 issues resolved.
+* **Ready for `main` Merge:** **Yes**.
