@@ -169,19 +169,20 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
       {/* 1.2 At-Risk Warning Callouts (Rendered conditionally when blockers exist) */}
       <AtRiskWarnings risks={risks} />
 
-      {/* Compact Secondary Metrics Strip & Quick Ingest CTA */}
-      <div className="border-2 border-hack-ink bg-hack-panel p-3 sm:p-4 shadow-hack-md flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 sm:gap-4 flex-wrap font-mono text-xs text-hack-subtext">
-          <span className="font-bold text-hack-ink">
-            <strong className="text-base text-hack-ink font-black">{activeEventsCount}</strong> active
+      {/* Compact Secondary Summary Chips & Add Action */}
+      <div className="border border-hack-muted/60 bg-hack-surface p-3.5 sm:p-4 rounded-xl shadow-hack-card flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap font-mono text-xs text-hack-subtext">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-hack-sand border border-hack-muted/40 font-semibold text-hack-ink">
+            <span className="w-2 h-2 rounded-full bg-hack-coral inline-block" />
+            <strong className="text-hack-ink font-bold">{activeEventsCount}</strong> active
           </span>
-          <span className="text-hack-ink/30 font-black">|</span>
-          <span className="font-bold text-hack-ink">
-            <strong className="text-base text-hack-ink font-black">{upcomingDeadlinesCount}</strong> deadlines this week
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-hack-sand border border-hack-muted/40 font-semibold text-hack-ink">
+            <span className="w-2 h-2 rounded-full bg-hack-gold inline-block" />
+            <strong className="text-hack-ink font-bold">{upcomingDeadlinesCount}</strong> due soon
           </span>
-          <span className="text-hack-ink/30 font-black">|</span>
-          <span className="font-bold text-hack-ink">
-            <strong className="text-base text-hack-ink font-black">{doneDeliverables}/{totalDeliverables}</strong> tasks done ({completionRate}%)
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-hack-sand border border-hack-muted/40 font-semibold text-hack-ink">
+            <span className="w-2 h-2 rounded-full bg-hack-mint inline-block" />
+            <strong className="text-hack-ink font-bold">{completionRate}%</strong> team progress
           </span>
         </div>
 
@@ -189,9 +190,9 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
           <Button 
             onClick={() => setIsDialogOpen(true)}
             size="sm"
-            className="w-full sm:w-auto border-2 border-hack-ink bg-hack-coral hover:bg-hack-pink active:scale-[0.98] text-hack-ink font-mono text-xs font-black uppercase tracking-wide shadow-[3px_3px_0_#671912] active:translate-x-[1px] active:translate-y-[1px] hover:translate-x-[1px] hover:translate-y-[1px] px-4 h-9 flex items-center justify-center gap-1.5 touch-manipulation"
+            className="w-full sm:w-auto rounded-lg border border-hack-coral bg-hack-coral hover:brightness-105 active:scale-[0.98] text-hack-ink font-mono text-xs font-bold uppercase tracking-wider shadow-hack-hero px-4 h-9 flex items-center justify-center gap-1.5 touch-manipulation transition-all"
           >
-            <span className="text-base font-bold">+</span> Paste Hackathon Link
+            <span className="text-base font-bold">+</span> Add Hackathon
           </Button>
         </div>
       </div>
@@ -208,10 +209,10 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
                   aria-selected={selectedFilter === f.id}
                   onClick={() => setSelectedFilter(f.id)}
                   className={cn(
-                    "font-mono text-xs font-bold uppercase tracking-wider px-2.5 sm:px-3 py-1.5 border-2 border-hack-ink transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
+                    "font-mono text-xs font-semibold uppercase tracking-wider px-3 py-1.5 rounded-lg border transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
                     selectedFilter === f.id
-                      ? "bg-hack-yellow text-hack-ink shadow-[2px_2px_0_#8a5d13]"
-                      : "bg-hack-panel text-hack-subtext hover:bg-hack-muted active:bg-hack-muted"
+                      ? "bg-hack-gold/20 border-hack-gold text-hack-gold-dark font-bold shadow-hack-sm"
+                      : "bg-hack-surface border-hack-muted/60 text-hack-subtext hover:bg-hack-sand hover:text-hack-ink"
                   )}
                 >
                   {f.label} ({f.count})
@@ -220,12 +221,12 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
             </div>
 
             {availableSquads.length > 0 && (
-              <div className="flex items-center gap-1.5 border-2 border-hack-ink bg-hack-panel px-2 py-1 shadow-hack-sm shrink-0">
+              <div className="flex items-center gap-1.5 border border-hack-muted/60 bg-hack-surface px-2.5 py-1 rounded-lg shadow-hack-sm shrink-0">
                 <span className="font-mono text-xs font-bold text-hack-ink">Squad:</span>
                 <select
                   value={selectedSquad}
                   onChange={(e) => setSelectedSquad(e.target.value)}
-                  className="font-mono text-xs font-bold bg-white border border-hack-ink px-1 py-0.5 focus:outline-none"
+                  className="font-mono text-xs font-bold bg-transparent border-0 px-1 py-0.5 focus:outline-none text-hack-ink cursor-pointer"
                 >
                   <option value="all">All Squads</option>
                   {availableSquads.map((sq) => (
@@ -239,29 +240,29 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
           </div>
 
           <p className="font-mono text-xs text-hack-subtext shrink-0">
-            Showing {filteredEvents.length} of {safeEvents.length} total
+            Showing {filteredEvents.length} of {safeEvents.length} competitions
           </p>
         </div>
 
         {/* Events Grid */}
         {filteredEvents.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 px-4 text-center border-2 border-hack-ink bg-hack-panel shadow-[7px_7px_0_#671912]">
-            <div className="h-16 w-16 bg-hack-sky border-2 border-hack-ink shadow-[3px_3px_0_#2e4742] flex items-center justify-center mb-4 text-hack-ink">
-              <Trophy className="h-8 w-8" />
+          <div className="flex flex-col items-center justify-center py-16 px-4 text-center border border-dashed border-hack-muted bg-hack-surface rounded-xl shadow-hack-sm">
+            <div className="h-14 w-14 rounded-full bg-hack-sand border border-hack-muted flex items-center justify-center mb-3 text-hack-gold-dark">
+              <Trophy className="h-7 w-7" />
             </div>
-            <h3 className="font-display text-2xl font-bold text-hack-ink">
-              {safeEvents.length === 0 ? 'Nothing here yet' : 'No competitions match this filter'}
+            <h3 className="font-display text-xl font-bold text-hack-ink">
+              {safeEvents.length === 0 ? 'Nothing here yet.' : 'No competitions match this filter'}
             </h3>
-            <p className="mt-2 font-mono text-xs text-hack-subtext max-w-sm">
+            <p className="mt-1.5 font-sans text-xs sm:text-sm text-hack-subtext max-w-sm">
               {safeEvents.length === 0 
-                ? "Paste your first hackathon link and we'll build the workspace for you."
+                ? "Nothing here yet. Add a hackathon to get started."
                 : 'Try selecting a different filter above or add another hackathon.'}
             </p>
             <Button 
               onClick={() => setIsDialogOpen(true)}
-              className="mt-6 font-mono text-xs font-bold border-2 border-hack-ink bg-hack-coral text-hack-ink shadow-[3px_3px_0_#671912]"
+              className="mt-5 font-mono text-xs font-bold rounded-lg border border-hack-coral bg-hack-coral text-hack-ink shadow-hack-hero hover:brightness-105"
             >
-              + Paste Hackathon Link
+              + Add Hackathon
             </Button>
           </div>
         ) : (
