@@ -79,19 +79,19 @@ export function VaultView({
   if (squads.length === 0) {
     return (
       <div className="max-w-2xl mx-auto py-16 px-4">
-        <div className="border-4 border-[#10201d] bg-[#f7f7f2] shadow-[8px_8px_0_#671912] p-8 sm:p-12 text-center space-y-6">
-          <div className="w-16 h-16 mx-auto border-2 border-[#10201d] bg-[#f5b726] flex items-center justify-center shadow-[4px_4px_0_#10201d]">
-            <Users className="w-8 h-8 text-[#10201d]" />
+        <div className="rounded-2xl border border-hack-ink/20 bg-hack-panel shadow-sm p-8 sm:p-12 text-center space-y-6">
+          <div className="w-14 h-14 mx-auto rounded-xl bg-hack-sand border border-hack-ink/15 flex items-center justify-center text-hack-ink">
+            <Users className="w-7 h-7 text-hack-ink" />
           </div>
 
           <div className="space-y-2">
-            <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#e53927] bg-[#f6c4c1] px-2.5 py-1 border border-[#10201d] inline-block shadow-[1px_1px_0_#10201d]">
-              Strictly Squad-Scoped
+            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-hack-coral-dark bg-hack-coral/15 px-3 py-1 rounded-full border border-hack-coral/30 inline-block">
+              Squad-Scoped Vault
             </span>
-            <h1 className="font-display text-3xl sm:text-4xl font-extrabold text-[#10201d]">
-              No Squad Found
+            <h1 className="font-sans text-2xl sm:text-3xl font-bold text-hack-ink">
+              No Squad Formed Yet
             </h1>
-            <p className="font-mono text-xs text-[#34433f] max-w-md mx-auto leading-relaxed">
+            <p className="font-mono text-xs text-hack-subtext max-w-md mx-auto leading-relaxed">
               The Vault is exclusively squad-scoped. Create or join a squad to access 1-click team registration rosters, shared environment keyrings, sprint scratchpads, and slide decks.
             </p>
           </div>
@@ -99,7 +99,7 @@ export function VaultView({
           <div className="pt-2 flex justify-center">
             <Link
               href="/friends"
-              className="inline-flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider px-6 py-3 border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[4px_4px_0_#8a5d13] transition-all hover:translate-x-[1px] hover:translate-y-[1px]"
+              className="inline-flex items-center gap-2 font-sans text-xs font-bold uppercase tracking-wider px-5 py-2.5 rounded-lg bg-hack-coral hover:bg-hack-coral/90 text-hack-ink shadow-hack-hero transition-all active:translate-y-0.5"
             >
               <Users className="w-4 h-4" />
               <span>Create or Join a Squad</span>
@@ -114,35 +114,31 @@ export function VaultView({
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Vault Header Banner */}
-      <div className="border-2 border-[#10201d] bg-[#3d5f58] p-6 text-[#f7f7f2] shadow-[7px_7px_0_#671912] flex flex-col md:flex-row justify-between md:items-center gap-4">
+      <div className="rounded-2xl border border-hack-ink/20 bg-hack-ink p-6 text-hack-panel shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="w-2.5 h-2.5 bg-[#e53927] inline-block" />
-            <span className="w-2.5 h-2.5 bg-[#8bb2de] inline-block" />
-            <span className="w-2.5 h-2.5 bg-[#f5b726] inline-block" />
-            <span className="w-2.5 h-2.5 bg-[#e97b77] inline-block" />
-            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#f6c4c1] ml-2">
-              Squad Vault: {currentSquad?.name || 'Squad'}
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-sand/60">
+              Squad Vault • {currentSquad?.name || 'Squad'}
             </span>
           </div>
-          <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-[#f7f7f2]">
+          <h1 className="font-sans text-2xl sm:text-3xl font-bold tracking-tight text-hack-panel">
             {currentSquad?.name || 'Squad'} Vault
           </h1>
-          <p className="font-mono text-xs text-[#8bb2de] mt-1">
+          <p className="font-mono text-xs text-hack-sand/70 mt-1 max-w-xl">
             1-click team registration clipboard, sprint scratchpad & keyring, shared slide decks, and starter repos.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
           {/* Squad Selector Dropdown */}
-          <div className="flex items-center gap-2 bg-[#2e4742] p-1.5 border-2 border-[#10201d] shadow-[3px_3px_0_#10201d]">
-            <Users className="h-4 w-4 text-[#f5b726]" />
-            <span className="font-mono text-xs font-bold text-[#f2f2eb] uppercase hidden sm:inline">Squad:</span>
+          <div className="flex items-center gap-2 bg-hack-panel/10 px-2.5 py-1.5 rounded-lg border border-white/10">
+            <Users className="h-4 w-4 text-[#F6C344]" />
+            <span className="font-mono text-xs font-semibold text-hack-sand uppercase hidden sm:inline">Squad:</span>
             <select
               value={selectedSquadId || squads[0]?.id || ''}
               onChange={(e) => handleSquadChange(e.target.value)}
               disabled={loadingData}
-              className="bg-white text-[#10201d] font-mono text-xs font-bold py-1 px-2 border-2 border-[#10201d] focus:outline-none cursor-pointer"
+              className="bg-hack-panel text-hack-ink font-mono text-xs font-semibold py-1 px-2.5 rounded-md border border-hack-ink/20 focus:outline-none cursor-pointer"
             >
               {squads.map((sq) => (
                 <option key={sq.id} value={sq.id}>
@@ -154,7 +150,7 @@ export function VaultView({
 
           <Button
             onClick={() => setIsAssetModalOpen(true)}
-            className="border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] font-mono text-xs font-bold shadow-[3px_3px_0_#671912]"
+            className="rounded-lg bg-hack-coral hover:bg-hack-coral/90 text-hack-ink font-sans text-xs font-bold shadow-hack-hero"
           >
             <Plus className="h-4 w-4 mr-1.5" />
             + Add Shared Asset
@@ -163,14 +159,14 @@ export function VaultView({
       </div>
 
       {/* Navigation Tabs (Smooth Horizontal Scroll on mobile) */}
-      <div className="flex items-center gap-2 border-b-2 border-[#10201d] pb-2 overflow-x-auto no-scrollbar scroll-smooth flex-nowrap sm:flex-wrap -mx-3 px-3 sm:mx-0 sm:px-0">
+      <div className="flex items-center gap-2 border-b border-hack-ink/15 pb-2 overflow-x-auto no-scrollbar scroll-smooth flex-nowrap sm:flex-wrap -mx-3 px-3 sm:mx-0 sm:px-0">
         <button
           onClick={() => setActiveTab('profiles')}
           className={cn(
-            "font-mono text-xs font-bold uppercase tracking-wider px-3 sm:px-4 py-2 border-2 border-[#10201d] transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
+            "font-mono text-xs font-semibold uppercase tracking-wider px-3 sm:px-4 py-2 rounded-lg border transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
             activeTab === 'profiles'
-              ? "bg-[#f5b726] text-[#10201d] shadow-[3px_3px_0_#8a5d13]"
-              : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"
+              ? "bg-hack-ink text-hack-panel border-hack-ink shadow-sm font-bold"
+              : "bg-hack-panel text-hack-subtext border-hack-ink/15 hover:bg-hack-sand/60 hover:text-hack-ink"
           )}
         >
           Quick-Fill Team Profiles ({profiles.length})
@@ -179,24 +175,24 @@ export function VaultView({
         <button
           onClick={() => setActiveTab('scratchpad')}
           className={cn(
-            "font-mono text-xs font-bold uppercase tracking-wider px-3 sm:px-4 py-2 border-2 border-[#10201d] transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
+            "font-mono text-xs font-semibold uppercase tracking-wider px-3 sm:px-4 py-2 rounded-lg border transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
             activeTab === 'scratchpad'
-              ? "bg-[#f5b726] text-[#10201d] shadow-[3px_3px_0_#8a5d13]"
-              : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"
+              ? "bg-hack-ink text-hack-panel border-hack-ink shadow-sm font-bold"
+              : "bg-hack-panel text-hack-subtext border-hack-ink/15 hover:bg-hack-sand/60 hover:text-hack-ink"
           )}
         >
           <Pin className="w-3.5 h-3.5" />
           <span>Sprint Scratchpad & Keyring</span>
-          <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block ml-0.5" />
+          <span className="w-2 h-2 rounded-full bg-hack-mint-dark inline-block ml-0.5" />
         </button>
 
         <button
           onClick={() => setActiveTab('decks')}
           className={cn(
-            "font-mono text-xs font-bold uppercase tracking-wider px-3 sm:px-4 py-2 border-2 border-[#10201d] transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
+            "font-mono text-xs font-semibold uppercase tracking-wider px-3 sm:px-4 py-2 rounded-lg border transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
             activeTab === 'decks'
-              ? "bg-[#f5b726] text-[#10201d] shadow-[3px_3px_0_#8a5d13]"
-              : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"
+              ? "bg-hack-ink text-hack-panel border-hack-ink shadow-sm font-bold"
+              : "bg-hack-panel text-hack-subtext border-hack-ink/15 hover:bg-hack-sand/60 hover:text-hack-ink"
           )}
         >
           Pitch & Deck Kit ({deckAssets.length})
@@ -205,10 +201,10 @@ export function VaultView({
         <button
           onClick={() => setActiveTab('boilerplates')}
           className={cn(
-            "font-mono text-xs font-bold uppercase tracking-wider px-3 sm:px-4 py-2 border-2 border-[#10201d] transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
+            "font-mono text-xs font-semibold uppercase tracking-wider px-3 sm:px-4 py-2 rounded-lg border transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
             activeTab === 'boilerplates'
-              ? "bg-[#f5b726] text-[#10201d] shadow-[3px_3px_0_#8a5d13]"
-              : "bg-[#f7f7f2] text-[#34433f] hover:bg-[#e4e5da] active:bg-[#e4e5da]"
+              ? "bg-hack-ink text-hack-panel border-hack-ink shadow-sm font-bold"
+              : "bg-hack-panel text-hack-subtext border-hack-ink/15 hover:bg-hack-sand/60 hover:text-hack-ink"
           )}
         >
           Boilerplate Hub ({boilerplateAssets.length})
