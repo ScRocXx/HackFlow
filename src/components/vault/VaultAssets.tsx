@@ -157,24 +157,24 @@ export function VaultAssets({
   if (activeTab === 'decks') {
     return (
       <div className="space-y-4">
-        <div className="p-4 border-2 border-hack-ink bg-hack-sand shadow-hack-card flex items-center justify-between">
-          <span className="font-mono text-xs text-hack-ink font-bold">
+        <div className="p-4 rounded-xl border border-hack-ink/15 bg-hack-panel shadow-sm flex items-center justify-between">
+          <span className="font-sans text-xs text-hack-ink font-medium">
             Pinned master slide decks, Figma templates, cover slides, and architecture diagrams.
           </span>
           <Button
             size="sm"
             onClick={() => handleOpenAddAsset('pitch_deck')}
-            className="font-mono text-xs font-bold border-2 border-hack-ink bg-hack-coral text-hack-ink shadow-hack-chip hover:bg-hack-coral/90"
+            className="font-sans text-xs font-bold rounded-lg bg-hack-coral text-hack-ink shadow-hack-hero hover:bg-hack-coral/90"
           >
             + Pinned Deck / Kit
           </Button>
         </div>
 
         {deckAssets.length === 0 ? (
-          <div className="p-12 border-2 border-dashed border-hack-ink text-center bg-hack-panel">
+          <div className="p-12 rounded-2xl border border-dashed border-hack-ink/20 text-center bg-hack-panel">
             <Palette className="h-10 w-10 text-hack-subtext mx-auto opacity-40 mb-3" />
-            <h3 className="font-display text-2xl font-bold text-hack-ink">No Decks or Figma Kits Pinned</h3>
-            <p className="font-mono text-xs text-hack-subtext mt-1 max-w-md mx-auto">
+            <h3 className="font-sans text-xl font-bold text-hack-ink">No Decks or Figma Kits Pinned</h3>
+            <p className="font-mono text-xs text-hack-subtext mt-1.5 max-w-md mx-auto">
               Pin your team's master pitch deck, Figma UI kit, and standard diagrams here to reuse in every hackathon.
             </p>
           </div>
@@ -183,16 +183,16 @@ export function VaultAssets({
             {deckAssets.map((asset) => (
               <div 
                 key={asset.id}
-                className="border-2 border-hack-ink bg-hack-panel shadow-hack-panel p-4 flex flex-col justify-between"
+                className="rounded-xl border border-hack-ink/15 bg-hack-panel shadow-sm p-4 sm:p-5 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 border-2 border-hack-ink bg-hack-sky text-hack-ink">
+                      <span className="font-mono text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border border-hack-ink/15 bg-hack-sky/30 text-hack-ink">
                         {asset.asset_type.replace('_', ' ')}
                       </span>
                       {(asset.url.toLowerCase().endsWith('.pdf') || asset.url.toLowerCase().includes('hackflow_uploads') || asset.url.toLowerCase().includes('/uploads/')) && (
-                        <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 border-2 border-hack-ink bg-hack-rust text-white flex items-center gap-1 shadow-[1px_1px_0_#10201d]">
+                        <span className="font-mono text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border border-hack-coral/30 bg-hack-coral/15 text-hack-coral-dark flex items-center gap-1">
                           <FileText className="w-3 h-3" /> PDF Deck
                         </span>
                       )}
@@ -200,7 +200,7 @@ export function VaultAssets({
                     {asset.created_by === currentUserId && (
                       <button
                         onClick={() => handleDeleteAsset(asset.id)}
-                        className="text-hack-ink hover:text-hack-rust"
+                        className="text-hack-subtext hover:text-hack-coral-dark p-1 rounded transition-colors"
                         title="Delete asset"
                         aria-label={`Delete asset: ${asset.title}`}
                       >
@@ -208,14 +208,14 @@ export function VaultAssets({
                       </button>
                     )}
                   </div>
-                  <h3 className="font-display text-xl font-bold text-hack-ink truncate">{asset.title}</h3>
+                  <h3 className="font-sans text-base font-bold text-hack-ink truncate">{asset.title}</h3>
                   {asset.description && (
                     <p className="font-mono text-xs text-hack-subtext mt-1 line-clamp-2">{asset.description}</p>
                   )}
                   {asset.tags?.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-2.5">
                       {asset.tags.map((t, idx) => (
-                        <span key={idx} className="font-mono text-[9px] px-1.5 py-0.5 bg-hack-muted border border-hack-ink text-hack-ink">
+                        <span key={idx} className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-hack-sand border border-hack-ink/10 text-hack-subtext">
                           #{t}
                         </span>
                       ))}
@@ -223,31 +223,31 @@ export function VaultAssets({
                   )}
                 </div>
 
-                <div className="pt-4 mt-4 border-t-2 border-hack-ink flex items-center justify-between">
+                <div className="pt-3.5 mt-3.5 border-t border-hack-ink/10 flex items-center justify-between">
                   {(asset.url.toLowerCase().endsWith('.pdf') || asset.url.toLowerCase().includes('hackflow_uploads') || asset.url.toLowerCase().includes('/uploads/')) ? (
                     <a
                       href={ensureExternalUrl(asset.url)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-mono text-xs font-bold text-hack-ink hover:text-hack-rust flex items-center gap-1.5 group underline"
+                      className="font-mono text-xs font-semibold text-hack-coral-dark hover:underline flex items-center gap-1.5 group"
                     >
-                      <FileText className="w-3.5 h-3.5 text-hack-rust" /> View PDF <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                      <FileText className="w-3.5 h-3.5" /> View PDF <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                     </a>
                   ) : (
                     <a
                       href={ensureExternalUrl(asset.url)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-mono text-xs font-bold text-hack-ink hover:text-hack-rust flex items-center gap-1.5 group underline"
+                      className="font-mono text-xs font-semibold text-hack-coral-dark hover:underline flex items-center gap-1.5 group"
                     >
                       Open Link <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                     </a>
                   )}
                   <button
                     onClick={() => handleCopy(`asset-${asset.id}`, asset.url, asset.title)}
-                    className="font-mono text-[11px] font-bold px-2 py-1 border-2 border-hack-ink bg-hack-gold hover:bg-hack-gold/80 text-hack-ink shadow-hack-chip flex items-center gap-1"
+                    className="font-mono text-[11px] font-medium px-2 py-1 rounded-md border border-hack-ink/20 bg-white hover:bg-hack-sand text-hack-ink shadow-sm flex items-center gap-1"
                   >
-                    {copiedKey === `asset-${asset.id}` ? <Check className="w-3 h-3 text-emerald-800" /> : <Copy className="w-3 h-3" />}
+                    {copiedKey === `asset-${asset.id}` ? <Check className="w-3 h-3 text-hack-mint-dark stroke-[3]" /> : <Copy className="w-3 h-3" />}
                     Copy Link
                   </button>
                 </div>
@@ -288,8 +288,8 @@ export function VaultAssets({
       {boilerplateAssets.length === 0 ? (
         <div className="p-12 border-2 border-dashed border-hack-ink text-center bg-hack-panel">
           <Code className="h-10 w-10 text-hack-subtext mx-auto opacity-40 mb-3" />
-          <h3 className="font-display text-2xl font-bold text-hack-ink">No Boilerplates Linked</h3>
-          <p className="font-mono text-xs text-hack-subtext mt-1 max-w-md mx-auto">
+          <h3 className="font-sans text-xl font-bold text-hack-ink">No Boilerplates Linked</h3>
+          <p className="font-mono text-xs text-hack-subtext mt-1.5 max-w-md mx-auto">
             Add GitHub template repos for your squad so you never waste the first two hours setting up configurations.
           </p>
         </div>
@@ -298,17 +298,17 @@ export function VaultAssets({
           {boilerplateAssets.map((asset) => (
             <div 
               key={asset.id}
-              className="border-2 border-hack-ink bg-hack-panel shadow-hack-panel p-4 flex flex-col justify-between"
+              className="rounded-xl border border-hack-ink/15 bg-hack-panel shadow-sm p-4 sm:p-5 flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 border-2 border-hack-ink bg-hack-gold text-hack-ink">
+                  <span className="font-mono text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border border-[#F6C344]/50 bg-[#FEF9EE] text-[#8A5D13]">
                     Starter Repo
                   </span>
                   {asset.created_by === currentUserId && (
                     <button
                       onClick={() => handleDeleteAsset(asset.id)}
-                      className="text-hack-ink hover:text-hack-rust"
+                      className="text-hack-subtext hover:text-hack-coral-dark p-1 rounded transition-colors"
                       title="Delete boilerplate"
                       aria-label={`Delete boilerplate: ${asset.title}`}
                     >
@@ -316,14 +316,14 @@ export function VaultAssets({
                     </button>
                   )}
                 </div>
-                <h3 className="font-display text-xl font-bold text-hack-ink truncate">{asset.title}</h3>
+                <h3 className="font-sans text-base font-bold text-hack-ink truncate">{asset.title}</h3>
                 {asset.description && (
                   <p className="font-mono text-xs text-hack-subtext mt-1 line-clamp-2">{asset.description}</p>
                 )}
                 {asset.tags?.length > 0 && (
                   <div className="flex flex-wrap gap-1 mt-2.5">
                     {asset.tags.map((t, idx) => (
-                      <span key={idx} className="font-mono text-[9px] px-1.5 py-0.5 bg-hack-muted border border-hack-ink text-hack-ink">
+                      <span key={idx} className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-hack-sand border border-hack-ink/10 text-hack-subtext">
                         #{t}
                       </span>
                     ))}
@@ -331,20 +331,20 @@ export function VaultAssets({
                 )}
               </div>
 
-              <div className="pt-4 mt-4 border-t-2 border-hack-ink flex items-center justify-between">
+              <div className="pt-3.5 mt-3.5 border-t border-hack-ink/10 flex items-center justify-between">
                 <a
                   href={ensureExternalUrl(asset.url)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-mono text-xs font-bold text-hack-ink hover:text-hack-rust flex items-center gap-1.5 group underline"
+                  className="font-mono text-xs font-semibold text-hack-coral-dark hover:underline flex items-center gap-1.5 group"
                 >
                   <GithubIcon className="w-3.5 h-3.5" /> Open GitHub <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                 </a>
                 <button
                   onClick={() => handleCopy(`repo-${asset.id}`, asset.url, asset.title)}
-                  className="font-mono text-[11px] font-bold px-2 py-1 border-2 border-hack-ink bg-hack-sky hover:bg-hack-sky/80 text-hack-ink shadow-hack-chip flex items-center gap-1"
+                  className="font-mono text-[11px] font-medium px-2 py-1 rounded-md border border-hack-ink/20 bg-white hover:bg-hack-sand text-hack-ink shadow-sm flex items-center gap-1"
                 >
-                  {copiedKey === `repo-${asset.id}` ? <Check className="w-3 h-3 text-emerald-800" /> : <Copy className="w-3 h-3" />}
+                  {copiedKey === `repo-${asset.id}` ? <Check className="w-3 h-3 text-hack-mint-dark stroke-[3]" /> : <Copy className="w-3 h-3" />}
                   Copy Git URL
                 </button>
               </div>
@@ -397,34 +397,34 @@ function AddAssetModal({
 }: AddAssetModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[540px] border-2 border-hack-ink bg-hack-panel shadow-hack-dialog p-6">
+      <DialogContent className="sm:max-w-[540px] rounded-2xl border border-hack-ink/20 bg-hack-sand shadow-2xl p-5 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="font-display text-2xl font-bold text-hack-ink">
+          <DialogTitle className="font-sans text-xl sm:text-2xl font-bold text-hack-ink">
             Add Reusable Squad Asset
           </DialogTitle>
-          <DialogDescription className="font-mono text-xs text-hack-subtext">
+          <DialogDescription className="font-mono text-xs text-hack-subtext mt-1">
             Master presentation deck, Figma design system, or boilerplate repo link.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={onSave} className="space-y-3 py-2">
+        <form onSubmit={onSave} className="space-y-3.5 py-2">
           <div className="space-y-1">
-            <label className="font-mono text-xs font-bold uppercase text-hack-ink block">Asset Title *</label>
+            <label className="font-mono text-xs font-semibold uppercase text-hack-ink block">Asset Title *</label>
             <Input
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
               placeholder="e.g. Master Pitch Deck (Dark Mode)"
-              className="font-mono text-xs border-2 border-hack-ink bg-white shadow-hack-chip"
+              className="font-mono text-xs rounded-lg border border-hack-ink/20 bg-white focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
               required
             />
           </div>
 
           <div className="space-y-1">
-            <label className="font-mono text-xs font-bold uppercase text-hack-ink block">Asset Type</label>
+            <label className="font-mono text-xs font-semibold uppercase text-hack-ink block">Asset Type</label>
             <select
               value={form.asset_type}
               onChange={(e) => setForm({ ...form, asset_type: e.target.value as any })}
-              className="w-full h-10 px-3 border-2 border-hack-ink bg-white font-mono text-xs shadow-hack-chip focus:outline-none"
+              className="w-full h-10 px-3 rounded-lg border border-hack-ink/20 bg-white font-mono text-xs focus:outline-none focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
             >
               <option value="pitch_deck">Pitch Deck Template (PDF / Presentation)</option>
               <option value="figma_kit">Figma UI Kit</option>
@@ -451,40 +451,40 @@ function AddAssetModal({
           />
 
           <div className="space-y-1">
-            <label className="font-mono text-xs font-bold uppercase text-hack-ink block">Description</label>
+            <label className="font-mono text-xs font-semibold uppercase text-hack-ink block">Description</label>
             <Input
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder="e.g. Contains team slide, market size graph, and system diagram"
-              className="font-mono text-xs border-2 border-hack-ink bg-white shadow-hack-chip"
+              className="font-mono text-xs rounded-lg border border-hack-ink/20 bg-white focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
             />
           </div>
 
           <div className="space-y-1">
-            <label className="font-mono text-xs font-bold uppercase text-hack-ink block">Tags (comma separated)</label>
+            <label className="font-mono text-xs font-semibold uppercase text-hack-ink block">Tags (comma separated)</label>
             <Input
               value={form.tags}
               onChange={(e) => setForm({ ...form, tags: e.target.value })}
               placeholder="pitch, figma, nextjs"
-              className="font-mono text-xs border-2 border-hack-ink bg-white shadow-hack-chip"
+              className="font-mono text-xs rounded-lg border border-hack-ink/20 bg-white focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
+          <div className="flex justify-end gap-2.5 pt-3 border-t border-hack-ink/10">
             <Button
               type="button"
               variant="outline"
               onClick={() => setIsOpen(false)}
-              className="font-mono text-xs font-bold border-2 border-hack-ink bg-hack-sand"
+              className="font-sans text-xs font-semibold rounded-lg border border-hack-ink/20 bg-white hover:bg-hack-sand"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={saving}
-              className="font-mono text-xs font-bold border-2 border-hack-ink bg-hack-coral hover:bg-hack-coral/90 text-hack-ink shadow-hack-btn"
+              className="font-sans text-xs font-bold rounded-lg bg-hack-coral hover:bg-hack-coral/90 text-hack-ink shadow-hack-hero active:translate-y-0.5 transition-all"
             >
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Pin Asset'}
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : 'Pin Asset'}
             </Button>
           </div>
         </form>

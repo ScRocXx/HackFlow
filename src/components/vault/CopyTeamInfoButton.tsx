@@ -58,13 +58,13 @@ export function CopyTeamInfoButton({
     setCopied(true)
 
     toast({
-      title: 'Team Info Copied!',
+      title: 'Copied. Go register.',
       description: `Copied clean roster for ${validProfiles.length} member(s). Ready to paste into competition forms.`,
     })
 
     setTimeout(() => {
       setCopied(false)
-    }, 1500)
+    }, 2000)
   }
 
   return (
@@ -74,12 +74,12 @@ export function CopyTeamInfoButton({
       disabled={profiles.length === 0}
       onClick={handleCopyTeamInfo}
       className={cn(
-        "h-7 text-xs font-mono font-bold bg-[#e97b77] text-[#10201d] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-[#f6c4c1] transition-all",
+        "h-8 px-3 text-xs font-sans font-bold rounded-lg bg-hack-coral text-hack-ink hover:bg-hack-coral/90 shadow-sm transition-all active:translate-y-0.5",
         className
       )}
     >
-      {copied ? <Check className="h-3 w-3 mr-1 text-emerald-800" /> : <Copy className="h-3 w-3 mr-1" />}
-      {copied ? 'Copied Team Info!' : 'Copy Team Info'}
+      {copied ? <Check className="h-3.5 w-3.5 mr-1.5 text-hack-mint-dark stroke-[3]" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />}
+      {copied ? 'Copied. Go register.' : 'Copy Team Info'}
     </Button>
   )
 }

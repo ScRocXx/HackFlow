@@ -43,8 +43,8 @@ export function FriendsManager({
       const res = await sendFriendRequest(targetEmail)
       if (res.success && res.data) {
         toast({
-          title: 'Request Sent',
-          description: `Friend request sent to ${targetEmail}`,
+          title: 'Invite sent. Now go build.',
+          description: `Squad invitation sent to ${targetEmail}`,
           variant: 'success',
         })
         setOutgoing([res.data as Friendship, ...outgoing])
@@ -131,35 +131,42 @@ export function FriendsManager({
   return (
     <div className="space-y-6">
       {/* Invite Friend Card */}
-      <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#10201d]">
-        <CardHeader className="p-4 border-b-2 border-[#10201d] bg-[#2e4742] text-[#f2f2eb]">
-          <div className="flex items-center gap-2">
-            <UserPlus className="h-5 w-5 text-[#f5b726]" />
-            <CardTitle className="font-display text-base tracking-wide">Invite Teammates to Your Squad</CardTitle>
+      <Card className="border border-hack-muted/30 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
+        <CardHeader className="p-5 border-b border-hack-muted/20 bg-hack-sand/40 text-hack-ink">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-hack-forest/10 flex items-center justify-center">
+              <UserPlus className="h-4 w-4 text-hack-forest" />
+            </div>
+            <div>
+              <CardTitle className="font-display text-base font-bold">Bring the team in.</CardTitle>
+              <p className="font-mono text-xs text-hack-subtext mt-0.5">
+                Drop their email. We&apos;ll send them the invite.
+              </p>
+            </div>
           </div>
         </CardHeader>
-        <CardContent className="p-4">
+        <CardContent className="p-5">
           <form onSubmit={handleSendRequest} className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-1">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#57726d]" />
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-hack-subtext" />
               <Input
                 type="email"
                 placeholder="teammate@college.edu or friend@gmail.com"
                 value={emailInput}
                 onChange={(e) => setEmailInput(e.target.value)}
                 required
-                className="pl-9 font-mono text-sm border-2 border-[#10201d] bg-white text-[#10201d] placeholder:text-[#57726d]"
+                className="pl-9 font-mono text-sm border border-hack-muted/40 rounded-lg bg-hack-surface text-hack-ink placeholder:text-hack-subtext focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25"
               />
             </div>
             <Button
               type="submit"
               disabled={sending}
-              className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#faaf00] text-[#10201d] shadow-[3px_3px_0_#10201d]"
+              className="font-mono text-xs font-semibold bg-hack-coral hover:bg-hack-coral/90 text-white shadow-hack-hero rounded-lg px-4 py-2 shrink-0 transition-colors"
             >
               {sending ? 'Sending...' : 'Send Squad Invite'}
             </Button>
           </form>
-          <p className="mt-2 text-xs font-mono text-[#57726d]">
+          <p className="mt-2 text-xs font-mono text-hack-subtext">
             If registered, they receive an instant in-app prompt. If not, they receive an email invitation to join HackFlow.
           </p>
         </CardContent>
@@ -167,32 +174,32 @@ export function FriendsManager({
 
       {/* Incoming Requests */}
       {incoming.length > 0 && (
-        <Card className="border-2 border-[#10201d] bg-[#fef7ee] shadow-[5px_5px_0_#10201d]">
-          <CardHeader className="p-4 border-b-2 border-[#10201d] bg-[#e53927] text-white flex flex-row items-center justify-between">
+        <Card className="border border-hack-coral/30 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
+          <CardHeader className="p-4 border-b border-hack-coral/20 bg-hack-coral/10 text-hack-ink flex flex-row items-center justify-between">
             <div className="flex items-center gap-2">
-              <Clock className="h-5 w-5" />
-              <CardTitle className="font-display text-base">Incoming Squad Invites</CardTitle>
+              <Clock className="h-4 w-4 text-hack-coral" />
+              <CardTitle className="font-display text-sm font-bold text-hack-coral">Incoming Squad Invites</CardTitle>
             </div>
-            <Badge className="font-mono text-xs bg-[#10201d] text-white border-0">
+            <Badge className="font-mono text-[11px] bg-hack-coral text-white border-0 rounded-full px-2.5">
               {incoming.length} Pending
             </Badge>
           </CardHeader>
-          <CardContent className="p-4 space-y-3">
+          <CardContent className="p-4 space-y-2.5">
             {incoming.map((req) => {
               const sender = req.sender_profile
               const displayName = sender?.full_name || req.receiver_email
               return (
                 <div
                   key={req.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-white border-2 border-[#10201d] shadow-[3px_3px_0_#10201d]"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-hack-sand/40 border border-hack-muted/20 rounded-lg"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-none border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] font-mono font-bold flex items-center justify-center text-sm">
+                    <div className="h-9 w-9 rounded-lg bg-hack-blue/15 text-hack-blue font-mono font-bold flex items-center justify-center text-xs">
                       {displayName.substring(0, 2).toUpperCase()}
                     </div>
                     <div>
-                      <div className="font-display font-bold text-sm text-[#10201d]">{displayName}</div>
-                      <div className="font-mono text-xs text-[#57726d]">Sent you a squad connection request</div>
+                      <div className="font-display font-semibold text-sm text-hack-ink">{displayName}</div>
+                      <div className="font-mono text-xs text-hack-subtext">Sent you a squad connection request</div>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -200,16 +207,16 @@ export function FriendsManager({
                       size="sm"
                       onClick={() => handleAccept(req.id)}
                       disabled={actionLoading === req.id}
-                      className="font-mono text-xs border-2 border-[#10201d] bg-[#2e4742] text-[#f2f2eb] hover:bg-[#3d5f58]"
+                      className="font-mono text-xs font-semibold rounded-lg bg-hack-forest text-hack-sand hover:bg-hack-forest/90 shadow-sm"
                     >
-                      <Check className="h-3.5 w-3.5 mr-1 text-[#f5b726]" /> Accept
+                      <Check className="h-3.5 w-3.5 mr-1 text-hack-gold" /> Accept
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => handleDecline(req.id)}
                       disabled={actionLoading === req.id}
-                      className="font-mono text-xs border-2 border-[#10201d] bg-white text-[#e53927] hover:bg-[#fee2e2]"
+                      className="font-mono text-xs rounded-lg border-hack-muted/30 text-hack-coral hover:bg-hack-coral/10"
                     >
                       <X className="h-3.5 w-3.5 mr-1" /> Decline
                     </Button>
@@ -222,21 +229,21 @@ export function FriendsManager({
       )}
 
       {/* Friends List */}
-      <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#10201d]">
-        <CardHeader className="p-4 border-b-2 border-[#10201d] bg-[#3d5f58] text-[#f2f2eb] flex flex-row items-center justify-between">
+      <Card className="border border-hack-muted/30 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
+        <CardHeader className="p-4 border-b border-hack-muted/20 bg-hack-sand/40 text-hack-ink flex flex-row items-center justify-between">
           <div className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-[#8bb2de]" />
-            <CardTitle className="font-display text-base">Squad Friends ({friends.length})</CardTitle>
+            <Users className="h-4 w-4 text-hack-forest" />
+            <CardTitle className="font-display text-sm font-bold">Squad Friends ({friends.length})</CardTitle>
           </div>
-          <span className="font-mono text-xs text-[#f2f2eb]/70">Available for squad creation & event invites</span>
+          <span className="font-mono text-[11px] text-hack-subtext">Available for squad creation & event invites</span>
         </CardHeader>
         <CardContent className="p-4">
           {friends.length === 0 ? (
-            <div className="text-center py-8 border-2 border-dashed border-[#57726d]/40 p-6 bg-white/50">
-              <Users className="h-10 w-10 mx-auto text-[#57726d] mb-2 opacity-60" />
-              <p className="font-display font-bold text-sm text-[#10201d]">No friends connected yet</p>
-              <p className="font-mono text-xs text-[#57726d] mt-1">
-                Enter your teammates' email above to connect with them directly.
+            <div className="text-center py-8 border border-dashed border-hack-muted/40 rounded-lg p-6 bg-hack-sand/20">
+              <Users className="h-10 w-10 mx-auto text-hack-subtext mb-2 opacity-60" />
+              <p className="font-display font-bold text-sm text-hack-ink">No friends connected yet</p>
+              <p className="font-mono text-xs text-hack-subtext mt-1">
+                Enter your teammate&apos;s email above to connect with them directly.
               </p>
             </div>
           ) : (
@@ -249,18 +256,18 @@ export function FriendsManager({
                 return (
                   <div
                     key={f.id}
-                    className="p-3 bg-white border-2 border-[#10201d] shadow-[3px_3px_0_#10201d] flex items-center justify-between gap-3"
+                    className="p-3 bg-hack-sand/30 border border-hack-muted/20 rounded-lg flex items-center justify-between gap-3 hover:border-hack-muted/40 transition-colors"
                   >
                     <div className="flex items-center gap-3 overflow-hidden">
-                      <div className="h-10 w-10 flex-shrink-0 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] font-mono font-bold flex items-center justify-center text-sm">
+                      <div className="h-9 w-9 flex-shrink-0 rounded-lg bg-hack-forest/10 text-hack-forest font-mono font-bold flex items-center justify-center text-xs">
                         {name.substring(0, 2).toUpperCase()}
                       </div>
                       <div className="truncate">
-                        <div className="font-display font-bold text-sm text-[#10201d] truncate flex items-center gap-1.5">
+                        <div className="font-display font-semibold text-sm text-hack-ink truncate flex items-center gap-1.5">
                           {name}
-                          <ShieldCheck className="h-3.5 w-3.5 text-[#2e4742] inline flex-shrink-0" />
+                          <ShieldCheck className="h-3.5 w-3.5 text-hack-forest inline flex-shrink-0" />
                         </div>
-                        <div className="font-mono text-xs text-[#57726d] truncate">{email}</div>
+                        <div className="font-mono text-xs text-hack-subtext truncate">{email}</div>
                       </div>
                     </div>
                     <Button
@@ -268,7 +275,7 @@ export function FriendsManager({
                       size="sm"
                       onClick={() => handleRemove(f.id)}
                       disabled={actionLoading === f.id}
-                      className="text-[#e53927] hover:bg-[#fee2e2] p-2 h-auto flex-shrink-0"
+                      className="text-hack-subtext hover:text-hack-coral hover:bg-hack-coral/10 p-2 h-auto flex-shrink-0 rounded-md transition-colors"
                       title="Remove friend"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -283,8 +290,8 @@ export function FriendsManager({
 
       {/* Outgoing Pending Requests */}
       {outgoing.length > 0 && (
-        <div className="p-4 bg-white/70 border-2 border-[#10201d] shadow-[3px_3px_0_#10201d]">
-          <div className="font-mono text-xs font-bold text-[#57726d] uppercase tracking-wider mb-2">
+        <div className="p-4 bg-hack-surface border border-hack-muted/30 rounded-xl shadow-hack-card">
+          <div className="font-mono text-xs font-bold text-hack-subtext uppercase tracking-wider mb-2.5">
             Awaiting Confirmation ({outgoing.length})
           </div>
           <div className="flex flex-wrap gap-2">
@@ -292,9 +299,9 @@ export function FriendsManager({
               <Badge
                 key={out.id}
                 variant="outline"
-                className="font-mono text-xs border-2 border-[#10201d] bg-[#f7f7f2] text-[#10201d] py-1 px-2.5 flex items-center gap-1.5"
+                className="font-mono text-xs border border-hack-muted/30 bg-hack-sand/40 text-hack-ink py-1 px-2.5 rounded-full flex items-center gap-1.5"
               >
-                <Clock className="h-3 w-3 text-[#f5b726]" />
+                <Clock className="h-3 w-3 text-hack-gold" />
                 {out.receiver_email}
               </Badge>
             ))}

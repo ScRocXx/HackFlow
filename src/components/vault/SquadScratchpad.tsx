@@ -171,16 +171,16 @@ export function SquadScratchpad({
   return (
     <div className="space-y-6">
       {/* Header Info Banner */}
-      <div className="p-4 border-2 border-[#10201d] bg-[#f2f2eb] shadow-[4px_4px_0_#10201d] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="p-4 border border-hack-muted/30 bg-hack-surface rounded-xl shadow-hack-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] font-mono text-sm font-black flex items-center justify-center shadow-[2px_2px_0_#10201d]">
+          <div className="w-8 h-8 rounded-lg bg-hack-sand/70 border border-hack-muted/30 text-hack-ink font-mono text-sm flex items-center justify-center">
             📌
           </div>
           <div>
-            <h3 className="font-display text-base font-bold text-[#10201d] leading-none">
+            <h3 className="font-display text-base font-bold text-hack-ink leading-none">
               {squadName} Sprint Scratchpad & Pinboard
             </h3>
-            <p className="font-mono text-[11px] text-[#57726d] mt-1">
+            <p className="font-mono text-[11px] text-hack-subtext mt-1">
               {lastUpdateTime ? `Last updated by ${lastEditorName} on ${lastUpdateTime}` : 'Pin your team call, Discord, staging link, and test accounts.'}
             </p>
           </div>
@@ -189,7 +189,7 @@ export function SquadScratchpad({
         <Button
           onClick={handleSave}
           disabled={isSaving}
-          className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[2px_2px_0_#671912] shrink-0"
+          className="font-mono text-xs font-semibold bg-hack-coral hover:bg-hack-coral/90 text-white shadow-hack-hero rounded-lg px-4 py-2 shrink-0 transition-colors"
         >
           {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Save className="w-3.5 h-3.5 mr-1.5" />}
           <span>{isSaving ? 'Saving...' : 'Save Scratchpad'}</span>
@@ -201,9 +201,9 @@ export function SquadScratchpad({
         {/* Left Column: Comms & Staging Environment */}
         <div className="space-y-5">
           {/* 1. Live Meeting & Discord/WhatsApp */}
-          <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912]">
-            <div className="p-3 bg-[#2e4742] text-[#f7f7f2] border-b-2 border-[#10201d] flex items-center gap-2">
-              <Video className="w-4 h-4 text-[#f5b726]" />
+          <Card className="border border-hack-muted/30 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
+            <div className="p-3.5 bg-hack-sand/50 text-hack-ink border-b border-hack-muted/20 flex items-center gap-2">
+              <Video className="w-4 h-4 text-hack-coral" />
               <h4 className="font-display text-sm font-bold tracking-wide">
                 Squad Comms & Meeting Links
               </h4>
@@ -213,28 +213,28 @@ export function SquadScratchpad({
               {/* Google Meet Link */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="font-mono text-xs font-bold uppercase text-[#10201d] flex items-center gap-1.5">
-                    <Video className="w-3.5 h-3.5 text-[#e53927]" />
+                  <label className="font-mono text-xs font-bold uppercase text-hack-ink flex items-center gap-1.5">
+                    <Video className="w-3.5 h-3.5 text-hack-coral" />
                     <span>Live Team Call (Google Meet / Zoom)</span>
                   </label>
                   {formData.meet_url && (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
                       <a
                         href={ensureExternalUrl(formData.meet_url)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-mono text-[11px] font-bold text-[#10201d] hover:text-[#e53927] flex items-center gap-1 underline mr-2"
+                        className="font-mono text-[11px] font-semibold text-hack-forest hover:text-hack-coral flex items-center gap-1 underline mr-1 transition-colors"
                       >
                         Join Call <ExternalLink className="w-3 h-3" />
                       </a>
                       <button
                         type="button"
                         onClick={() => handleCopy('meet-url', formData.meet_url, 'Meeting Link')}
-                        className="p-1 border border-[#10201d] bg-[#f2f2eb] hover:bg-[#f5b726] text-[#10201d]"
+                        className="p-1 rounded-md border border-hack-muted/30 bg-hack-surface hover:bg-hack-sand text-hack-ink transition-colors"
                         title="Copy Meet Link"
                         aria-label="Copy Meet Link"
                       >
-                        {copiedKey === 'meet-url' ? <Check className="w-3 h-3 text-emerald-800" /> : <Copy className="w-3 h-3" />}
+                        {copiedKey === 'meet-url' ? <Check className="w-3 h-3 text-hack-mint" /> : <Copy className="w-3 h-3" />}
                       </button>
                     </div>
                   )}
@@ -243,35 +243,35 @@ export function SquadScratchpad({
                   value={formData.meet_url}
                   onChange={(e) => setFormData({ ...formData, meet_url: e.target.value })}
                   placeholder="https://meet.google.com/abc-defg-hij"
-                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
+                  className="font-mono text-xs border border-hack-muted/40 rounded-lg bg-hack-surface focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25"
                 />
               </div>
 
               {/* Chat Channel Link */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="font-mono text-xs font-bold uppercase text-[#10201d] flex items-center gap-1.5">
-                    <MessageSquare className="w-3.5 h-3.5 text-[#8bb2de]" />
+                  <label className="font-mono text-xs font-bold uppercase text-hack-ink flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5 text-hack-blue" />
                     <span>External Squad Chat (Discord / WhatsApp / Telegram)</span>
                   </label>
                   {formData.chat_channel_url && (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
                       <a
                         href={ensureExternalUrl(formData.chat_channel_url)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-mono text-[11px] font-bold text-[#10201d] hover:text-[#e53927] flex items-center gap-1 underline mr-2"
+                        className="font-mono text-[11px] font-semibold text-hack-forest hover:text-hack-coral flex items-center gap-1 underline mr-1 transition-colors"
                       >
                         Open Group <ExternalLink className="w-3 h-3" />
                       </a>
                       <button
                         type="button"
                         onClick={() => handleCopy('chat-url', formData.chat_channel_url, 'Squad Chat Link')}
-                        className="p-1 border border-[#10201d] bg-[#f2f2eb] hover:bg-[#8bb2de] text-[#10201d]"
+                        className="p-1 rounded-md border border-hack-muted/30 bg-hack-surface hover:bg-hack-sand text-hack-ink transition-colors"
                         title="Copy Chat Link"
                         aria-label="Copy Chat Link"
                       >
-                        {copiedKey === 'chat-url' ? <Check className="w-3 h-3 text-emerald-800" /> : <Copy className="w-3 h-3" />}
+                        {copiedKey === 'chat-url' ? <Check className="w-3 h-3 text-hack-mint" /> : <Copy className="w-3 h-3" />}
                       </button>
                     </div>
                   )}
@@ -280,16 +280,16 @@ export function SquadScratchpad({
                   value={formData.chat_channel_url}
                   onChange={(e) => setFormData({ ...formData, chat_channel_url: e.target.value })}
                   placeholder="https://discord.gg/... or https://chat.whatsapp.com/..."
-                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
+                  className="font-mono text-xs border border-hack-muted/40 rounded-lg bg-hack-surface focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25"
                 />
               </div>
             </CardContent>
           </Card>
 
           {/* 2. Staging / Preview URL & Test Credentials */}
-          <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912]">
-            <div className="p-3 bg-[#2e4742] text-[#f7f7f2] border-b-2 border-[#10201d] flex items-center gap-2">
-              <Globe className="w-4 h-4 text-[#f5b726]" />
+          <Card className="border border-hack-muted/30 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
+            <div className="p-3.5 bg-hack-sand/50 text-hack-ink border-b border-hack-muted/20 flex items-center gap-2">
+              <Globe className="w-4 h-4 text-hack-gold" />
               <h4 className="font-display text-sm font-bold tracking-wide">
                 Staging & Test Environment
               </h4>
@@ -299,28 +299,28 @@ export function SquadScratchpad({
               {/* Staging URL */}
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                  <label className="font-mono text-xs font-bold uppercase text-[#10201d] flex items-center gap-1.5">
-                    <Globe className="w-3.5 h-3.5 text-emerald-700" />
+                  <label className="font-mono text-xs font-bold uppercase text-hack-ink flex items-center gap-1.5">
+                    <Globe className="w-3.5 h-3.5 text-hack-forest" />
                     <span>Preview / Staging URL (Vercel / Cloud)</span>
                   </label>
                   {formData.staging_url && (
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
                       <a
                         href={ensureExternalUrl(formData.staging_url)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="font-mono text-[11px] font-bold text-[#10201d] hover:text-[#e53927] flex items-center gap-1 underline mr-2"
+                        className="font-mono text-[11px] font-semibold text-hack-forest hover:text-hack-coral flex items-center gap-1 underline mr-1 transition-colors"
                       >
                         Open Staging <ExternalLink className="w-3 h-3" />
                       </a>
                       <button
                         type="button"
                         onClick={() => handleCopy('staging-url', formData.staging_url, 'Staging URL')}
-                        className="p-1 border border-[#10201d] bg-[#f2f2eb] hover:bg-[#8bb2de] text-[#10201d]"
+                        className="p-1 rounded-md border border-hack-muted/30 bg-hack-surface hover:bg-hack-sand text-hack-ink transition-colors"
                         title="Copy Staging Link"
                         aria-label="Copy Staging Link"
                       >
-                        {copiedKey === 'staging-url' ? <Check className="w-3 h-3 text-emerald-800" /> : <Copy className="w-3 h-3" />}
+                        {copiedKey === 'staging-url' ? <Check className="w-3 h-3 text-hack-mint" /> : <Copy className="w-3 h-3" />}
                       </button>
                     </div>
                   )}
@@ -329,15 +329,15 @@ export function SquadScratchpad({
                   value={formData.staging_url}
                   onChange={(e) => setFormData({ ...formData, staging_url: e.target.value })}
                   placeholder="https://hackflow-staging.vercel.app"
-                  className="font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
+                  className="font-mono text-xs border border-hack-muted/40 rounded-lg bg-hack-surface focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25"
                 />
               </div>
 
               {/* Squad Keyring & Test Credentials */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between flex-wrap gap-1">
-                  <label className="font-mono text-xs font-bold uppercase text-[#10201d] flex items-center gap-1.5">
-                    <Key className="w-3.5 h-3.5 text-[#f5b726]" />
+                  <label className="font-mono text-xs font-bold uppercase text-hack-ink flex items-center gap-1.5">
+                    <Key className="w-3.5 h-3.5 text-hack-gold" />
                     <span>Squad Keyring & Shared Credentials</span>
                   </label>
                   
@@ -346,10 +346,10 @@ export function SquadScratchpad({
                       type="button"
                       size="sm"
                       onClick={handleCopyEnv}
-                      className="h-6 text-[10px] font-mono font-bold bg-[#8bb2de] hover:bg-[#a9c9f0] text-[#10201d] border border-[#10201d] px-2 shadow-[1px_1px_0_#10201d]"
+                      className="h-6 text-[10px] font-mono font-semibold bg-hack-sand hover:bg-hack-sand/80 text-hack-ink border border-hack-muted/40 px-2 rounded-md shadow-sm"
                       title="Copy all variables formatted as .env.local"
                     >
-                      {copiedKey === 'env-export' ? <Check className="w-3 h-3 mr-1 text-emerald-800" /> : <Copy className="w-3 h-3 mr-1" />}
+                      {copiedKey === 'env-export' ? <Check className="w-3 h-3 mr-1 text-hack-mint" /> : <Copy className="w-3 h-3 mr-1" />}
                       Copy .env.local
                     </Button>
                     {formData.test_credentials && (
@@ -357,9 +357,9 @@ export function SquadScratchpad({
                         type="button"
                         size="sm"
                         onClick={() => handleCopy('creds', formData.test_credentials, 'Credentials')}
-                        className="h-6 text-[10px] font-mono font-bold bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] border border-[#10201d] px-2 shadow-[1px_1px_0_#10201d]"
+                        className="h-6 text-[10px] font-mono font-semibold bg-hack-sand hover:bg-hack-sand/80 text-hack-ink border border-hack-muted/40 px-2 rounded-md shadow-sm"
                       >
-                        {copiedKey === 'creds' ? <Check className="w-3 h-3 mr-1 text-emerald-800" /> : <Copy className="w-3 h-3 mr-1" />}
+                        {copiedKey === 'creds' ? <Check className="w-3 h-3 mr-1 text-hack-mint" /> : <Copy className="w-3 h-3 mr-1" />}
                         Copy Raw
                       </Button>
                     )}
@@ -367,33 +367,33 @@ export function SquadScratchpad({
                 </div>
 
                 {/* Keyring Quick Insert Chips */}
-                <div className="flex items-center gap-1 overflow-x-auto pb-0.5 text-[10px] font-mono">
-                  <span className="text-[#34433f] font-bold uppercase shrink-0 text-[9px]">+ Quick Keys:</span>
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 text-[10px] font-mono">
+                  <span className="text-hack-subtext font-semibold uppercase shrink-0 text-[9px]">+ Quick Keys:</span>
                   <button
                     type="button"
                     onClick={() => handleAppendKeyringTemplate('GEMINI_API_KEY=AIzaSy...')}
-                    className="px-1.5 py-0.5 border border-[#10201d] bg-[#f2f2eb] hover:bg-[#f5b726] font-bold shrink-0 text-[#10201d]"
+                    className="px-2 py-0.5 rounded-md border border-hack-muted/30 bg-hack-sand/50 hover:bg-hack-sand font-medium shrink-0 text-hack-ink transition-colors"
                   >
                     + Gemini
                   </button>
                   <button
                     type="button"
                     onClick={() => handleAppendKeyringTemplate('GROQ_API_KEY=gsk_...')}
-                    className="px-1.5 py-0.5 border border-[#10201d] bg-[#f2f2eb] hover:bg-[#f5b726] font-bold shrink-0 text-[#10201d]"
+                    className="px-2 py-0.5 rounded-md border border-hack-muted/30 bg-hack-sand/50 hover:bg-hack-sand font-medium shrink-0 text-hack-ink transition-colors"
                   >
                     + Groq
                   </button>
                   <button
                     type="button"
                     onClick={() => handleAppendKeyringTemplate('NEXT_PUBLIC_SUPABASE_ANON_KEY=ey...')}
-                    className="px-1.5 py-0.5 border border-[#10201d] bg-[#f2f2eb] hover:bg-[#8bb2de] font-bold shrink-0 text-[#10201d]"
+                    className="px-2 py-0.5 rounded-md border border-hack-muted/30 bg-hack-sand/50 hover:bg-hack-sand font-medium shrink-0 text-hack-ink transition-colors"
                   >
                     + Supabase
                   </button>
                   <button
                     type="button"
                     onClick={() => handleAppendKeyringTemplate('NGROK_TUNNEL_URL=https://...ngrok-free.app')}
-                    className="px-1.5 py-0.5 border border-[#10201d] bg-[#f2f2eb] hover:bg-[#e97b77] font-bold shrink-0 text-[#10201d]"
+                    className="px-2 py-0.5 rounded-md border border-hack-muted/30 bg-hack-sand/50 hover:bg-hack-sand font-medium shrink-0 text-hack-ink transition-colors"
                   >
                     + Ngrok
                   </button>
@@ -404,7 +404,7 @@ export function SquadScratchpad({
                   onChange={(e) => setFormData({ ...formData, test_credentials: e.target.value })}
                   rows={4}
                   placeholder={`GEMINI_API_KEY=AIzaSy...\nGROQ_API_KEY=gsk_...\nJudge Login: judge@demo.com / pass123`}
-                  className="w-full p-2.5 font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d] focus:outline-none resize-none leading-relaxed font-medium"
+                  className="w-full p-2.5 font-mono text-xs border border-hack-muted/40 rounded-lg bg-hack-surface text-hack-ink focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25 focus:outline-none resize-none leading-relaxed"
                 />
               </div>
             </CardContent>
@@ -413,10 +413,10 @@ export function SquadScratchpad({
 
         {/* Right Column: Shared Sprint Notes & Scratchpad */}
         <div className="space-y-5">
-          <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[5px_5px_0_#671912] h-full flex flex-col">
-            <div className="p-3 bg-[#2e4742] text-[#f7f7f2] border-b-2 border-[#10201d] flex items-center justify-between">
+          <Card className="border border-hack-muted/30 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden h-full flex flex-col">
+            <div className="p-3.5 bg-hack-sand/50 text-hack-ink border-b border-hack-muted/20 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <FileText className="w-4 h-4 text-[#f5b726]" />
+                <FileText className="w-4 h-4 text-hack-gold" />
                 <h4 className="font-display text-sm font-bold tracking-wide">
                   Shared Sprint Notes & Scratchpad
                 </h4>
@@ -425,16 +425,16 @@ export function SquadScratchpad({
                 <button
                   type="button"
                   onClick={() => handleCopy('scratch-notes', formData.notes, 'Sprint Notes')}
-                  className="font-mono text-[10px] font-bold px-2 py-0.5 border border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] flex items-center gap-1 shadow-[1px_1px_0_#10201d]"
+                  className="font-mono text-[10px] font-semibold px-2 py-0.5 border border-hack-muted/30 rounded-md bg-hack-surface hover:bg-hack-sand text-hack-ink flex items-center gap-1 shadow-sm transition-colors"
                 >
-                  {copiedKey === 'scratch-notes' ? <Check className="w-3 h-3 text-emerald-800" /> : <Copy className="w-3 h-3" />}
+                  {copiedKey === 'scratch-notes' ? <Check className="w-3 h-3 text-hack-mint" /> : <Copy className="w-3 h-3" />}
                   Copy Notes
                 </button>
               )}
             </div>
 
             <CardContent className="p-4 flex-1 flex flex-col space-y-3">
-              <p className="font-mono text-[11px] text-[#57726d]">
+              <p className="font-mono text-[11px] text-hack-subtext">
                 Live scratchpad for sprint checklists, API keys, curl commands, pitch outline, and quick copy-paste snippets.
               </p>
               <textarea
@@ -442,7 +442,7 @@ export function SquadScratchpad({
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 rows={14}
                 placeholder={`# Sprint Checklist\n- [ ] Finalize slides\n- [ ] Deploy backend to Railway\n- [ ] Verify test judge accounts\n\n# API Notes\nEndpoint: https://api.myhack.com/v1/inference\nKey: sk_live_...`}
-                className="w-full flex-1 min-h-[280px] p-3 font-mono text-xs border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d] focus:outline-none resize-y leading-relaxed font-medium"
+                className="w-full flex-1 min-h-[280px] p-3 font-mono text-xs border border-hack-muted/40 rounded-lg bg-hack-surface text-hack-ink focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25 focus:outline-none resize-y leading-relaxed"
               />
             </CardContent>
           </Card>
