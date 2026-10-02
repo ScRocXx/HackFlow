@@ -584,18 +584,18 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[760px] max-h-[92vh] sm:max-h-[90vh] overflow-y-auto border-2 border-[#10201d] bg-[#f7f7f2] shadow-[6px_6px_0_#671912] sm:shadow-[8px_8px_0_#671912] p-3.5 sm:p-6">
+      <DialogContent className="sm:max-w-[760px] max-h-[92vh] sm:max-h-[90vh] overflow-y-auto rounded-2xl border border-hack-ink/20 bg-hack-sand shadow-2xl p-4 sm:p-6">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <div className="p-2.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d]">
-              <Sparkles className="h-5 w-5" />
+            <div className="p-2 rounded-lg bg-[#F6C344]/25 text-hack-ink border border-[#F6C344]/50">
+              <Sparkles className="h-5 w-5 text-[#8A5D13]" />
             </div>
             <div>
-              <DialogTitle className="font-display text-2xl sm:text-3xl font-extrabold text-[#10201d] tracking-tight">
+              <DialogTitle className="font-sans text-xl sm:text-2xl font-bold text-hack-ink tracking-tight">
                 Add a Hackathon
               </DialogTitle>
-              <DialogDescription className="font-mono text-xs text-[#34433f] mt-1">
-                Paste a hackathon link or copy-paste guidelines directly to extract rounds and deadlines.
+              <DialogDescription className="font-mono text-xs text-hack-subtext mt-0.5">
+                Paste a link or guidelines copy to extract rounds and deadlines in seconds.
               </DialogDescription>
             </div>
           </div>
@@ -631,17 +631,22 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
         ) : (
           /* Step 2: Review and Edit Auto-Populated Cards */
           <div className="space-y-6 py-2">
-            {/* Extraction Confidence & Verification Summary */}
-            <ExtractionProgress isExtracting={false} confidence={confidence} />
+            {/* Extraction Confidence & Verification Summary with Actual Facts */}
+            <ExtractionProgress 
+              isExtracting={false} 
+              confidence={confidence} 
+              stages={stages}
+              eventTitle={title}
+            />
 
             {/* Raw Text Stash & Re-Parse Engine Bar */}
-            <div className="p-3 bg-[#e8ece9] border-2 border-[#10201d] shadow-[3px_3px_0_#10201d] flex flex-wrap items-center justify-between gap-2">
+            <div className="p-3 rounded-xl bg-hack-sand/60 border border-hack-ink/15 flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] flex items-center gap-1">
-                  <Zap className="h-3.5 w-3.5 text-[#10201d]" />
+                <span className="font-mono text-xs font-semibold text-hack-ink flex items-center gap-1">
+                  <Zap className="h-3.5 w-3.5 text-hack-coral-dark" />
                   Raw Stash:
                 </span>
-                <span className={`font-mono text-[11px] font-bold px-2 py-0.5 border border-[#10201d] ${isFromCache ? 'bg-[#98c1d9] text-[#10201d]' : 'bg-[#d8f3dc] text-[#10201d]'}`}>
+                <span className={`font-mono text-[11px] font-medium px-2 py-0.5 rounded border ${isFromCache ? 'border-hack-ink/20 bg-hack-sky/30 text-hack-ink' : 'border-hack-mint/60 bg-hack-mint/20 text-hack-mint-dark'}`}>
                   {isFromCache ? '⚡ In-Memory Cache (10m TTL)' : '🌐 Fresh Extracted'}
                 </span>
               </div>
@@ -653,7 +658,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                     variant="outline"
                     disabled={extracting}
                     onClick={handleFreshReScrape}
-                    className="h-7 text-xs font-mono font-bold bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-[#ffeedd]"
+                    className="h-7 text-xs font-mono font-medium bg-white rounded-md border border-hack-ink/20 hover:bg-hack-sand"
                   >
                     {extracting ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <RefreshCw className="h-3 w-3 mr-1" />}
                     Fresh Re-scrape
@@ -665,28 +670,28 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                   variant="outline"
                   disabled={extracting || (!url && !stashedRawText)}
                   onClick={handleQuickReParse}
-                  className="h-7 text-xs font-mono font-bold bg-[#e3efd8] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-[#c9e4b6]"
+                  className="h-7 text-xs font-mono font-medium bg-hack-mint/20 text-hack-mint-dark rounded-md border border-hack-mint/40 hover:bg-hack-mint/30"
                 >
                   {extracting ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Zap className="h-3 w-3 mr-1" />}
-                  Re-parse Stash (Skip Jina)
+                  Re-parse Stash
                 </Button>
                 <Button
                   type="button"
                   size="sm"
                   variant="outline"
                   onClick={() => setShowRawEditor(!showRawEditor)}
-                  className="h-7 text-xs font-mono font-bold bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-slate-100"
+                  className="h-7 text-xs font-mono font-medium bg-white rounded-md border border-hack-ink/20 hover:bg-hack-sand"
                 >
                   <Eye className="h-3 w-3 mr-1" />
-                  {showRawEditor ? 'Hide Raw Text' : 'View / Edit Raw Text'}
+                  {showRawEditor ? 'Hide Raw Text' : 'View / Edit Raw'}
                 </Button>
               </div>
             </div>
 
             {showRawEditor && (
-              <div className="p-3 bg-[#ffffff] border-2 border-[#10201d] shadow-[3px_3px_0_#10201d] space-y-2">
+              <div className="p-3.5 rounded-xl bg-white border border-hack-ink/15 shadow-sm space-y-2">
                 <div className="flex items-center justify-between">
-                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d]">
+                  <label className="font-mono text-xs font-semibold uppercase tracking-wider text-hack-ink">
                     Raw Scraped Markdown / Text Stash
                   </label>
                   <Button
@@ -694,7 +699,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                     size="sm"
                     disabled={extracting || !stashedRawText.trim()}
                     onClick={handleReparseEditedText}
-                    className="h-7 text-xs font-mono font-bold bg-[#e53927] text-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d] hover:bg-[#c82717]"
+                    className="h-7 text-xs font-mono font-bold bg-hack-coral text-hack-ink rounded-md hover:bg-hack-coral/90 shadow-sm"
                   >
                     {extracting ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
                     Re-parse Edited Text
@@ -705,22 +710,22 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                   value={stashedRawText}
                   onChange={(e) => setStashedRawText(e.target.value)}
                   placeholder="Raw scraped text or markdown content..."
-                  className="w-full font-mono text-xs p-2 border-2 border-[#10201d] bg-[#fbfbf8] focus:outline-none focus:ring-1 focus:ring-[#10201d] resize-y"
+                  className="w-full font-mono text-xs p-2.5 rounded-lg border border-hack-ink/20 bg-hack-sand/20 focus:border-hack-coral focus:ring-1 focus:ring-hack-coral focus:outline-none resize-y"
                 />
               </div>
             )}
 
             {/* Event Metadata */}
-            <div className="p-4 bg-[#f2f2eb] border-2 border-[#10201d] shadow-[4px_4px_0_#10201d] space-y-4">
+            <div className="p-4 sm:p-5 rounded-xl bg-hack-panel border border-hack-ink/15 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d]">Event Overview</span>
-                <span className="font-mono text-xs font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] shadow-[1px_1px_0_#10201d]">
+                <span className="font-sans text-sm font-bold text-hack-ink">Event Overview</span>
+                <span className="font-mono text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-hack-ink/20 bg-hack-sand text-hack-ink">
                   {sourcePlatform}
                 </span>
               </div>
 
               {bannerUrl && (
-                <div className="relative w-full h-32 overflow-hidden border-2 border-[#10201d] shadow-[3px_3px_0_#10201d] bg-black/5 rounded-sm">
+                <div className="relative w-full h-32 overflow-hidden rounded-lg border border-hack-ink/15 bg-black/5">
                   <img 
                     src={bannerUrl} 
                     alt="Event Banner Preview" 
@@ -729,38 +734,38 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                       (e.target as HTMLElement).style.display = 'none';
                     }} 
                   />
-                  <div className="absolute top-2 right-2 px-2 py-0.5 bg-[#10201d]/80 text-[#f7f7f2] font-mono text-[10px] font-bold border border-white/20">
+                  <div className="absolute top-2 right-2 px-2 py-0.5 bg-hack-ink/80 text-white rounded font-mono text-[10px] font-semibold">
                     Banner Preview
                   </div>
                 </div>
               )}
 
               <div className="space-y-1.5">
-                <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">Competition Title *</label>
+                <label className="font-mono text-xs font-semibold uppercase tracking-wider text-hack-ink block">Competition Title *</label>
                 <Input 
                   value={title} 
                   onChange={e => setTitle(e.target.value)} 
                   placeholder="Hackathon Title"
-                  className="bg-white font-display text-base font-bold border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
+                  className="bg-white rounded-lg font-sans text-base font-bold border border-hack-ink/20 focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <div className="space-y-1">
-                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">Organizer</label>
+                  <label className="font-mono text-xs font-semibold uppercase tracking-wider text-hack-ink block">Organizer</label>
                   <Input 
                     value={organizer} 
                     onChange={e => setOrganizer(e.target.value)} 
                     placeholder="e.g. Google, IIT"
-                    className="bg-white font-mono text-xs border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
+                    className="bg-white rounded-lg font-mono text-xs border border-hack-ink/20 focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">Mode</label>
+                  <label className="font-mono text-xs font-semibold uppercase tracking-wider text-hack-ink block">Mode</label>
                   <select
                     value={mode}
                     onChange={e => setMode(e.target.value)}
-                    className="w-full h-10 px-3 border-2 border-[#10201d] bg-white font-mono text-xs shadow-[2px_2px_0_#10201d] focus:outline-none focus:ring-0"
+                    className="w-full h-10 px-3 rounded-lg border border-hack-ink/20 bg-white font-mono text-xs focus:outline-none focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                   >
                     <option value="online">Online</option>
                     <option value="in-person">In-Person</option>
@@ -768,31 +773,31 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">Location / Venue</label>
+                  <label className="font-mono text-xs font-semibold uppercase tracking-wider text-hack-ink block">Location / Venue</label>
                   <Input 
                     value={location} 
                     onChange={e => setLocation(e.target.value)} 
                     placeholder="e.g. San Francisco, CA or Virtual"
-                    className="bg-white font-mono text-xs border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
+                    className="bg-white rounded-lg font-mono text-xs border border-hack-ink/20 focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">Prize Pool</label>
+                  <label className="font-mono text-xs font-semibold uppercase tracking-wider text-hack-ink block">Prize Pool</label>
                   <Input 
                     value={prizePool} 
                     onChange={e => setPrizePool(e.target.value)} 
                     placeholder="e.g. ₹5,00,000"
-                    className="bg-white font-mono text-xs border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
+                    className="bg-white rounded-lg font-mono text-xs border border-hack-ink/20 focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                   />
                   {(prizeCashPool !== null || hasPerksOrCredits) && (
                     <div className="flex flex-wrap gap-1 mt-1">
                       {prizeCashPool !== null && (
-                        <span className="font-mono text-[9px] px-1.5 py-0.5 bg-[#8bb2de] text-[#10201d] font-bold border border-[#10201d]">
+                        <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-hack-sky/30 text-hack-ink font-semibold border border-hack-ink/15">
                           💵 Cash: {String(prizeCashPool).startsWith('₹') || String(prizeCashPool).startsWith('$') || String(prizeCashPool).startsWith('€') || String(prizeCashPool).startsWith('£') ? String(prizeCashPool) : `₹${Number(prizeCashPool) ? Number(prizeCashPool).toLocaleString() : prizeCashPool}`}
                         </span>
                       )}
                       {hasPerksOrCredits && (
-                        <span className="font-mono text-[9px] px-1.5 py-0.5 bg-[#f5b726] text-[#10201d] font-bold border border-[#10201d]">
+                        <span className="font-mono text-[9px] px-1.5 py-0.5 rounded bg-[#FEF9EE] text-[#8A5D13] font-semibold border border-[#F6C344]/50">
                           🎁 Perks/Credits Included
                         </span>
                       )}
@@ -800,21 +805,21 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                   )}
                 </div>
                 <div className="space-y-1">
-                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">Banner Image URL</label>
+                  <label className="font-mono text-xs font-semibold uppercase tracking-wider text-hack-ink block">Banner Image URL</label>
                   <Input 
                     value={bannerUrl} 
                     onChange={e => setBannerUrl(e.target.value)} 
                     placeholder="e.g. https://.../banner.png"
-                    className="bg-white font-mono text-xs border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
+                    className="bg-white rounded-lg font-mono text-xs border border-hack-ink/20 focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">Source Link (Optional)</label>
+                  <label className="font-mono text-xs font-semibold uppercase tracking-wider text-hack-ink block">Source Link (Optional)</label>
                   <Input 
                     value={url} 
                     onChange={e => setUrl(e.target.value)} 
                     placeholder="e.g. https://..."
-                    className="bg-white font-mono text-xs border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
+                    className="bg-white rounded-lg font-mono text-xs border border-hack-ink/20 focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                   />
                 </div>
               </div>
@@ -822,21 +827,21 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
 
             {/* Hackathon Brief Preview Card */}
             {missionBrief && (
-              <div className="p-4 bg-[#f2f2eb] border-2 border-[#10201d] shadow-[4px_4px_0_#10201d] space-y-3">
+              <div className="p-4 sm:p-5 rounded-xl bg-hack-panel border border-hack-ink/15 shadow-sm space-y-3">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2">
                     <span className="text-base">🎯</span>
-                    <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d]">
+                    <span className="font-sans text-sm font-bold text-hack-ink">
                       Hackathon Brief
                     </span>
                   </div>
                   <span
-                    className={`font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 border-2 border-[#10201d] shadow-[1px_1px_0_#10201d] ${
+                    className={`font-mono text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
                       missionBrief.hackathon_tier === 'tech_mandate'
-                        ? 'bg-[#f5b726] text-[#10201d]'
+                        ? 'bg-[#FEF9EE] text-[#8A5D13] border-[#F6C344]'
                         : missionBrief.hackathon_tier === 'domain_focused'
-                        ? 'bg-[#8bb2de] text-[#10201d]'
-                        : 'bg-[#d8f3dc] text-[#10201d]'
+                        ? 'bg-hack-sky/30 text-hack-ink border-hack-ink/20'
+                        : 'bg-hack-mint/20 text-hack-mint-dark border-hack-mint/40'
                     }`}
                   >
                     {missionBrief.hackathon_tier === 'tech_mandate'
@@ -849,18 +854,18 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                    <label className="font-mono text-[10px] font-semibold uppercase tracking-wider text-hack-subtext block">
                       What to Build
                     </label>
-                    <p className="font-mono text-xs text-[#10201d] bg-white p-2.5 border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
+                    <p className="font-sans text-xs text-hack-ink bg-hack-sand/40 p-3 rounded-lg border border-hack-ink/10 leading-relaxed">
                       {missionBrief.what_to_build}
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <label className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                    <label className="font-mono text-[10px] font-semibold uppercase tracking-wider text-hack-subtext block">
                       Why It Exists (Sponsor Motive)
                     </label>
-                    <p className="font-mono text-xs text-[#10201d] bg-white p-2.5 border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
+                    <p className="font-sans text-xs text-hack-ink bg-hack-sand/40 p-3 rounded-lg border border-hack-ink/10 leading-relaxed">
                       {missionBrief.why_it_exists}
                     </p>
                   </div>
@@ -869,26 +874,26 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                 {/* Stack Rules */}
                 <div className="space-y-1.5 pt-1">
                   <div className="flex items-center justify-between">
-                    <label className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                    <label className="font-mono text-[10px] font-semibold uppercase tracking-wider text-hack-subtext block">
                       Stack Rules & Constraints
                     </label>
                     {missionBrief.tech_stack_mandate.is_stack_restricted && (
-                      <span className="font-mono text-[9px] font-bold px-1.5 py-0.5 bg-[#f6c4c1] text-[#671912] border border-[#e53927]">
+                      <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full bg-hack-coral/15 text-hack-coral-dark border border-hack-coral/40">
                         ⚠️ Stack Restricted
                       </span>
                     )}
                   </div>
 
                   {missionBrief.tech_stack_mandate.is_stack_restricted ? (
-                    <div className="space-y-2 p-2.5 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
-                      <p className="font-mono text-[11px] text-[#34433f]">
+                    <div className="space-y-2 p-3 rounded-lg bg-hack-sand/30 border border-hack-ink/10">
+                      <p className="font-mono text-xs text-hack-subtext">
                         {missionBrief.tech_stack_mandate.allowed_stack_summary}
                       </p>
                       <div className="flex flex-wrap gap-1.5 items-center">
                         {missionBrief.tech_stack_mandate.mandatory_tools.map((tool, idx) => (
                           <span
                             key={idx}
-                            className="font-mono text-xs font-bold px-2 py-0.5 border-2 border-[#e53927] bg-[#f6c4c1] text-[#671912] shadow-[1px_1px_0_#671912] flex items-center gap-1"
+                            className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md border border-hack-coral/40 bg-hack-coral/10 text-hack-coral-dark flex items-center gap-1"
                           >
                             <span>⚡</span> {tool}
                           </span>
@@ -896,7 +901,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                         {missionBrief.tech_stack_mandate.bonus_sponsor_tools.map((tool, idx) => (
                           <span
                             key={`bonus-${idx}`}
-                            className="font-mono text-xs font-bold px-2 py-0.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[1px_1px_0_#10201d] flex items-center gap-1"
+                            className="font-mono text-xs font-semibold px-2 py-0.5 rounded-md border border-[#F6C344]/50 bg-[#FEF9EE] text-[#8A5D13] flex items-center gap-1"
                           >
                             <span>⭐</span> {tool} (Bonus)
                           </span>
@@ -904,8 +909,8 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                       </div>
                     </div>
                   ) : (
-                    <div className="p-2.5 bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]">
-                      <p className="font-mono text-xs text-[#2e4742] font-bold flex items-center gap-1.5">
+                    <div className="p-3 rounded-lg bg-hack-sand/30 border border-hack-ink/10">
+                      <p className="font-sans text-xs text-hack-ink font-semibold flex items-center gap-1.5">
                         <span>✨</span>
                         {missionBrief.tech_stack_mandate.allowed_stack_summary || 'Any tech stack permitted (Free Choice)'}
                       </p>
@@ -916,16 +921,16 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                 {/* Submission Deliverables */}
                 {missionBrief.submission_deliverables && missionBrief.submission_deliverables.length > 0 && (
                   <div className="space-y-1.5 pt-1">
-                    <label className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#34433f] block">
+                    <label className="font-mono text-[10px] font-semibold uppercase tracking-wider text-hack-subtext block">
                       Required Deliverables Checklist
                     </label>
                     <div className="flex flex-wrap gap-1.5">
                       {missionBrief.submission_deliverables.map((deliv, idx) => (
                         <span
                           key={idx}
-                          className="font-mono text-xs font-bold px-2 py-0.5 border-2 border-[#10201d] bg-white text-[#10201d] shadow-[1px_1px_0_#10201d] flex items-center gap-1"
+                          className="font-mono text-xs font-medium px-2 py-0.5 rounded-md border border-hack-ink/10 bg-hack-sand/50 text-hack-ink flex items-center gap-1"
                         >
-                          <span className="text-[#2e4742]">✓</span> {deliv}
+                          <span className="text-hack-mint-dark font-bold">✓</span> {deliv}
                         </span>
                       ))}
                     </div>
@@ -938,10 +943,10 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <div>
-                  <h4 className="font-display text-2xl font-bold tracking-tight text-[#10201d]">
+                  <h4 className="font-sans text-base sm:text-lg font-bold text-hack-ink">
                     Sequential Stages & Deadlines ({stages.length})
                   </h4>
-                  <p className="font-mono text-xs text-[#34433f]">
+                  <p className="font-mono text-xs text-hack-subtext">
                     Extracted automatically. Customize dates, round formats, and deliverables below.
                   </p>
                 </div>
@@ -949,7 +954,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                   variant="outline" 
                   size="sm" 
                   onClick={handleAddStage}
-                  className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[2px_2px_0_#8a5d13]"
+                  className="font-sans text-xs font-bold rounded-lg border border-hack-ink/20 bg-white hover:bg-hack-sand text-hack-ink shadow-sm"
                 >
                   <Plus className="h-3.5 w-3.5 mr-1" /> Add Round
                 </Button>
@@ -959,16 +964,16 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                 {stages.map((stage, idx) => (
                   <div 
                     key={idx} 
-                    className="p-4 border-2 border-[#10201d] bg-white shadow-[4px_4px_0_#10201d] space-y-3"
+                    className="p-4 rounded-xl border border-hack-ink/15 bg-hack-panel shadow-sm space-y-3"
                   >
                     {/* Stage Header */}
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 flex-1">
-                        <span className="font-mono text-xs font-bold uppercase px-2 py-0.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d] shadow-[1px_1px_0_#10201d]">
+                        <span className="font-mono text-xs font-bold uppercase px-2 py-0.5 rounded border border-hack-ink/20 bg-hack-ink text-hack-panel">
                           Round {stage.round_number}
                         </span>
                         {stage.raw_date_snippet && (
-                          <span className="font-mono text-[10px] font-bold px-2 py-0.5 border border-[#10201d] bg-[#f2f2eb] text-[#34433f] hidden sm:inline-block">
+                          <span className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded border border-hack-ink/15 bg-hack-sand text-hack-subtext hidden sm:inline-block">
                             🗓️ {stage.raw_date_snippet}
                           </span>
                         )}
@@ -980,7 +985,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                             setStages(newStages)
                           }}
                           placeholder="Stage Title"
-                          className="font-display text-base font-bold text-[#10201d] border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d] flex-1 h-9"
+                          className="font-sans text-sm font-bold text-hack-ink rounded-lg border border-hack-ink/20 bg-white flex-1 h-9 focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                         />
                       </div>
                       <Button 
@@ -988,7 +993,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                         variant="ghost" 
                         size="icon" 
                         onClick={() => handleRemoveStage(idx)}
-                        className="text-[#10201d] hover:bg-[#e97b77] hover:text-white border-2 border-transparent hover:border-[#10201d] h-8 w-8 shrink-0 transition-colors"
+                        className="text-hack-subtext hover:bg-hack-coral/15 hover:text-hack-coral-dark rounded-md h-8 w-8 shrink-0 transition-colors"
                         title="Delete this stage"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -998,7 +1003,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                     {/* Stage Details Grid */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div className="space-y-1">
-                        <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">Evaluation Format</label>
+                        <label className="font-mono text-xs font-semibold uppercase tracking-wider text-hack-ink block">Evaluation Format</label>
                         <select
                           value={stage.stage_type}
                           onChange={e => {
@@ -1006,7 +1011,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                             newStages[idx].stage_type = e.target.value
                             setStages(newStages)
                           }}
-                          className="w-full h-9 px-3 border-2 border-[#10201d] bg-[#f2f2eb] font-mono text-xs shadow-[2px_2px_0_#10201d] focus:outline-none focus:ring-0"
+                          className="w-full h-9 px-3 rounded-lg border border-hack-ink/20 bg-hack-sand/30 font-mono text-xs focus:outline-none focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                         >
                           {STAGE_TYPES.map(type => (
                             <option key={type.value} value={type.value}>{type.label}</option>
@@ -1016,12 +1021,12 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
 
                       <div className="space-y-1">
                         <div className="flex items-center justify-between">
-                          <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] flex items-center gap-1">
+                          <label className="font-mono text-xs font-semibold uppercase tracking-wider text-hack-ink flex items-center gap-1">
                             <Calendar className="h-3 w-3" />
                             Deadline (Local Time)
                           </label>
                           {!stage.deadline && (
-                            <span className="font-mono text-[10px] font-bold text-[#10201d] bg-[#e4e5da] px-1.5 py-0.5 border border-[#10201d]">
+                            <span className="font-mono text-[10px] font-semibold text-[#8A5D13] bg-[#FEF9EE] px-1.5 py-0.2 rounded border border-[#F6C344]/40">
                               📅 Dates TBA
                             </span>
                           )}
@@ -1034,15 +1039,15 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                             newStages[idx].deadline = e.target.value
                             setStages(newStages)
                           }}
-                          className="h-9 font-mono text-xs border-2 border-[#10201d] bg-[#f2f2eb] shadow-[2px_2px_0_#10201d]"
+                          className="h-9 font-mono text-xs rounded-lg border border-hack-ink/20 bg-hack-sand/30 focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                         />
                       </div>
                     </div>
 
                     {/* Deliverables Tags */}
                     <div className="space-y-1.5 pt-1">
-                      <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] flex items-center gap-1">
-                        <Tag className="h-3 w-3 text-[#34433f]" />
+                      <label className="font-mono text-xs font-semibold uppercase tracking-wider text-hack-ink flex items-center gap-1">
+                        <Tag className="h-3 w-3 text-hack-subtext" />
                         Key Deliverables Checklist
                       </label>
                       
@@ -1050,14 +1055,14 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                         {(stage.deliverables || []).map((deliv, dIdx) => (
                           <span 
                             key={dIdx} 
-                            className="inline-flex items-center gap-1 font-mono text-xs font-bold px-2 py-1 border-2 border-[#10201d] bg-[#f2f2eb] text-[#10201d] shadow-[1px_1px_0_#10201d]"
+                            className="inline-flex items-center gap-1 font-mono text-xs font-medium px-2 py-1 rounded-md border border-hack-ink/15 bg-hack-sand/50 text-hack-ink"
                           >
-                            <Check className="h-3 w-3 text-[#2e4742]" />
+                            <Check className="h-3 w-3 text-hack-mint-dark" />
                             {deliv}
                             <button
                               type="button"
                               onClick={() => handleRemoveDeliverableTag(idx, deliv)}
-                              className="text-[#e53927] hover:scale-110 ml-0.5 font-bold"
+                              className="text-hack-subtext hover:text-hack-coral-dark ml-0.5 font-bold"
                             >
                               &times;
                             </button>
@@ -1076,14 +1081,14 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                               handleAddDeliverableTag(idx)
                             }
                           }}
-                          className="h-8 font-mono text-xs flex-1 border-2 border-[#10201d] bg-white shadow-[2px_2px_0_#10201d]"
+                          className="h-8 font-mono text-xs flex-1 rounded-md border border-hack-ink/20 bg-white focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                         />
                         <Button
                           type="button"
                           variant="outline"
                           size="sm"
                           onClick={() => handleAddDeliverableTag(idx)}
-                          className="h-8 font-mono text-xs font-bold px-2.5 border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[2px_2px_0_#671912] shrink-0"
+                          className="h-8 font-mono text-xs font-semibold px-2.5 rounded-md border border-hack-ink/20 bg-white hover:bg-hack-sand text-hack-ink shrink-0"
                         >
                           <Plus className="h-3 w-3 mr-1" /> Tag
                         </Button>
@@ -1097,11 +1102,11 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
             {/* Attached Documents & Problem Statement Links */}
             <div className="space-y-3">
               <div>
-                <h3 className="font-display text-2xl font-bold tracking-tight text-[#10201d] flex items-center gap-1.5">
-                  <FileText className="h-5 w-5 text-[#f5b726]" />
+                <h3 className="font-sans text-base sm:text-lg font-bold text-hack-ink flex items-center gap-1.5">
+                  <FileText className="h-4 w-4 text-[#8A5D13]" />
                   Attached Documents & Problem Statement Links ({resources.length})
                 </h3>
-                <p className="font-mono text-xs text-[#34433f] mt-0.5">
+                <p className="font-mono text-xs text-hack-subtext mt-0.5">
                   Official challenge briefs, guidelines, slide templates, datasets, or cloud links.
                 </p>
               </div>
@@ -1111,20 +1116,20 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                 {resources.map((res, rIdx) => (
                   <div 
                     key={rIdx} 
-                    className="p-3 bg-white border-2 border-[#10201d] shadow-[3px_3px_0_#10201d] flex items-center justify-between gap-3 text-xs"
+                    className="p-3 bg-hack-panel rounded-xl border border-hack-ink/15 shadow-sm flex items-center justify-between gap-3 text-xs"
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1">
                       {res.resource_type === 'dataset' ? (
-                        <Database className="h-4 w-4 text-[#2e4742] shrink-0" />
+                        <Database className="h-4 w-4 text-hack-mint-dark shrink-0" />
                       ) : res.resource_type === 'rulebook' || res.resource_type === 'problem_statement' ? (
-                        <FileText className="h-4 w-4 text-[#f5b726] shrink-0" />
+                        <FileText className="h-4 w-4 text-[#8A5D13] shrink-0" />
                       ) : (
-                        <Link2 className="h-4 w-4 text-[#34433f] shrink-0" />
+                        <Link2 className="h-4 w-4 text-hack-subtext shrink-0" />
                       )}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="font-display text-sm font-bold text-[#10201d] truncate">{res.title}</span>
-                          <span className="font-mono text-[10px] font-bold px-1.5 py-0 uppercase tracking-wider border-2 border-[#10201d] bg-[#f2f2eb] text-[#10201d] shrink-0">
+                          <span className="font-sans text-sm font-bold text-hack-ink truncate">{res.title}</span>
+                          <span className="font-mono text-[10px] font-semibold px-2 py-0.5 uppercase tracking-wider rounded border border-hack-ink/15 bg-hack-sand text-hack-ink shrink-0">
                             {res.resource_type.replace('_', ' ')}
                           </span>
                         </div>
@@ -1132,7 +1137,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                           href={ensureExternalUrl(res.url)} 
                           target="_blank" 
                           rel="noopener noreferrer" 
-                          className="font-mono text-xs text-[#2e4742] hover:text-[#e53927] hover:underline flex items-center gap-1 truncate mt-0.5"
+                          className="font-mono text-xs text-hack-coral-dark hover:underline flex items-center gap-1 truncate mt-0.5"
                         >
                           <span className="truncate">{res.url}</span>
                           <ExternalLink className="h-3 w-3 shrink-0 inline" />
@@ -1144,7 +1149,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                       variant="ghost"
                       size="icon"
                       onClick={() => handleRemoveResource(rIdx)}
-                      className="text-[#10201d] hover:bg-[#e97b77] hover:text-white border-2 border-transparent hover:border-[#10201d] h-7 w-7 shrink-0 transition-colors"
+                      className="text-hack-subtext hover:bg-hack-coral/15 hover:text-hack-coral-dark rounded-md h-7 w-7 shrink-0 transition-colors"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -1152,33 +1157,33 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                 ))}
 
                 {resources.length === 0 && (
-                  <div className="p-3 border-2 border-dashed border-[#10201d] text-center font-mono text-xs text-[#34433f] bg-[#f2f2eb]">
+                  <div className="p-3.5 rounded-xl border border-dashed border-hack-ink/20 text-center font-mono text-xs text-hack-subtext bg-hack-sand/30">
                     No attached documents detected. You can add problem statement or guideline links below.
                   </div>
                 )}
               </div>
 
               {/* Add custom resource link inputs */}
-              <div className="p-3.5 bg-[#e4e5da] border-2 border-[#10201d] shadow-[3px_3px_0_#10201d] space-y-2">
-                <span className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] block">Add Resource Link</span>
+              <div className="p-3.5 rounded-xl bg-hack-sand/60 border border-hack-ink/15 space-y-2">
+                <span className="font-mono text-xs font-semibold uppercase tracking-wider text-hack-ink block">Add Resource Link</span>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <Input
                     placeholder="Document Title (e.g. Problem Statement)"
                     value={newResourceTitle}
                     onChange={e => setNewResourceTitle(e.target.value)}
-                    className="h-8 font-mono text-xs bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
+                    className="h-8 font-mono text-xs bg-white rounded-md border border-hack-ink/20 focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                   />
                   <Input
                     placeholder="URL (e.g. Google Drive, PDF)"
                     value={newResourceUrl}
                     onChange={e => setNewResourceUrl(e.target.value)}
-                    className="h-8 font-mono text-xs bg-white border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
+                    className="h-8 font-mono text-xs bg-white rounded-md border border-hack-ink/20 focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                   />
                   <div className="flex gap-1.5">
                     <select
                       value={newResourceType}
                       onChange={e => setNewResourceType(e.target.value)}
-                      className="h-8 px-2 border-2 border-[#10201d] bg-white font-mono text-xs shadow-[2px_2px_0_#10201d] flex-1 focus:outline-none focus:ring-0"
+                      className="h-8 px-2 rounded-md border border-hack-ink/20 bg-white font-mono text-xs flex-1 focus:outline-none focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                     >
                       {RESOURCE_TYPES.map(type => (
                         <option key={type.value} value={type.value}>{type.label}</option>
@@ -1188,7 +1193,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                       type="button"
                       size="sm"
                       onClick={handleAddResource}
-                      className="h-8 font-mono text-xs font-bold px-3 border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[2px_2px_0_#8a5d13] shrink-0"
+                      className="h-8 font-mono text-xs font-semibold px-3 rounded-md bg-[#F6C344] hover:bg-[#F6C344]/90 text-hack-ink shadow-sm shrink-0"
                     >
                       <Plus className="h-3.5 w-3.5 mr-1" /> Add
                     </Button>
@@ -1198,10 +1203,10 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
             </div>
 
             {/* Participation Mode */}
-            <div className="border-2 border-[#10201d] bg-[#f7f7f2] p-3 shadow-[3px_3px_0_#10201d] space-y-2">
+            <div className="rounded-xl border border-hack-ink/15 bg-hack-panel p-4 shadow-sm space-y-2.5">
               <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-[#2e4742]" />
-                <span className="font-mono text-xs font-bold text-[#10201d] uppercase">
+                <Users className="h-4 w-4 text-hack-mint-dark" />
+                <span className="font-mono text-xs font-semibold text-hack-ink uppercase">
                   Participation Mode
                 </span>
               </div>
@@ -1212,10 +1217,10 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                     setParticipationMode('solo')
                     setSelectedSquadId(null)
                   }}
-                  className={`flex items-center justify-center gap-2 p-2 border-2 border-[#10201d] text-xs font-mono font-bold transition-all ${
+                  className={`flex items-center justify-center gap-2 p-2.5 rounded-lg border text-xs font-mono font-semibold transition-all ${
                     participationMode === 'solo'
-                      ? 'bg-[#f5b726] text-[#10201d] shadow-[2px_2px_0_#10201d]'
-                      : 'bg-white text-[#57726d] hover:bg-[#f2f2eb]'
+                      ? 'bg-hack-ink text-hack-panel border-hack-ink shadow-sm'
+                      : 'bg-white text-hack-subtext border-hack-ink/20 hover:bg-hack-sand'
                   }`}
                 >
                   <span>👤 Solo Sprint</span>
@@ -1229,10 +1234,10 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                       setSelectedSquadId(userSquads[0].id)
                     }
                   }}
-                  className={`flex items-center justify-center gap-2 p-2 border-2 border-[#10201d] text-xs font-mono font-bold transition-all ${
+                  className={`flex items-center justify-center gap-2 p-2.5 rounded-lg border text-xs font-mono font-semibold transition-all ${
                     participationMode === 'squad'
-                      ? 'bg-[#8bb2de] text-[#10201d] shadow-[2px_2px_0_#10201d]'
-                      : 'bg-white text-[#57726d] hover:bg-[#f2f2eb]'
+                      ? 'bg-hack-ink text-hack-panel border-hack-ink shadow-sm'
+                      : 'bg-white text-hack-subtext border-hack-ink/20 hover:bg-hack-sand'
                   }`}
                 >
                   <span>👥 Squad Roster</span>
@@ -1240,20 +1245,20 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
               </div>
 
               {participationMode === 'squad' && (
-                <div className="mt-2 space-y-2 pt-2 border-t-2 border-[#10201d]/20">
+                <div className="mt-2 space-y-2 pt-2 border-t border-hack-ink/10">
                   {userSquads.length === 0 ? (
-                    <div className="font-mono text-xs text-[#e53927] p-2 bg-white border border-[#10201d]">
+                    <div className="font-mono text-xs text-hack-coral-dark p-2.5 rounded-lg bg-hack-coral/10 border border-hack-coral/30">
                       You haven't formed any squads yet. Head to "Squads & Friends" to create one, or proceed Solo!
                     </div>
                   ) : (
                     <>
-                      <label className="block font-mono text-xs font-bold text-[#10201d]">
+                      <label className="block font-mono text-xs font-semibold text-hack-ink">
                         Select Squad to Enroll:
                       </label>
                       <select
                         value={selectedSquadId || ''}
                         onChange={(e) => setSelectedSquadId(e.target.value)}
-                        className="w-full font-mono text-xs font-bold p-2 border-2 border-[#10201d] bg-white text-[#10201d]"
+                        className="w-full font-mono text-xs font-medium p-2.5 rounded-lg border border-hack-ink/20 bg-white text-hack-ink focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                       >
                         {userSquads.map((sq) => (
                           <option key={sq.id} value={sq.id}>
@@ -1261,7 +1266,7 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                           </option>
                         ))}
                       </select>
-                      <p className="font-mono text-[11px] text-[#57726d]">
+                      <p className="font-mono text-[11px] text-hack-subtext">
                         All members of this squad will have access to this hackathon board and shared tasks.
                       </p>
                     </>
@@ -1276,14 +1281,14 @@ export function URLParseDialog({ open, onOpenChange, initialUrl = '' }: URLParse
                 variant="outline" 
                 onClick={() => setHasParsed(false)} 
                 disabled={submitting} 
-                className="flex-1 font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f2f2eb] hover:bg-white text-[#10201d] shadow-[3px_3px_0_#10201d]"
+                className="flex-1 font-sans text-xs font-bold rounded-lg border border-hack-ink/20 bg-white hover:bg-hack-sand text-hack-ink shadow-sm"
               >
-                {activeTab === 'text' ? 'Back to Text / Flyer Input' : 'Back to Link Input'}
+                {activeTab === 'text' ? 'Back to Text / Flyer' : 'Back to Link'}
               </Button>
               <Button 
                 onClick={handleSubmit} 
                 disabled={submitting} 
-                className="flex-[2] font-mono text-xs font-bold border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[4px_4px_0_#671912]"
+                className="flex-[2] font-sans text-xs font-bold rounded-lg bg-hack-coral hover:bg-hack-coral/90 text-hack-ink shadow-hack-hero transition-all active:translate-y-0.5"
               >
                 {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 {submitting ? 'Adding...' : 'Add to My Hackathons'}

@@ -32,43 +32,52 @@ export function URLParseIntake({
   onParseText,
   onManualEntry,
 }: URLParseIntakeProps) {
+  const isUrlValid = Boolean(url.trim() && /^https?:\/\/.+/i.test(url.trim().startsWith('http') ? url.trim() : `https://${url.trim()}`))
+
   return (
-    <div className="space-y-4 py-3">
+    <div className="space-y-4 py-2">
       {/* Primary Action Card: URL Input */}
-      <div className="border-2 border-[#10201d] bg-white p-4 sm:p-5 shadow-[4px_4px_0_#10201d] space-y-3">
-        <label className="font-mono text-xs font-black uppercase tracking-wider text-[#10201d] block">
-          Paste the competition link. We'll figure out the rest.
+      <div className="rounded-xl border border-hack-ink/20 bg-hack-panel p-5 shadow-sm space-y-3">
+        <label className="font-sans text-sm font-bold text-hack-ink block">
+          Paste the competition link. We'll extract the rest.
         </label>
 
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Input 
-            placeholder="https://unstop.com/... or https://devfolio.co/..." 
-            value={url} 
-            onChange={(e) => onUrlChange(e.target.value)} 
-            onKeyDown={(e) => e.key === 'Enter' && onParseUrl()}
-            disabled={extracting}
-            className="flex-1 h-12 font-mono text-xs border-2 border-[#10201d] bg-[#f7f7f2] shadow-[2px_2px_0_#10201d]"
-          />
+        <div className="flex flex-col sm:flex-row gap-2.5">
+          <div className="relative flex-1">
+            <Input 
+              placeholder="https://unstop.com/... or https://devfolio.co/..." 
+              value={url} 
+              onChange={(e) => onUrlChange(e.target.value)} 
+              onKeyDown={(e) => e.key === 'Enter' && onParseUrl()}
+              disabled={extracting}
+              className="h-11 rounded-lg font-mono text-xs border border-hack-ink/25 bg-hack-sand/40 focus:border-hack-coral focus:ring-1 focus:ring-hack-coral pr-8"
+            />
+            {isUrlValid && !extracting && (
+              <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-hack-mint-dark font-mono text-[10px] font-bold">
+                ✓
+              </span>
+            )}
+          </div>
           <Button 
             onClick={onParseUrl} 
             disabled={extracting || !url.trim()} 
-            className="h-12 px-6 font-mono text-xs font-black uppercase tracking-wider border-2 border-[#10201d] bg-[#e97b77] hover:bg-[#f6c4c1] text-[#10201d] shadow-[3px_3px_0_#671912] shrink-0 active:translate-x-[1px] active:translate-y-[1px]"
+            className="h-11 px-5 rounded-lg font-sans text-xs font-bold bg-hack-coral text-hack-ink hover:bg-hack-coral/90 shadow-hack-hero shrink-0 active:translate-y-0.5 transition-all"
           >
             {extracting ? 'Reading page...' : 'Extract Hackathon'}
           </Button>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
-          <p className="font-mono text-[11px] text-[#34433f]">
-            Works with Unstop, Devfolio, Devpost, MLH, Kaggle, or any university contest.
+          <p className="font-mono text-[11px] text-hack-subtext">
+            Works with Unstop, Devfolio, Devpost, MLH, Kaggle, or university sites.
           </p>
 
           <button
             type="button"
             onClick={onManualEntry}
-            className="font-mono text-xs font-bold text-[#10201d] hover:text-[#e53927] underline shrink-0"
+            className="font-mono text-xs font-semibold text-hack-coral-dark hover:underline shrink-0"
           >
-            or Add manually →
+            or enter details manually →
           </button>
         </div>
       </div>
@@ -76,43 +85,62 @@ export function URLParseIntake({
       {/* Stepped Progress Animation while Extracting */}
       <ExtractionProgress isExtracting={extracting} />
 
-      {/* Extraction Error Callout */}
+      {/* Extraction Error Callout with Explicit Next Steps */}
       {extractError && (
-        <div className="p-3.5 border-2 border-[#10201d] bg-[#f6c4c1] text-[#671912] shadow-[3px_3px_0_#671912] text-sm flex gap-2.5 items-start">
-          <AlertCircle className="h-5 w-5 text-[#e53927] shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="font-display font-bold text-base">Extraction Notice</p>
-            <p className="font-mono text-xs mt-0.5">{extractError}</p>
+        <div className="rounded-xl border border-hack-coral/40 bg-hack-coral/10 text-hack-coral-dark p-4 shadow-sm text-sm flex gap-3 items-start">
+          <AlertCircle className="h-5 w-5 text-hack-coral-dark shrink-0 mt-0.5" />
+          <div className="flex-1 space-y-1.5">
+            <p className="font-sans font-bold text-sm text-hack-ink">Could not extract link directly</p>
+            <p className="font-mono text-xs text-hack-subtext leading-relaxed">{extractError}</p>
+            <div className="flex items-center gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!showTextInput) onToggleTextInput()
+                }}
+                className="font-mono text-xs font-bold text-hack-coral-dark hover:underline"
+              >
+                Paste text below instead ↓
+              </button>
+              <span className="text-hack-subtext/40">•</span>
+              <button
+                type="button"
+                onClick={onManualEntry}
+                className="font-mono text-xs font-bold text-hack-ink hover:underline"
+              >
+                Add manually →
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Secondary Accordion: Paste Text / Guidelines */}
-      <div className="border-2 border-[#10201d] bg-[#f2f2eb]">
+      <div className="rounded-xl border border-hack-ink/15 bg-hack-sand/50 overflow-hidden">
         <button
           type="button"
           onClick={onToggleTextInput}
           aria-expanded={showTextInput}
-          className="w-full p-3 font-mono text-xs font-bold text-[#10201d] flex items-center justify-between hover:bg-[#e4e5da] transition-colors"
+          className="w-full p-3.5 font-mono text-xs font-medium text-hack-ink flex items-center justify-between hover:bg-hack-sand transition-colors"
         >
           <span className="flex items-center gap-2">
-            <FileText className="w-3.5 h-3.5 text-[#34433f]" />
-            Need to paste announcement text, guidelines, or flyer instead?
+            <FileText className="w-4 h-4 text-hack-subtext" />
+            <span>Have flyer text, Discord announcements, or guidelines copy?</span>
           </span>
-          {showTextInput ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          {showTextInput ? <ChevronUp className="w-4 h-4 text-hack-subtext" /> : <ChevronDown className="w-4 h-4 text-hack-subtext" />}
         </button>
 
         {showTextInput && (
-          <div className="p-4 border-t-2 border-[#10201d] space-y-3 bg-white">
+          <div className="p-4 border-t border-hack-ink/10 space-y-3 bg-hack-panel">
             <div className="flex items-center justify-between">
-              <span className="font-mono text-[10px] text-[#34433f]">
+              <span className="font-mono text-[11px] text-hack-subtext">
                 {pastedText.length > 0 ? `${pastedText.length.toLocaleString()} characters` : 'Direct AI Parsing (Fastest)'}
               </span>
               {pastedText.length > 0 && !extracting && (
                 <button
                   type="button"
                   onClick={() => onPastedTextChange('')}
-                  className="font-mono text-[10px] font-bold text-[#e53927] hover:underline"
+                  className="font-mono text-[10px] font-semibold text-hack-coral-dark hover:underline"
                 >
                   Clear
                 </button>
@@ -125,14 +153,14 @@ export function URLParseIntake({
               disabled={extracting}
               placeholder="Paste raw guidelines, announcement text, WhatsApp/Discord messages, or rulebook copy here..."
               rows={6}
-              className="w-full p-3 font-mono text-xs border-2 border-[#10201d] bg-[#f7f7f2] focus:outline-none"
+              className="w-full p-3 font-mono text-xs rounded-lg border border-hack-ink/20 bg-hack-sand/30 focus:border-hack-coral focus:ring-1 focus:ring-hack-coral focus:outline-none resize-y"
             />
 
             <div className="flex justify-end">
               <Button 
                 onClick={onParseText} 
                 disabled={extracting || !pastedText.trim()} 
-                className="h-10 px-5 font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[2px_2px_0_#10201d]"
+                className="h-10 px-5 rounded-lg font-sans text-xs font-bold bg-[#F6C344] text-hack-ink hover:bg-[#F6C344]/90 shadow-sm"
               >
                 {extracting ? 'Reading text...' : 'Extract from Text'}
               </Button>

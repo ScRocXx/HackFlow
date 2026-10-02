@@ -233,74 +233,76 @@ export function EditEventDialog({ open, onOpenChange, event, onSuccess }: EditEv
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto border-2 border-[#10201d] bg-[#f7f7f2] p-6 shadow-[8px_8px_0_#671912]">
+      <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto rounded-2xl border border-hack-ink/20 bg-hack-sand p-5 sm:p-6 shadow-2xl">
         <DialogHeader>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 bg-[#e53927] inline-block" />
-            <DialogTitle className="font-display text-2xl font-black uppercase text-[#10201d] tracking-tight">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-hack-coral/15 text-hack-coral-dark">
+              <Trophy className="w-5 h-5" />
+            </div>
+            <DialogTitle className="font-sans text-xl sm:text-2xl font-bold text-hack-ink tracking-tight">
               Edit Hackathon
             </DialogTitle>
           </div>
-          <DialogDescription className="font-mono text-xs text-[#34433f]">
+          <DialogDescription className="font-mono text-xs text-hack-subtext mt-1">
             Update details, customize stages and deadlines, or mark dates as TBA.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 my-2">
+        <div className="space-y-5 my-2">
           {/* Section: Basic Metadata */}
-          <div className="border-2 border-[#10201d] p-4 bg-white shadow-[3px_3px_0_#10201d] space-y-4">
-            <div className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] pb-2 border-b-2 border-[#10201d] flex items-center gap-2">
-              <Trophy className="w-4 h-4 text-[#e53927]" />
+          <div className="rounded-xl border border-hack-ink/15 p-4 sm:p-5 bg-hack-panel shadow-sm space-y-4">
+            <div className="font-mono text-xs font-semibold uppercase tracking-wider text-hack-ink pb-2 border-b border-hack-ink/10 flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-hack-coral-dark" />
               Event Overview
             </div>
 
             <div>
-              <label className="block font-mono text-xs font-bold text-[#10201d] mb-1 uppercase">
+              <label className="block font-mono text-xs font-semibold text-hack-ink mb-1 uppercase">
                 Hackathon Title *
               </label>
               <Input
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. HackMIT 2026"
-                className="font-sans font-bold border-2 border-[#10201d] bg-[#f7f7f2] focus-visible:ring-0"
+                className="font-sans font-bold text-sm rounded-lg border border-hack-ink/20 bg-white focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block font-mono text-xs font-bold text-[#10201d] mb-1 uppercase">
+                <label className="block font-mono text-xs font-semibold text-hack-ink mb-1 uppercase">
                   Organizer / Host
                 </label>
                 <Input
                   value={organizer}
                   onChange={(e) => setOrganizer(e.target.value)}
                   placeholder="e.g. MIT Tech Club"
-                  className="font-mono text-xs border-2 border-[#10201d] bg-[#f7f7f2] focus-visible:ring-0"
+                  className="font-mono text-xs rounded-lg border border-hack-ink/20 bg-white focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                 />
               </div>
 
               <div>
-                <label className="block font-mono text-xs font-bold text-[#10201d] mb-1 uppercase">
+                <label className="block font-mono text-xs font-semibold text-hack-ink mb-1 uppercase">
                   Prize Pool / Summary
                 </label>
                 <Input
                   value={prizePool}
                   onChange={(e) => setPrizePool(e.target.value)}
                   placeholder="e.g. $50,000 or ₹2,50,000"
-                  className="font-mono text-xs border-2 border-[#10201d] bg-[#f7f7f2] focus-visible:ring-0"
+                  className="font-mono text-xs rounded-lg border border-hack-ink/20 bg-white focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block font-mono text-xs font-bold text-[#10201d] mb-1 uppercase">
+                <label className="block font-mono text-xs font-semibold text-hack-ink mb-1 uppercase">
                   Event Mode
                 </label>
                 <select
                   value={mode}
                   onChange={(e) => setMode(e.target.value as any)}
-                  className="w-full h-10 px-3 border-2 border-[#10201d] bg-[#f7f7f2] font-mono text-xs font-bold focus:outline-none shadow-[2px_2px_0_#10201d]"
+                  className="w-full h-10 px-3 rounded-lg border border-hack-ink/20 bg-white font-mono text-xs focus:outline-none focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                 >
                   <option value="online">Online / Virtual</option>
                   <option value="in-person">In-Person</option>
@@ -309,25 +311,25 @@ export function EditEventDialog({ open, onOpenChange, event, onSuccess }: EditEv
               </div>
 
               <div>
-                <label className="block font-mono text-xs font-bold text-[#10201d] mb-1 uppercase">
+                <label className="block font-mono text-xs font-semibold text-hack-ink mb-1 uppercase">
                   Location / Venue
                 </label>
                 <Input
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
                   placeholder="e.g. Bengaluru / Boston"
-                  className="font-mono text-xs border-2 border-[#10201d] bg-[#f7f7f2] focus-visible:ring-0"
+                  className="font-mono text-xs rounded-lg border border-hack-ink/20 bg-white focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                 />
               </div>
 
               <div>
-                <label className="block font-mono text-xs font-bold text-[#10201d] mb-1 uppercase">
+                <label className="block font-mono text-xs font-semibold text-hack-ink mb-1 uppercase">
                   Lifecycle Status
                 </label>
                 <select
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
-                  className="w-full h-10 px-3 border-2 border-[#10201d] bg-[#f7f7f2] font-mono text-xs font-bold focus:outline-none shadow-[2px_2px_0_#10201d]"
+                  className="w-full h-10 px-3 rounded-lg border border-hack-ink/20 bg-white font-mono text-xs focus:outline-none focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                 >
                   <option value="bookmarked">Bookmarked</option>
                   <option value="registered">Registered</option>
@@ -339,10 +341,10 @@ export function EditEventDialog({ open, onOpenChange, event, onSuccess }: EditEv
           </div>
 
           {/* Section: Timeline & Stages */}
-          <div className="border-2 border-[#10201d] p-4 bg-white shadow-[3px_3px_0_#10201d] space-y-4">
-            <div className="flex items-center justify-between pb-2 border-b-2 border-[#10201d]">
-              <div className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d] flex items-center gap-2">
-                <Layers className="w-4 h-4 text-[#e53927]" />
+          <div className="rounded-xl border border-hack-ink/15 p-4 sm:p-5 bg-hack-panel shadow-sm space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-hack-ink/10">
+              <div className="font-mono text-xs font-semibold uppercase tracking-wider text-hack-ink flex items-center gap-2">
+                <Layers className="w-4 h-4 text-hack-coral-dark" />
                 Rounds & Deadlines ({stages.length})
               </div>
               <Button
@@ -350,7 +352,7 @@ export function EditEventDialog({ open, onOpenChange, event, onSuccess }: EditEv
                 variant="outline"
                 size="sm"
                 onClick={handleAddStage}
-                className="h-8 text-xs font-mono font-bold bg-[#f5b726] hover:bg-[#8bb2de] border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
+                className="h-8 text-xs font-sans font-semibold rounded-lg bg-white hover:bg-hack-sand border border-hack-ink/20 shadow-sm"
               >
                 <Plus className="w-3.5 h-3.5 mr-1" /> Add Round
               </Button>
@@ -360,17 +362,17 @@ export function EditEventDialog({ open, onOpenChange, event, onSuccess }: EditEv
               {stages.map((stage, idx) => (
                 <div 
                   key={stage.id || `stage-${idx}`}
-                  className="border-2 border-[#10201d] bg-[#f7f7f2] p-3 shadow-[3px_3px_0_#10201d] space-y-3 relative group"
+                  className="rounded-xl border border-hack-ink/15 bg-hack-sand/30 p-3.5 shadow-sm space-y-3 relative group"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <span className="font-mono text-[10px] font-extrabold uppercase px-2 py-0.5 border-2 border-[#10201d] bg-[#10201d] text-[#f7f7f2]">
+                      <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded border border-hack-ink/20 bg-hack-ink text-hack-panel">
                         Round {stage.round_number}
                       </span>
                       <select
                         value={stage.stage_type}
                         onChange={(e) => handleUpdateStage(idx, { stage_type: e.target.value })}
-                        className="h-7 px-2 border-2 border-[#10201d] bg-white font-mono text-[11px] font-bold focus:outline-none"
+                        className="h-7 px-2 rounded-md border border-hack-ink/20 bg-white font-mono text-[11px] font-medium focus:outline-none focus:border-hack-coral"
                       >
                         <option value="prototype">Prototype / Build</option>
                         <option value="ppt_submission">Idea / PPT</option>
@@ -386,7 +388,7 @@ export function EditEventDialog({ open, onOpenChange, event, onSuccess }: EditEv
                       disabled={stages.length <= 1}
                       title="Remove this round"
                       aria-label="Remove this round"
-                      className="p-1 border border-[#10201d] bg-white hover:bg-[#e53927] hover:text-white disabled:opacity-30 disabled:pointer-events-none transition-colors"
+                      className="p-1 rounded text-hack-subtext hover:bg-hack-coral/15 hover:text-hack-coral-dark disabled:opacity-30 disabled:pointer-events-none transition-colors"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -394,32 +396,32 @@ export function EditEventDialog({ open, onOpenChange, event, onSuccess }: EditEv
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block font-mono text-[10px] font-bold text-[#10201d] mb-0.5 uppercase">
+                      <label className="block font-mono text-[10px] font-semibold text-hack-ink mb-0.5 uppercase">
                         Round Title
                       </label>
                       <Input
                         value={stage.title}
                         onChange={(e) => handleUpdateStage(idx, { title: e.target.value })}
                         placeholder="e.g. Round 1: Online Quiz"
-                        className="h-8 text-xs font-bold border-2 border-[#10201d] bg-white focus-visible:ring-0"
+                        className="h-8 text-xs font-bold rounded-md border border-hack-ink/20 bg-white focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                       />
                     </div>
 
                     <div>
                       <div className="flex justify-between items-center mb-0.5">
-                        <label className="block font-mono text-[10px] font-bold text-[#10201d] uppercase">
+                        <label className="block font-mono text-[10px] font-semibold text-hack-ink uppercase">
                           Cutoff / Deadline
                         </label>
                         {stage.deadline ? (
                           <button
                             type="button"
                             onClick={() => handleUpdateStage(idx, { deadline: '', raw_date_snippet: 'TBA' })}
-                            className="font-mono text-[10px] text-[#e53927] hover:underline font-bold"
+                            className="font-mono text-[10px] text-hack-coral-dark hover:underline font-semibold"
                           >
                             Clear (TBA)
                           </button>
                         ) : (
-                          <span className="font-mono text-[10px] text-amber-700 font-bold">Dates TBA</span>
+                          <span className="font-mono text-[10px] text-[#8A5D13] font-semibold">Dates TBA</span>
                         )}
                       </div>
                       <Input
@@ -429,33 +431,33 @@ export function EditEventDialog({ open, onOpenChange, event, onSuccess }: EditEv
                           deadline: e.target.value,
                           raw_date_snippet: e.target.value ? '' : 'TBA' 
                         })}
-                        className="h-8 font-mono text-xs border-2 border-[#10201d] bg-white focus-visible:ring-0"
+                        className="h-8 font-mono text-xs rounded-md border border-hack-ink/20 bg-white focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                       />
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-[#10201d]/10">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-hack-ink/10">
                     <div>
-                      <label className="block font-mono text-[10px] font-bold text-[#34433f] mb-0.5 uppercase">
+                      <label className="block font-mono text-[10px] font-medium text-hack-subtext mb-0.5 uppercase">
                         Kickoff Window (Optional)
                       </label>
                       <Input
                         type="datetime-local"
                         value={stage.window_start}
                         onChange={(e) => handleUpdateStage(idx, { window_start: e.target.value })}
-                        className="h-8 font-mono text-xs border border-[#10201d] bg-white focus-visible:ring-0"
+                        className="h-8 font-mono text-xs rounded-md border border-hack-ink/15 bg-white focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                       />
                     </div>
 
                     <div>
-                      <label className="block font-mono text-[10px] font-bold text-[#34433f] mb-0.5 uppercase">
+                      <label className="block font-mono text-[10px] font-medium text-hack-subtext mb-0.5 uppercase">
                         Display Date Note / Snippet
                       </label>
                       <Input
                         value={stage.raw_date_snippet}
                         onChange={(e) => handleUpdateStage(idx, { raw_date_snippet: e.target.value })}
                         placeholder="e.g. 24–28 Oct or TBA"
-                        className="h-8 font-mono text-xs border border-[#10201d] bg-white focus-visible:ring-0"
+                        className="h-8 font-mono text-xs rounded-md border border-hack-ink/15 bg-white focus:border-hack-coral focus:ring-1 focus:ring-hack-coral"
                       />
                     </div>
                   </div>
@@ -465,13 +467,13 @@ export function EditEventDialog({ open, onOpenChange, event, onSuccess }: EditEv
           </div>
         </div>
 
-        <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-2 border-t-2 border-[#10201d]">
+        <DialogFooter className="flex flex-col sm:flex-row gap-2.5 pt-3 border-t border-hack-ink/10">
           <Button
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={saving}
-            className="w-full sm:w-auto font-mono text-xs border-2 border-[#10201d]"
+            className="w-full sm:w-auto font-sans text-xs font-semibold rounded-lg border border-hack-ink/20 bg-white hover:bg-hack-sand"
           >
             Cancel
           </Button>
@@ -479,11 +481,11 @@ export function EditEventDialog({ open, onOpenChange, event, onSuccess }: EditEv
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="w-full sm:w-auto font-mono text-xs bg-[#e97b77] hover:bg-[#e53927] hover:text-white border-2 border-[#10201d] shadow-[3px_3px_0_#10201d] font-bold"
+            className="w-full sm:w-auto font-sans text-xs font-bold rounded-lg bg-hack-coral hover:bg-hack-coral/90 text-hack-ink shadow-hack-hero active:translate-y-0.5 transition-all"
           >
             {saving ? (
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 border-2 border-[#10201d] border-t-transparent rounded-full animate-spin" />
+                <span className="w-3 h-3 border-2 border-hack-ink border-t-transparent rounded-full animate-spin" />
                 Saving...
               </span>
             ) : (
