@@ -24,141 +24,173 @@ export default async function ArchivePage() {
     ['winner', 'runner_up', 'participated', 'archived', 'submitted', 'finalist', 'under_review'].includes(e.status)
   )
 
+  // Group concluded events by year
+  const eventsByYear = concludedEvents.reduce((acc: Record<string, any[]>, ev: any) => {
+    const year = ev.created_at ? new Date(ev.created_at).getFullYear().toString() : new Date().getFullYear().toString()
+    if (!acc[year]) acc[year] = []
+    acc[year].push(ev)
+    return acc
+  }, {})
+
+  const sortedYears = Object.keys(eventsByYear).sort((a, b) => Number(b) - Number(a))
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header Banner */}
-      <div className="border-2 border-[#10201d] bg-[#3d5f58] p-6 text-[#f7f7f2] shadow-[7px_7px_0_#671912] flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+      <div className="border border-hack-muted/30 bg-hack-surface p-6 rounded-xl shadow-hack-card flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="w-2.5 h-2.5 bg-[#e53927] inline-block" />
-            <span className="w-2.5 h-2.5 bg-[#8bb2de] inline-block" />
-            <span className="w-2.5 h-2.5 bg-[#f5b726] inline-block" />
-            <span className="w-2.5 h-2.5 bg-[#e97b77] inline-block" />
-            <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-[#f6c4c1] ml-2">
-              Squad Portfolio & Hall of Fame
-            </span>
-          </div>
-          <h1 className="font-display text-3xl sm:text-4xl font-extrabold tracking-tight text-[#f7f7f2]">
+          <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-hack-ink">
             Trophy Case & Archive
           </h1>
-          <p className="font-mono text-xs text-[#8bb2de] mt-1">
+          <p className="font-mono text-xs text-hack-subtext mt-1">
             Indexed portfolio of concluded hackathons, repos, pitch decks, and retro learnings.
           </p>
         </div>
 
-        <div className="p-3 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[3px_3px_0_#8a5d13] font-mono text-xs font-bold shrink-0">
+        <div className="px-3.5 py-1.5 rounded-lg bg-hack-sand border border-hack-muted/30 text-hack-ink font-mono text-xs font-semibold shrink-0">
           🏆 {concludedEvents.length} Concluded Sprints
         </div>
       </div>
 
       {concludedEvents.length === 0 ? (
-        <div className="p-16 border-2 border-dashed border-[#10201d] text-center bg-[#f7f7f2]">
-          <Trophy className="h-12 w-12 text-[#34433f] mx-auto opacity-40 mb-3" />
-          <h3 className="font-display text-2xl font-bold text-[#10201d]">No wins yet</h3>
-          <p className="font-mono text-xs text-[#34433f] mt-1 max-w-sm mx-auto">
-            That's fine. First build something worth putting here.
+        <div className="py-20 border border-dashed border-hack-muted/40 rounded-xl text-center bg-hack-surface shadow-hack-card p-8">
+          <Trophy className="h-12 w-12 text-hack-gold mx-auto opacity-50 mb-3" />
+          <h3 className="font-display text-2xl font-bold text-hack-ink">Nothing here yet.</h3>
+          <p className="font-mono text-sm text-hack-subtext mt-1">
+            That&apos;s okay.
+          </p>
+          <p className="font-mono text-xs text-hack-subtext mt-0.5 max-w-sm mx-auto">
+            The next box gets added when you finish a hackathon.
           </p>
           <Link
             href="/dashboard"
-            className="inline-block mt-5 font-mono text-xs font-bold px-4 py-2 border-2 border-[#10201d] bg-[#e97b77] text-[#10201d] shadow-[3px_3px_0_#671912]"
+            className="inline-block mt-6 font-mono text-xs font-semibold px-5 py-2.5 rounded-lg bg-hack-coral text-white shadow-hack-hero hover:bg-hack-coral/90 transition-colors"
           >
-            Back to Dashboard &rarr;
+            Back to Active Board &rarr;
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {concludedEvents.map((ev: any) => {
-            const isWinner = ev.status === 'winner'
-            const isRunnerUp = ev.status === 'runner_up'
+        <div className="space-y-8">
+          {sortedYears.map((year) => (
+            <div key={year} className="space-y-4">
+              <div className="flex items-center gap-3">
+                <h2 className="font-display text-2xl font-bold text-hack-ink">{year}</h2>
+                <div className="h-px flex-1 bg-hack-muted/30" />
+              </div>
 
-            return (
-              <Card key={ev.id} className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[6px_6px_0_#671912] flex flex-col justify-between">
-                <div>
-                  <div className="p-4 bg-[#2e4742] text-[#f7f7f2] border-b-2 border-[#10201d] flex items-center justify-between">
-                    <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 border-2 border-[#10201d] bg-[#8bb2de] text-[#10201d]">
-                      {ev.source_platform || 'Hackathon'}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {eventsByYear[year].map((ev: any) => {
+                  const isWinner = ev.status === 'winner'
+                  const isRunnerUp = ev.status === 'runner_up'
+                  const isFinalist = ev.status === 'finalist'
+
+                  let statusBadge = (
+                    <span className="font-mono text-[11px] font-semibold px-2 py-0.5 rounded-full bg-hack-sand text-hack-subtext border border-hack-muted/30">
+                      {ev.status === 'under_review' ? '⏳ Under Review' : ev.status}
                     </span>
+                  )
 
-                    {isWinner && (
-                      <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 border-2 border-[#10201d] bg-[#f5b726] text-[#10201d] shadow-[1px_1px_0_#10201d] flex items-center gap-1">
+                  if (isWinner) {
+                    statusBadge = (
+                      <span className="font-mono text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-hack-gold/15 text-hack-gold flex items-center gap-1">
                         🏆 Winner
                       </span>
-                    )}
-                    {isRunnerUp && (
-                      <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 border-2 border-[#10201d] bg-[#f2f2eb] text-[#10201d] shadow-[1px_1px_0_#10201d]">
-                        🥈 Runner-Up
+                    )
+                  } else if (isRunnerUp) {
+                    statusBadge = (
+                      <span className="font-mono text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-hack-sand text-hack-ink border border-hack-muted/30 flex items-center gap-1">
+                        🥈 2nd Place
                       </span>
-                    )}
-                    {!isWinner && !isRunnerUp && (
-                      <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 border-2 border-[#10201d] bg-[#e4e5da] text-[#10201d]">
-                        {ev.status === 'finalist' ? '🎖️ Finalist' : ev.status === 'under_review' ? '⏳ Under Review' : ev.status}
+                    )
+                  } else if (isFinalist) {
+                    statusBadge = (
+                      <span className="font-mono text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-hack-blue/15 text-hack-blue flex items-center gap-1">
+                        🎖️ Finalist
                       </span>
-                    )}
-                  </div>
+                    )
+                  }
 
-                  <CardContent className="p-4 space-y-3">
-                    <h3 className="font-display text-xl font-bold text-[#10201d] line-clamp-1">{ev.title}</h3>
-                    <p className="font-mono text-xs text-[#34433f]">{ev.organizer || 'Organized Competition'}</p>
+                  return (
+                    <Card
+                      key={ev.id}
+                      className="border border-hack-muted/30 bg-hack-surface shadow-hack-card rounded-xl flex flex-col justify-between overflow-hidden hover:border-hack-muted/60 transition-all"
+                    >
+                      <div>
+                        <div className="p-4 bg-hack-sand/50 border-b border-hack-muted/20 flex items-center justify-between">
+                          <span className="font-mono text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-hack-surface border border-hack-muted/30 text-hack-subtext">
+                            {ev.source_platform || 'Hackathon'}
+                          </span>
+                          {statusBadge}
+                        </div>
 
-                    {ev.prize_details && (
-                      <div className="p-2 border border-[#10201d] bg-[#f5b726]/30 font-mono text-xs font-bold text-[#10201d]">
-                        Prize: {ev.prize_details}
+                        <CardContent className="p-5 space-y-3">
+                          <div>
+                            <h3 className="font-display text-lg font-bold text-hack-ink line-clamp-1">{ev.title}</h3>
+                            <p className="font-mono text-xs text-hack-subtext mt-0.5">{ev.organizer || 'Organized Competition'}</p>
+                          </div>
+
+                          {ev.prize_details && (
+                            <div className="p-2.5 rounded-lg bg-hack-gold/10 border border-hack-gold/20 font-mono text-xs font-semibold text-hack-gold">
+                              Prize: {ev.prize_details}
+                            </div>
+                          )}
+
+                          {ev.retro_notes && (
+                            <p className="font-mono text-[11px] text-hack-subtext italic line-clamp-2 bg-hack-sand/30 p-2.5 rounded-lg border border-hack-muted/20">
+                              &ldquo;{ev.retro_notes}&rdquo;
+                            </p>
+                          )}
+
+                          {/* Links row */}
+                          <div className="flex flex-wrap gap-3 pt-2 border-t border-hack-muted/20">
+                            {ev.github_repo_url && (
+                              <a
+                                href={ensureExternalUrl(ev.github_repo_url)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-mono text-[11px] font-semibold text-hack-forest hover:text-hack-coral flex items-center gap-1 transition-colors"
+                              >
+                                <GithubIcon className="w-3 h-3" /> Repo
+                              </a>
+                            )}
+                            {ev.pitch_deck_url && (
+                              <a
+                                href={ensureExternalUrl(ev.pitch_deck_url)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-mono text-[11px] font-semibold text-hack-forest hover:text-hack-coral flex items-center gap-1 transition-colors"
+                              >
+                                <FileText className="w-3 h-3" /> Pitch Deck
+                              </a>
+                            )}
+                            {ev.demo_url && (
+                              <a
+                                href={ensureExternalUrl(ev.demo_url)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="font-mono text-[11px] font-semibold text-hack-forest hover:text-hack-coral flex items-center gap-1 transition-colors"
+                              >
+                                <ExternalLink className="w-3 h-3" /> Live Demo
+                              </a>
+                            )}
+                          </div>
+                        </CardContent>
                       </div>
-                    )}
 
-                    {ev.retro_notes && (
-                      <p className="font-mono text-[11px] text-[#34433f] italic line-clamp-2">
-                        "{ev.retro_notes}"
-                      </p>
-                    )}
-
-                    {/* Links row */}
-                    <div className="flex flex-wrap gap-2 pt-2 border-t border-[#10201d]/20">
-                      {ev.github_repo_url && (
-                        <a
-                          href={ensureExternalUrl(ev.github_repo_url)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-mono text-[11px] font-bold text-[#10201d] hover:text-[#e53927] flex items-center gap-1 underline"
+                      <div className="p-4 pt-0">
+                        <Link
+                          href={`/events/${ev.id}`}
+                          className="w-full text-center block font-mono text-xs font-semibold py-2 rounded-lg border border-hack-muted/30 bg-hack-sand/40 hover:bg-hack-forest hover:text-hack-sand text-hack-ink transition-colors shadow-sm"
                         >
-                          <GithubIcon className="w-3 h-3" /> Repo
-                        </a>
-                      )}
-                      {ev.pitch_deck_url && (
-                        <a
-                          href={ensureExternalUrl(ev.pitch_deck_url)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-mono text-[11px] font-bold text-[#10201d] hover:text-[#e53927] flex items-center gap-1 underline"
-                        >
-                          <FileText className="w-3 h-3" /> Pitch Deck
-                        </a>
-                      )}
-                      {ev.demo_url && (
-                        <a
-                          href={ensureExternalUrl(ev.demo_url)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="font-mono text-[11px] font-bold text-[#10201d] hover:text-[#e53927] flex items-center gap-1 underline"
-                        >
-                          <ExternalLink className="w-3 h-3" /> Live Demo
-                        </a>
-                      )}
-                    </div>
-                  </CardContent>
-                </div>
-
-                <div className="p-4 pt-0">
-                  <Link
-                    href={`/events/${ev.id}`}
-                    className="w-full text-center block font-mono text-xs font-bold py-2 border-2 border-[#10201d] bg-[#f2f2eb] hover:bg-[#e97b77] hover:text-white transition-colors shadow-[2px_2px_0_#10201d]"
-                  >
-                    View Console &rarr;
-                  </Link>
-                </div>
-              </Card>
-            )
-          })}
+                          View Console &rarr;
+                        </Link>
+                      </div>
+                    </Card>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       )}
     </div>
