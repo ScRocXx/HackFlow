@@ -93,13 +93,13 @@ export function StatusPills({ eventId, currentStatus, onStatusChange }: StatusPi
         let colorClasses = ""
         if (isActive) {
           switch (status.color) {
-            case 'blue': colorClasses = 'bg-hack-sky text-hack-ink border-hack-ink shadow-hack-chip'; break;
-            case 'indigo': colorClasses = 'bg-hack-teal text-hack-panel border-hack-ink shadow-hack-chip'; break;
-            case 'orange': colorClasses = 'bg-hack-gold text-hack-ink border-hack-ink shadow-hack-chip'; break;
-            case 'emerald': colorClasses = 'bg-hack-coral text-hack-ink border-hack-ink shadow-hack-chip'; break;
+            case 'blue': colorClasses = 'bg-[#EEF4FB] text-[#1E3A5F] border-hack-ink/60 shadow-sm font-bold'; break;
+            case 'indigo': colorClasses = 'bg-hack-ink text-hack-panel border-hack-ink shadow-sm font-bold'; break;
+            case 'orange': colorClasses = 'bg-[#FEF9EE] text-[#8A5D13] border-[#F6C344] shadow-sm font-bold'; break;
+            case 'emerald': colorClasses = 'bg-hack-mint text-hack-mint-dark border-hack-ink/40 shadow-sm font-bold'; break;
           }
         } else {
-          colorClasses = 'bg-hack-panel text-hack-subtext/70 border-hack-ink opacity-60 hover:opacity-100 hover:bg-hack-muted'
+          colorClasses = 'bg-hack-panel text-hack-subtext border-hack-ink/15 hover:border-hack-ink/30 hover:bg-hack-sand/60'
         }
 
         return (
@@ -108,7 +108,7 @@ export function StatusPills({ eventId, currentStatus, onStatusChange }: StatusPi
             onClick={(e) => handleStatusChange(status.id, e)}
             disabled={!!isLoading}
             className={cn(
-              "flex-1 flex flex-col items-center justify-center p-1 border-2 transition-all font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-wider",
+              "flex-1 flex flex-col items-center justify-center p-1 sm:p-1.5 rounded-md border transition-all font-mono text-[9px] sm:text-[10px] uppercase tracking-wider",
               colorClasses,
               isLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
             )}
@@ -135,14 +135,14 @@ export function StatusPills({ eventId, currentStatus, onStatusChange }: StatusPi
           }}
           disabled={!!isLoading}
           className={cn(
-            "w-full flex flex-col items-center justify-center p-1 border-2 transition-all font-mono text-[9px] sm:text-[10px] font-bold uppercase tracking-wider",
+            "w-full flex flex-col items-center justify-center p-1 sm:p-1.5 rounded-md border transition-all font-mono text-[9px] sm:text-[10px] uppercase tracking-wider",
             isOutcomeActive 
               ? activeStatus === 'winner'
-                ? "bg-hack-gold text-hack-ink border-hack-ink shadow-hack-chip"
+                ? "bg-[#FEF9EE] text-[#8A5D13] border-[#F6C344] shadow-sm font-bold"
                 : activeStatus === 'finalist'
-                ? "bg-[#f6c4c1] text-hack-ink border-hack-ink shadow-hack-chip"
-                : "bg-hack-sky text-hack-ink border-hack-ink shadow-hack-chip"
-              : "bg-hack-panel text-hack-subtext/70 border-hack-ink opacity-60 hover:opacity-100 hover:bg-hack-muted",
+                ? "bg-hack-coral/15 text-hack-coral-dark border-hack-coral/40 shadow-sm font-bold"
+                : "bg-[#EEF4FB] text-[#1E3A5F] border-hack-ink/40 shadow-sm font-bold"
+              : "bg-hack-panel text-hack-subtext border-hack-ink/15 hover:border-hack-ink/30 hover:bg-hack-sand/60",
             isLoading ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
           )}
           title="Lifecycle & Outcome"
@@ -162,8 +162,8 @@ export function StatusPills({ eventId, currentStatus, onStatusChange }: StatusPi
 
         {/* Dropdown Menu */}
         {isDropdownOpen && (
-          <div className="absolute right-0 bottom-full mb-1 sm:bottom-auto sm:top-full sm:mt-1 w-44 bg-hack-panel border-2 border-hack-ink shadow-hack-card z-50 p-1 space-y-1">
-            <div className="px-2 py-1 text-[9px] font-mono font-bold uppercase tracking-wider text-hack-subtext border-b border-hack-ink/20">
+          <div className="absolute right-0 bottom-full mb-1 sm:bottom-auto sm:top-full sm:mt-1 w-44 bg-hack-panel rounded-lg border border-hack-ink/20 shadow-lg z-50 p-1 space-y-1">
+            <div className="px-2 py-1 text-[9px] font-mono font-bold uppercase tracking-wider text-hack-subtext border-b border-hack-ink/10">
               Evaluation & Outcome
             </div>
             {OUTCOME_STATUSES.map((status) => {
@@ -174,10 +174,10 @@ export function StatusPills({ eventId, currentStatus, onStatusChange }: StatusPi
                   type="button"
                   onClick={(e) => handleStatusChange(status.id, e)}
                   className={cn(
-                    "w-full flex items-center justify-between px-2 py-1.5 text-xs font-mono font-bold text-left transition-colors border",
+                    "w-full flex items-center justify-between px-2 py-1.5 rounded-md text-xs font-mono font-medium text-left transition-colors",
                     isSelected 
-                      ? "bg-hack-teal text-hack-panel border-hack-ink" 
-                      : "bg-white text-hack-ink border-transparent hover:bg-hack-muted hover:border-hack-ink"
+                      ? "bg-hack-ink text-hack-panel font-bold" 
+                      : "bg-transparent text-hack-ink hover:bg-hack-sand/60"
                   )}
                 >
                   <span className="flex items-center gap-1.5">

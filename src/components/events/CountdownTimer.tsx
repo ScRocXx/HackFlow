@@ -118,19 +118,19 @@ export function CountdownTimer({
 
   if (!hasAnyDate || !targetDate) {
     return (
-      <div className={cn("inline-flex items-center gap-1 text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-1 border-2 border-[#10201d] bg-[#e4e5da] text-[#10201d] shadow-[2px_2px_0_#10201d] select-none", className)}>
+      <div className={cn("inline-flex items-center gap-1.5 text-xs font-mono font-medium tracking-wide px-2.5 py-1 rounded-md border border-hack-ink/15 bg-hack-muted/60 text-hack-subtext select-none", className)}>
         <span>📅 Dates TBA</span>
       </div>
     )
   }
 
   if (!mounted) {
-    return <div className="h-7 w-28 bg-[#e4e5da] border-2 border-[#10201d] animate-pulse" />
+    return <div className="h-7 w-28 bg-hack-muted rounded-md border border-hack-ink/10 animate-pulse" />
   }
 
   if (timeLeft.passed || timeLeft.diffMs <= 0 || currentMilestone === 'passed') {
     return (
-      <div className={cn("inline-flex items-center text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-1 border-2 border-[#10201d] bg-[#e53927] text-[#f7f7f2] shadow-[2px_2px_0_#671912]", className)}>
+      <div className={cn("inline-flex items-center text-xs font-mono font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md border border-hack-ink/20 bg-hack-muted text-hack-subtext select-none", className)}>
         Deadline Passed
       </div>
     )
@@ -140,21 +140,22 @@ export function CountdownTimer({
   const milestone = currentMilestone
   const totalHours = days * 24 + hours
 
-  let bgClass = "bg-[#f7f7f2] text-[#10201d]"
-  let shadowClass = "shadow-[3px_3px_0_#2e4742]"
+  let tierClass = "bg-hack-panel text-hack-ink border-hack-ink/20 shadow-sm"
   
   if (milestone === 'kickoff') {
-    bgClass = "bg-[#8bb2de] text-[#10201d]"
-    shadowClass = "shadow-[3px_3px_0_#10201d]"
-  } else if (days < 3 && days >= 1) {
-    bgClass = "bg-[#f5b726] text-[#10201d]"
-    shadowClass = "shadow-[3px_3px_0_#8a5d13]"
-  } else if (days < 1 && totalHours >= 6) {
-    bgClass = "bg-[#e97b77] text-[#10201d]"
-    shadowClass = "shadow-[3px_3px_0_#671912]"
-  } else if (totalHours < 6) {
-    bgClass = "bg-[#e53927] text-[#f7f7f2] animate-pulse"
-    shadowClass = "shadow-[3px_3px_0_#671912]"
+    tierClass = "bg-[#EEF4FB] text-[#1E3A5F] border-[#B8D5E5]"
+  } else if (totalHours < 3) {
+    // Under 3h: pulse + critical coral
+    tierClass = "bg-hack-coral/20 text-hack-coral-dark border-hack-coral animate-pulse"
+  } else if (totalHours < 24) {
+    // Critical (<24h)
+    tierClass = "bg-hack-coral/15 text-hack-coral-dark border-hack-coral/40"
+  } else if (days < 3) {
+    // Approaching (24–72h)
+    tierClass = "bg-[#FEF9EE] text-[#8A5D13] border-[#F6C344]/50"
+  } else {
+    // Calm (>72h)
+    tierClass = "bg-[#F3F7F5] text-hack-ink border-hack-ink/15"
   }
 
   const pad = (num: number) => num.toString().padStart(2, '0')
@@ -162,29 +163,29 @@ export function CountdownTimer({
   return (
     <div className="flex flex-col gap-1">
       {showMilestoneLabel && (
-        <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#34433f]">
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-hack-subtext">
           {milestone === 'kickoff' ? '🚀 Sprint Kickoff in:' : '⚡ Code Freeze in:'}
         </span>
       )}
-      <div className={cn("inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 border-2 border-[#10201d] font-mono font-bold text-xs select-none max-w-full overflow-hidden", bgClass, shadowClass, className)}>
+      <div className={cn("inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md border font-mono font-bold text-xs select-none max-w-full overflow-hidden transition-colors", tierClass, className)}>
         <div className="flex flex-col items-center">
-          <span className="leading-tight text-xs sm:text-sm font-extrabold">{pad(days)}</span>
-          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-80">d</span>
+          <span className="leading-tight text-xs sm:text-sm font-bold">{pad(days)}</span>
+          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-70">d</span>
         </div>
-        <span className="opacity-50 font-bold -mt-1 text-xs sm:text-sm">:</span>
+        <span className="opacity-40 font-bold -mt-1 text-xs sm:text-sm">:</span>
         <div className="flex flex-col items-center">
-          <span className="leading-tight text-xs sm:text-sm font-extrabold">{pad(hours)}</span>
-          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-80">h</span>
+          <span className="leading-tight text-xs sm:text-sm font-bold">{pad(hours)}</span>
+          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-70">h</span>
         </div>
-        <span className="opacity-50 font-bold -mt-1 text-xs sm:text-sm">:</span>
+        <span className="opacity-40 font-bold -mt-1 text-xs sm:text-sm">:</span>
         <div className="flex flex-col items-center">
-          <span className="leading-tight text-xs sm:text-sm font-extrabold">{pad(minutes)}</span>
-          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-80">m</span>
+          <span className="leading-tight text-xs sm:text-sm font-bold">{pad(minutes)}</span>
+          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-70">m</span>
         </div>
-        <span className="opacity-50 font-bold -mt-1 text-xs sm:text-sm">:</span>
+        <span className="opacity-40 font-bold -mt-1 text-xs sm:text-sm">:</span>
         <div className="flex flex-col items-center">
-          <span className="leading-tight text-xs sm:text-sm font-extrabold">{pad(seconds)}</span>
-          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-80">s</span>
+          <span className="leading-tight text-xs sm:text-sm font-bold">{pad(seconds)}</span>
+          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-70">s</span>
         </div>
       </div>
 
