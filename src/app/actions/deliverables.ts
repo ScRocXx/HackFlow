@@ -35,6 +35,45 @@ export async function toggleDeliverable(deliverableId: string, isDone: boolean) 
   }
 }
 
+export async function claimDeliverable(deliverableId: string) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    const { data: current } = await supabase
+      .from('stage_deliverables')
+      .select('done_by, stage_id')
+      .eq('id', deliverableId)
+      .single();
+
+    if (!current) return { success: false, error: 'Deliverable not found' };
+
+    const isAlreadyClaimedByUser = current.done_by === user.id;
+    const updateData = isAlreadyClaimedByUser
+      ? { done_by: null }
+      : { done_by: user.id };
+
+    const { error } = await supabase
+      .from('stage_deliverables')
+      .update(updateData)
+      .eq('id', deliverableId);
+
+    if (error) return { success: false, error: error.message };
+
+    const { data: stage } = await supabase.from('event_stages').select('event_id').eq('id', current.stage_id).single();
+    if (stage) {
+      revalidatePath(`/events/${stage.event_id}`);
+      revalidatePath('/dashboard');
+    }
+
+    return { success: true, claimed: !isAlreadyClaimedByUser, userId: isAlreadyClaimedByUser ? null : user.id };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to claim deliverable' };
+  }
+}
+
 export async function addDeliverable(stageId: string, title: string) {
   try {
     const supabase = await createClient();

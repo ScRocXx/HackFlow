@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Plus, Trash2, Loader2, CheckCircle2 } from 'lucide-react'
-import { toggleDeliverable, addDeliverable, deleteDeliverable } from '@/app/actions/deliverables'
+import { toggleDeliverable, addDeliverable, deleteDeliverable, claimDeliverable } from '@/app/actions/deliverables'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useEventRoom } from '@/lib/supabase/event-channel'
@@ -68,6 +68,32 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
       }
     } catch {
       setItems(prev => prev.map(item => item.id === id ? { ...item, is_done: currentIsDone } : item))
+    } finally {
+      setLoadingIds(prev => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }
+  }
+
+  // 0ms Zero-Latency Optimistic Claim / Unclaim
+  const handleClaim = async (id: string) => {
+    setLoadingIds(prev => new Set(prev).add(id))
+    const currentItem = items.find(i => i.id === id)
+    const prevDoneBy = currentItem?.done_by || null
+    const optimisticDoneBy = prevDoneBy ? null : 'claimed'
+    setItems(prev => prev.map(item => item.id === id ? { ...item, done_by: optimisticDoneBy } : item))
+
+    try {
+      const res = await claimDeliverable(id)
+      if (res && res.success) {
+        setItems(prev => prev.map(item => item.id === id ? { ...item, done_by: res.claimed ? (res.userId || 'claimed') : null } : item))
+      } else {
+        setItems(prev => prev.map(item => item.id === id ? { ...item, done_by: prevDoneBy } : item))
+      }
+    } catch {
+      setItems(prev => prev.map(item => item.id === id ? { ...item, done_by: prevDoneBy } : item))
     } finally {
       setLoadingIds(prev => {
         const next = new Set(prev)
@@ -189,22 +215,34 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
                 {/* Assignee / Claim badge */}
                 {isDone ? (
                   <span 
-                    title="Completed by you"
-                    aria-label="Completed by you"
+                    title="Cleared"
+                    aria-label="Cleared"
                     className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-hack-mint/25 text-hack-mint-dark border border-hack-mint/40 shrink-0"
                   >
-                    You
+                    Done
                   </span>
+                ) : item.done_by ? (
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={() => handleClaim(item.id)}
+                    title="Claimed by you. Click to release."
+                    aria-label={`Claimed by you: "${item.title}". Click to release.`}
+                    className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-hack-coral/15 text-hack-coral-dark border border-hack-coral/40 shrink-0 hover:bg-hack-coral/25 active:scale-95 transition-all"
+                  >
+                    You
+                  </button>
                 ) : (
                   <button
                     type="button"
-                    onClick={() => handleToggle(item.id, false)}
-                    title="Assign to me & complete"
-                    aria-label={`Assign "${item.title}" to me`}
-                    className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-md border border-dashed border-hack-muted/80 hover:border-hack-coral text-hack-subtext hover:text-hack-ink hover:bg-hack-sand shrink-0 transition-colors flex items-center gap-1"
+                    disabled={isLoading}
+                    onClick={() => handleClaim(item.id)}
+                    title="Claim this task for yourself"
+                    aria-label={`Claim task: "${item.title}"`}
+                    className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-md border border-dashed border-hack-muted/80 hover:border-hack-coral text-hack-subtext hover:text-hack-ink hover:bg-hack-sand shrink-0 transition-colors flex items-center gap-1 active:scale-95"
                   >
                     <span className="text-hack-coral font-bold">+</span>
-                    <span>Assign to me</span>
+                    <span>Claim</span>
                   </button>
                 )}
 
