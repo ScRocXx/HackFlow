@@ -271,7 +271,7 @@ export function VaultProfiles({
   return (
     <div className="space-y-6">
       {/* Helper Banner */}
-      <div className="p-4 rounded-xl border border-hack-ink/15 bg-hack-panel shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="p-4 rounded-xl border border-hack-ink/15 bg-hack-surface shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <ShieldCheck className="w-5 h-5 text-hack-mint-dark shrink-0" />
           <div>
@@ -339,7 +339,7 @@ export function VaultProfiles({
 
       {/* Member Profiles Grid */}
       {profiles.length === 0 ? (
-        <div className="p-12 rounded-2xl border border-dashed border-hack-ink/20 text-center bg-hack-panel">
+        <div className="p-12 rounded-2xl border border-dashed border-hack-ink/20 text-center bg-hack-surface">
           <User className="h-10 w-10 text-hack-subtext mx-auto opacity-40 mb-3" />
           <h3 className="font-sans text-xl font-bold text-hack-ink">Your team's info isn't here yet</h3>
           <p className="font-mono text-xs text-hack-subtext mt-1.5 max-w-md mx-auto">
@@ -417,11 +417,11 @@ export function VaultProfiles({
             }
 
             return (
-              <Card key={p.user_id} className="rounded-xl border border-hack-ink/15 bg-hack-panel shadow-sm flex flex-col justify-between overflow-hidden">
+              <Card key={p.user_id} className="rounded-xl border border-hack-ink/15 bg-hack-surface shadow-sm flex flex-col justify-between overflow-hidden">
                 <div>
                   <div className="p-4 bg-hack-sand/80 border-b border-hack-ink/10 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-hack-ink text-hack-panel font-mono text-sm font-bold flex items-center justify-center">
+                      <div className="w-9 h-9 rounded-full bg-hack-ink text-hack-sand font-mono text-sm font-bold flex items-center justify-center">
                         {p.full_name ? p.full_name.charAt(0).toUpperCase() : 'U'}
                       </div>
                       <div>
@@ -436,12 +436,12 @@ export function VaultProfiles({
 
                     <div className="flex items-center gap-1.5">
                       {p.role === 'leader' && (
-                        <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-[#F6C344]/50 bg-[#FEF9EE] text-[#8A5D13]">
+                        <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-hack-gold/50 bg-hack-gold/15 text-hack-gold-dark">
                           Leader
                         </span>
                       )}
                       {isMe && (
-                        <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-hack-ink/20 bg-hack-ink text-hack-panel">
+                        <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-hack-ink/20 bg-hack-ink text-hack-sand">
                           You
                         </span>
                       )}
@@ -456,8 +456,8 @@ export function VaultProfiles({
                   <CardContent className="p-4 space-y-3">
                     {/* If details are missing, show nudge or edit banner */}
                     {isPending && (
-                      <div className="p-2.5 rounded-lg border border-[#F6C344]/50 bg-[#FEF9EE] flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 text-[#8A5D13]">
+                      <div className="p-2.5 rounded-lg border border-hack-gold/50 bg-hack-gold/15 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                        <div className="flex items-center gap-1.5 text-hack-gold-dark">
                           <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
                           <span className="font-mono text-[11px] font-semibold">
                             {isMe ? 'Your registration details are incomplete' : 'Teammate details not yet added'}
@@ -477,7 +477,7 @@ export function VaultProfiles({
                             size="sm"
                             disabled={nudgingUserId === p.user_id}
                             onClick={() => handleNudge(p.user_id, p.full_name)}
-                            className="h-6 text-[10px] font-mono font-bold bg-[#F6C344] hover:bg-[#F6C344]/90 text-hack-ink rounded border border-hack-ink/20 shrink-0 shadow-sm"
+                            className="h-6 text-[10px] font-mono font-bold bg-hack-gold hover:bg-hack-gold/90 text-hack-ink rounded border border-hack-ink/20 shrink-0 shadow-sm"
                           >
                             {nudgingUserId === p.user_id ? (
                               <Loader2 className="w-3 h-3 animate-spin mr-1" />

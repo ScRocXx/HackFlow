@@ -157,7 +157,7 @@ export function VaultAssets({
   if (activeTab === 'decks') {
     return (
       <div className="space-y-4">
-        <div className="p-4 rounded-xl border border-hack-ink/15 bg-hack-panel shadow-sm flex items-center justify-between">
+        <div className="p-4 rounded-xl border border-hack-ink/15 bg-hack-surface shadow-sm flex items-center justify-between">
           <span className="font-sans text-xs text-hack-ink font-medium">
             Pinned master slide decks, Figma templates, cover slides, and architecture diagrams.
           </span>
@@ -171,7 +171,7 @@ export function VaultAssets({
         </div>
 
         {deckAssets.length === 0 ? (
-          <div className="p-12 rounded-2xl border border-dashed border-hack-ink/20 text-center bg-hack-panel">
+          <div className="p-12 rounded-2xl border border-dashed border-hack-ink/20 text-center bg-hack-surface">
             <Palette className="h-10 w-10 text-hack-subtext mx-auto opacity-40 mb-3" />
             <h3 className="font-sans text-xl font-bold text-hack-ink">No Decks or Figma Kits Pinned</h3>
             <p className="font-mono text-xs text-hack-subtext mt-1.5 max-w-md mx-auto">
@@ -183,7 +183,7 @@ export function VaultAssets({
             {deckAssets.map((asset) => (
               <div 
                 key={asset.id}
-                className="rounded-xl border border-hack-ink/15 bg-hack-panel shadow-sm p-4 sm:p-5 flex flex-col justify-between"
+                className="rounded-xl border border-hack-ink/15 bg-hack-surface shadow-sm p-4 sm:p-5 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">
@@ -286,7 +286,7 @@ export function VaultAssets({
       </div>
 
       {boilerplateAssets.length === 0 ? (
-        <div className="p-12 border-2 border-dashed border-hack-ink text-center bg-hack-panel">
+        <div className="p-12 border-2 border-dashed border-hack-ink text-center bg-hack-surface">
           <Code className="h-10 w-10 text-hack-subtext mx-auto opacity-40 mb-3" />
           <h3 className="font-sans text-xl font-bold text-hack-ink">No Boilerplates Linked</h3>
           <p className="font-mono text-xs text-hack-subtext mt-1.5 max-w-md mx-auto">
@@ -298,11 +298,11 @@ export function VaultAssets({
           {boilerplateAssets.map((asset) => (
             <div 
               key={asset.id}
-              className="rounded-xl border border-hack-ink/15 bg-hack-panel shadow-sm p-4 sm:p-5 flex flex-col justify-between"
+              className="rounded-xl border border-hack-ink/15 bg-hack-surface shadow-sm p-4 sm:p-5 flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between gap-2 mb-2">
-                  <span className="font-mono text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border border-[#F6C344]/50 bg-[#FEF9EE] text-[#8A5D13]">
+                  <span className="font-mono text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full border border-hack-gold/50 bg-hack-gold/15 text-hack-gold-dark">
                     Starter Repo
                   </span>
                   {asset.created_by === currentUserId && (
