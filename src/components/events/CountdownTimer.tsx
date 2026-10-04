@@ -118,19 +118,19 @@ export function CountdownTimer({
 
   if (!hasAnyDate || !targetDate) {
     return (
-      <div className={cn("inline-flex items-center gap-1.5 text-xs font-mono font-medium tracking-wide px-2.5 py-1 rounded-md border border-hack-ink/15 bg-hack-muted/60 text-hack-subtext select-none", className)}>
+      <div className={cn("inline-flex items-center gap-1.5 text-xs font-mono font-medium tracking-wide px-2.5 py-1 rounded-md border border-hack-muted/60 bg-hack-sand text-hack-subtext select-none", className)}>
         <span>📅 Dates TBA</span>
       </div>
     )
   }
 
   if (!mounted) {
-    return <div className="h-7 w-28 bg-hack-muted rounded-md border border-hack-ink/10 animate-pulse" />
+    return <div className="h-7 w-28 bg-hack-sand rounded-md border border-hack-muted/40 animate-pulse" />
   }
 
   if (timeLeft.passed || timeLeft.diffMs <= 0 || currentMilestone === 'passed') {
     return (
-      <div className={cn("inline-flex items-center text-xs font-mono font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md border border-hack-ink/20 bg-hack-muted text-hack-subtext select-none", className)}>
+      <div className={cn("inline-flex items-center text-xs font-mono font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md border border-hack-muted/60 bg-hack-sand text-hack-subtext select-none", className)}>
         Deadline Passed
       </div>
     )
@@ -140,25 +140,26 @@ export function CountdownTimer({
   const milestone = currentMilestone
   const totalHours = days * 24 + hours
 
-  let tierClass = "bg-hack-panel text-hack-ink border-hack-ink/20 shadow-sm"
+  let tierClass = "bg-hack-surface text-hack-ink border-hack-muted/60 shadow-hack-sm"
   
   if (milestone === 'kickoff') {
-    tierClass = "bg-[#EEF4FB] text-[#1E3A5F] border-[#B8D5E5]"
+    tierClass = "bg-hack-sky/20 text-hack-ink border-hack-sky/40"
   } else if (totalHours < 3) {
     // Under 3h: pulse + critical coral
-    tierClass = "bg-hack-coral/20 text-hack-coral-dark border-hack-coral animate-pulse"
+    tierClass = "bg-hack-coral/25 text-hack-coral-dark border-hack-coral animate-pulse"
   } else if (totalHours < 24) {
     // Critical (<24h)
     tierClass = "bg-hack-coral/15 text-hack-coral-dark border-hack-coral/40"
   } else if (days < 3) {
     // Approaching (24–72h)
-    tierClass = "bg-[#FEF9EE] text-[#8A5D13] border-[#F6C344]/50"
+    tierClass = "bg-hack-gold/20 text-hack-gold-dark border-hack-gold/40"
   } else {
     // Calm (>72h)
-    tierClass = "bg-[#F3F7F5] text-hack-ink border-hack-ink/15"
+    tierClass = "bg-hack-surface text-hack-ink border-hack-muted/60"
   }
 
   const pad = (num: number) => num.toString().padStart(2, '0')
+  const humanTimeRemaining = `${days > 0 ? `${days} day${days === 1 ? '' : 's'}, ` : ''}${hours} hour${hours === 1 ? '' : 's'}, ${minutes} minute${minutes === 1 ? '' : 's'} remaining`
 
   return (
     <div className="flex flex-col gap-1">
@@ -167,31 +168,35 @@ export function CountdownTimer({
           {milestone === 'kickoff' ? '🚀 Sprint Kickoff in:' : '⚡ Code Freeze in:'}
         </span>
       )}
-      <div className={cn("inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md border font-mono font-bold text-xs select-none max-w-full overflow-hidden transition-colors", tierClass, className)}>
-        <div className="flex flex-col items-center">
+      <div 
+        role="timer"
+        aria-label={humanTimeRemaining}
+        className={cn("inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md border font-mono font-bold text-xs select-none max-w-full overflow-hidden transition-colors", tierClass, className)}
+      >
+        <div className="flex flex-col items-center" aria-hidden="true">
           <span className="leading-tight text-xs sm:text-sm font-bold">{pad(days)}</span>
           <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-70">d</span>
         </div>
-        <span className="opacity-40 font-bold -mt-1 text-xs sm:text-sm">:</span>
-        <div className="flex flex-col items-center">
+        <span className="opacity-40 font-bold -mt-1 text-xs sm:text-sm" aria-hidden="true">:</span>
+        <div className="flex flex-col items-center" aria-hidden="true">
           <span className="leading-tight text-xs sm:text-sm font-bold">{pad(hours)}</span>
           <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-70">h</span>
         </div>
-        <span className="opacity-40 font-bold -mt-1 text-xs sm:text-sm">:</span>
-        <div className="flex flex-col items-center">
+        <span className="opacity-40 font-bold -mt-1 text-xs sm:text-sm" aria-hidden="true">:</span>
+        <div className="flex flex-col items-center" aria-hidden="true">
           <span className="leading-tight text-xs sm:text-sm font-bold">{pad(minutes)}</span>
           <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-70">m</span>
         </div>
-        <span className="opacity-40 font-bold -mt-1 text-xs sm:text-sm">:</span>
-        <div className="flex flex-col items-center">
+        <span className="opacity-40 font-bold -mt-1 text-xs sm:text-sm" aria-hidden="true">:</span>
+        <div className="flex flex-col items-center" aria-hidden="true">
           <span className="leading-tight text-xs sm:text-sm font-bold">{pad(seconds)}</span>
           <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-70">s</span>
         </div>
       </div>
 
       {showTimezoneBadge && targetDate && (
-        <span className="font-mono text-[9px] text-[#34433f] font-semibold flex items-center gap-1 mt-0.5">
-          <span className="px-1.5 py-0.5 border border-[#10201d]/30 bg-[#f7f7f2] font-bold text-[#10201d]">
+        <span className="font-mono text-[9px] text-hack-subtext font-semibold flex items-center gap-1 mt-0.5">
+          <span className="px-1.5 py-0.5 border border-hack-muted/60 bg-hack-sand rounded font-bold text-hack-ink">
             {new Intl.DateTimeFormat('en-US', {
               hour: 'numeric',
               minute: 'numeric',
@@ -199,7 +204,7 @@ export function CountdownTimer({
               timeZoneName: 'short',
             }).format(targetDate)}
           </span>
-          <span className="opacity-75">
+          <span className="opacity-80">
             ({new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(targetDate)})
           </span>
         </span>
