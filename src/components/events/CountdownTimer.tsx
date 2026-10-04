@@ -130,7 +130,11 @@ export function CountdownTimer({
 
   if (timeLeft.passed || timeLeft.diffMs <= 0 || currentMilestone === 'passed') {
     return (
-      <div className={cn("inline-flex items-center text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-1 border-2 border-[#10201d] bg-[#e53927] text-[#f7f7f2] shadow-[2px_2px_0_#671912]", className)}>
+      <div 
+        role="status"
+        aria-label="Deadline passed"
+        className={cn("inline-flex items-center text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-1 border-2 border-[#10201d] bg-[#e53927] text-[#f7f7f2] shadow-[2px_2px_0_#671912]", className)}
+      >
         Deadline Passed
       </div>
     )
@@ -159,6 +163,17 @@ export function CountdownTimer({
 
   const pad = (num: number) => num.toString().padStart(2, '0')
 
+  // Screen-reader friendly time description
+  const timeRemainingLabel = useMemo(() => {
+    const parts: string[] = []
+    if (days > 0) parts.push(`${days} ${days === 1 ? 'day' : 'days'}`)
+    if (hours > 0) parts.push(`${hours} ${hours === 1 ? 'hour' : 'hours'}`)
+    if (minutes > 0) parts.push(`${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`)
+    parts.push(`${seconds} ${seconds === 1 ? 'second' : 'seconds'}`)
+    const prefix = milestone === 'kickoff' ? 'Sprint kickoff in ' : 'Deadline in '
+    return `${prefix}${parts.join(', ')}`
+  }, [days, hours, minutes, seconds, milestone])
+
   return (
     <div className="flex flex-col gap-1">
       {showMilestoneLabel && (
@@ -166,23 +181,27 @@ export function CountdownTimer({
           {milestone === 'kickoff' ? '🚀 Sprint Kickoff in:' : '⚡ Code Freeze in:'}
         </span>
       )}
-      <div className={cn("inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 border-2 border-[#10201d] font-mono font-bold text-xs select-none max-w-full overflow-hidden", bgClass, shadowClass, className)}>
-        <div className="flex flex-col items-center">
+      <div 
+        role="timer"
+        aria-label={timeRemainingLabel}
+        className={cn("inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 border-2 border-[#10201d] font-mono font-bold text-xs select-none max-w-full overflow-hidden", bgClass, shadowClass, className)}
+      >
+        <div className="flex flex-col items-center" aria-hidden="true">
           <span className="leading-tight text-xs sm:text-sm font-extrabold">{pad(days)}</span>
           <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-80">d</span>
         </div>
-        <span className="opacity-50 font-bold -mt-1 text-xs sm:text-sm">:</span>
-        <div className="flex flex-col items-center">
+        <span className="opacity-50 font-bold -mt-1 text-xs sm:text-sm" aria-hidden="true">:</span>
+        <div className="flex flex-col items-center" aria-hidden="true">
           <span className="leading-tight text-xs sm:text-sm font-extrabold">{pad(hours)}</span>
           <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-80">h</span>
         </div>
-        <span className="opacity-50 font-bold -mt-1 text-xs sm:text-sm">:</span>
-        <div className="flex flex-col items-center">
+        <span className="opacity-50 font-bold -mt-1 text-xs sm:text-sm" aria-hidden="true">:</span>
+        <div className="flex flex-col items-center" aria-hidden="true">
           <span className="leading-tight text-xs sm:text-sm font-extrabold">{pad(minutes)}</span>
           <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-80">m</span>
         </div>
-        <span className="opacity-50 font-bold -mt-1 text-xs sm:text-sm">:</span>
-        <div className="flex flex-col items-center">
+        <span className="opacity-50 font-bold -mt-1 text-xs sm:text-sm" aria-hidden="true">:</span>
+        <div className="flex flex-col items-center" aria-hidden="true">
           <span className="leading-tight text-xs sm:text-sm font-extrabold">{pad(seconds)}</span>
           <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-80">s</span>
         </div>
