@@ -1,8 +1,9 @@
 'use client'
 
-import { Calendar } from 'lucide-react'
+import { Calendar, ChevronDown, Download } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import { CountdownTimer } from '@/components/events/CountdownTimer'
 import { StageChecklist } from '@/components/events/StageChecklist'
 import { downloadIcsFile, getGoogleCalendarUrl } from '@/lib/calendar/calendar-sync'
@@ -116,28 +117,38 @@ export function ActiveStagePanel({
                 showTimezoneBadge={true}
               />
 
-              {/* Calendar Sync: Google Calendar + Phone .ics Alarm */}
-              <div className="flex items-center justify-start sm:justify-end gap-1.5 mt-2.5 flex-wrap">
-                <a
-                  href={getGoogleCalLink()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-mono text-[10px] font-bold px-2.5 py-1 rounded-lg border border-hack-gold/40 bg-hack-gold/20 hover:bg-hack-gold/30 text-hack-ink shadow-hack-sm inline-flex items-center gap-1 transition-all"
-                  title="Add cutoff to Google Calendar"
-                >
-                  <Calendar className="w-3 h-3 text-hack-gold-dark" />
-                  + G-Calendar
-                </a>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={handleDownloadIcs}
-                  className="font-mono text-[10px] font-bold rounded-lg border border-hack-muted bg-hack-surface hover:bg-hack-mint/30 text-hack-ink shadow-hack-sm h-7 px-2.5"
-                  title="Download .ics alarm with -24h and -2h phone notifications"
-                >
-                  ⚡ Phone Alarm (.ics)
-                </Button>
+              {/* Consolidated Cutoff Schedule Dropdown */}
+              <div className="mt-2.5 flex justify-start sm:justify-end">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="font-mono text-[10px] sm:text-xs font-semibold rounded-lg border border-hack-muted/60 bg-hack-surface hover:bg-hack-sand text-hack-ink shadow-hack-sm h-7 sm:h-8 px-2.5 flex items-center gap-1.5 active:scale-95"
+                    >
+                      <Calendar className="w-3.5 h-3.5 text-hack-gold-dark shrink-0" />
+                      <span>Sync Cutoff</span>
+                      <ChevronDown className="w-3 h-3 text-hack-subtext shrink-0" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-dialog font-mono text-xs w-48 p-1.5">
+                    <DropdownMenuItem
+                      onClick={() => window.open(getGoogleCalLink(), '_blank', 'noopener,noreferrer')}
+                      className="cursor-pointer font-semibold text-hack-ink hover:bg-hack-sand rounded-lg px-2.5 py-2 flex items-center gap-2"
+                    >
+                      <Calendar className="w-3.5 h-3.5 text-hack-gold-dark shrink-0" />
+                      <span>Google Calendar</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleDownloadIcs}
+                      className="cursor-pointer font-semibold text-hack-ink hover:bg-hack-sand rounded-lg px-2.5 py-2 flex items-center gap-2"
+                    >
+                      <Download className="w-3.5 h-3.5 text-hack-mint-dark shrink-0" />
+                      <span>Apple / Outlook (.ics)</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
           </div>
