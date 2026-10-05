@@ -42,25 +42,33 @@ export async function claimDeliverable(deliverableId: string) {
 
     if (!user) return { success: false, error: 'Unauthorized' };
 
-    const { data: current } = await supabase
+    const { data: current, error: fetchErr } = await supabase
       .from('stage_deliverables')
-      .select('done_by, stage_id')
+      .select('assigned_to, done_by, stage_id')
       .eq('id', deliverableId)
       .single();
 
-    if (!current) return { success: false, error: 'Deliverable not found' };
+    if (fetchErr || !current) return { success: false, error: fetchErr?.message || 'Deliverable not found' };
 
-    const isAlreadyClaimedByUser = current.done_by === user.id;
-    const updateData = isAlreadyClaimedByUser
-      ? { done_by: null }
-      : { done_by: user.id };
+    // Disambiguate ownership: use assigned_to as primary source of ownership
+    const currentAssignee = current.assigned_to;
+    const isAlreadyClaimedByUser = currentAssignee === user.id;
+    const nextAssignee = isAlreadyClaimedByUser ? null : user.id;
 
-    const { error } = await supabase
+    let updateRes = await supabase
       .from('stage_deliverables')
-      .update(updateData)
+      .update({ assigned_to: nextAssignee })
       .eq('id', deliverableId);
 
-    if (error) return { success: false, error: error.message };
+    // Backward-compatibility: if assigned_to column is pending migration, fallback gracefully
+    if (updateRes.error && updateRes.error.message?.includes('assigned_to')) {
+      updateRes = await supabase
+        .from('stage_deliverables')
+        .update({ done_by: nextAssignee })
+        .eq('id', deliverableId);
+    }
+
+    if (updateRes.error) return { success: false, error: updateRes.error.message };
 
     const { data: stage } = await supabase.from('event_stages').select('event_id').eq('id', current.stage_id).single();
     if (stage) {

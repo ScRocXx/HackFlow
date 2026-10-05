@@ -108,8 +108,10 @@ export interface EventWithRelations extends Event {
 export interface StageDeliverable {
   id: string
   stage_id: string
+  event_id?: string
   title: string
   is_done: boolean
+  assigned_to?: string | null
   done_by: string | null
   done_at: string | null
   sort_order: number

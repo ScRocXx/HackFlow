@@ -6,6 +6,7 @@ import { toggleDeliverable, addDeliverable, deleteDeliverable, claimDeliverable 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useEventRoom } from '@/lib/supabase/event-channel'
+import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import type { StageDeliverable } from '@/lib/supabase/types'
 
@@ -13,12 +14,25 @@ interface StageChecklistProps {
   stageId: string
   eventId: string
   deliverables: StageDeliverable[]
+  currentUserId?: string
 }
 
-export function StageChecklist({ stageId, eventId, deliverables: initialDeliverables }: StageChecklistProps) {
+export function StageChecklist({ stageId, eventId, deliverables: initialDeliverables, currentUserId }: StageChecklistProps) {
   const [items, setItems] = useState<StageDeliverable[]>(initialDeliverables)
   const [newTask, setNewTask] = useState('')
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set())
+  const [activeUserId, setActiveUserId] = useState<string | null>(currentUserId || null)
+
+  useEffect(() => {
+    if (currentUserId) {
+      setActiveUserId(currentUserId)
+      return
+    }
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) setActiveUserId(data.user.id)
+    })
+  }, [currentUserId])
 
   useEffect(() => {
     setItems(initialDeliverables)
@@ -81,19 +95,19 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
   const handleClaim = async (id: string) => {
     setLoadingIds(prev => new Set(prev).add(id))
     const currentItem = items.find(i => i.id === id)
-    const prevDoneBy = currentItem?.done_by || null
-    const optimisticDoneBy = prevDoneBy ? null : 'claimed'
-    setItems(prev => prev.map(item => item.id === id ? { ...item, done_by: optimisticDoneBy } : item))
+    const prevAssignedTo = currentItem?.assigned_to ?? currentItem?.done_by ?? null
+    const optimisticAssignedTo = prevAssignedTo ? null : (activeUserId || 'claimed')
+    setItems(prev => prev.map(item => item.id === id ? { ...item, assigned_to: optimisticAssignedTo } : item))
 
     try {
       const res = await claimDeliverable(id)
       if (res && res.success) {
-        setItems(prev => prev.map(item => item.id === id ? { ...item, done_by: res.claimed ? (res.userId || 'claimed') : null } : item))
+        setItems(prev => prev.map(item => item.id === id ? { ...item, assigned_to: res.claimed ? (res.userId || 'claimed') : null } : item))
       } else {
-        setItems(prev => prev.map(item => item.id === id ? { ...item, done_by: prevDoneBy } : item))
+        setItems(prev => prev.map(item => item.id === id ? { ...item, assigned_to: prevAssignedTo } : item))
       }
     } catch {
-      setItems(prev => prev.map(item => item.id === id ? { ...item, done_by: prevDoneBy } : item))
+      setItems(prev => prev.map(item => item.id === id ? { ...item, assigned_to: prevAssignedTo } : item))
     } finally {
       setLoadingIds(prev => {
         const next = new Set(prev)
@@ -115,6 +129,7 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
       stage_id: stageId,
       title: title,
       is_done: false,
+      assigned_to: null,
       done_by: null,
       done_at: null,
       sort_order: items.length + 1,
@@ -174,7 +189,9 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
           items.map(item => {
             const isDone = Boolean(item.is_done || item.status === 'completed')
             const isLoading = loadingIds.has(item.id)
-            const isAssignedToUser = Boolean(item.done_by)
+            const assigneeId = item.assigned_to ?? item.done_by ?? null
+            const isClaimedByMe = Boolean(activeUserId && assigneeId === activeUserId) || assigneeId === 'claimed'
+            const isClaimedByOther = Boolean(assigneeId && !isClaimedByMe)
             
             return (
               <div 
@@ -212,16 +229,8 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
                   {item.title}
                 </span>
 
-                {/* Assignee / Claim badge */}
-                {isDone ? (
-                  <span 
-                    title="Cleared"
-                    aria-label="Cleared"
-                    className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-hack-mint/25 text-hack-mint-dark border border-hack-mint/40 shrink-0"
-                  >
-                    Done
-                  </span>
-                ) : item.done_by ? (
+                {/* Independent Ownership / Assignee Badge */}
+                {isClaimedByMe ? (
                   <button
                     type="button"
                     disabled={isLoading}
@@ -232,7 +241,15 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
                   >
                     You
                   </button>
-                ) : (
+                ) : isClaimedByOther ? (
+                  <span
+                    title="Claimed by teammate"
+                    aria-label={`Claimed by teammate: "${item.title}"`}
+                    className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-md bg-hack-sky/20 text-hack-blue-dark border border-hack-sky/40 shrink-0"
+                  >
+                    Teammate
+                  </span>
+                ) : !isDone ? (
                   <button
                     type="button"
                     disabled={isLoading}
@@ -244,8 +261,9 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
                     <span className="text-hack-coral font-bold">+</span>
                     <span>Claim</span>
                   </button>
-                )}
+                ) : null}
 
+                {/* Independent Completion Status Badge */}
                 <span className={cn(
                   "font-mono text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md border shrink-0",
                   isDone 

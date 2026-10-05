@@ -1,6 +1,7 @@
 'use client'
 
 import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { CountdownTimer } from '@/components/events/CountdownTimer'
 import { StageChecklist } from '@/components/events/StageChecklist'
 import { cn } from '@/lib/utils'
@@ -18,6 +19,7 @@ interface ActiveStagePanelProps {
   eventCurrentStageDeliverables?: StageDeliverable[]
   isCompleting: boolean
   onCompleteStage: () => void
+  currentUserId?: string
   className?: string
 }
 
@@ -33,6 +35,7 @@ export function ActiveStagePanel({
   eventCurrentStageDeliverables = [],
   isCompleting,
   onCompleteStage,
+  currentUserId,
   className,
 }: ActiveStagePanelProps) {
   const deliverables = currentDisplayStage.stage_deliverables || 
@@ -91,6 +94,7 @@ export function ActiveStagePanel({
             stageId={currentDisplayStage.id} 
             deliverables={deliverables} 
             eventId={eventId} 
+            currentUserId={currentUserId}
           />
           
           <div className="p-3 sm:p-4 bg-hack-sand/40 border-t border-hack-muted/40 flex justify-end">

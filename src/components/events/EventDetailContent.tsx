@@ -479,6 +479,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
               eventCurrentStageDeliverables={currentEvent.current_stage_deliverables}
               isCompleting={isCompleting}
               onCompleteStage={handleCompleteStage}
+              currentUserId={currentEvent.current_user_id || event.created_by}
               className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:block")}
             />
           )}
