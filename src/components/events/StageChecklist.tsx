@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useEventRoom } from '@/lib/supabase/event-channel'
 import { createClient } from '@/lib/supabase/client'
+import { executeWithOfflineOutbox } from '@/lib/offline/outbox'
+import { SyncStatusPill } from '@/components/ui/SyncStatusPill'
 import { cn } from '@/lib/utils'
 import type { StageDeliverable } from '@/lib/supabase/types'
 
@@ -68,20 +70,24 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
     }
   })
 
-  // 0ms Zero-Latency Optimistic Toggle
+  // 0ms Zero-Latency Optimistic Toggle with Offline Outbox
   const handleToggle = async (id: string, currentIsDone: boolean) => {
     setLoadingIds(prev => new Set(prev).add(id))
     const newIsDone = !currentIsDone
     setItems(prev => prev.map(item => item.id === id ? { ...item, is_done: newIsDone } : item))
     
     try {
-      const res = await toggleDeliverable(id, newIsDone)
-      if (res && !res.success) {
+      const res = await executeWithOfflineOutbox(
+        'DELIVERABLE_TOGGLE',
+        { id, isDone: newIsDone },
+        () => toggleDeliverable(id, newIsDone)
+      )
+      if (res && !res.success && !res.queuedLocally) {
         // Rollback
         setItems(prev => prev.map(item => item.id === id ? { ...item, is_done: currentIsDone } : item))
       }
     } catch {
-      setItems(prev => prev.map(item => item.id === id ? { ...item, is_done: currentIsDone } : item))
+      // Outbox maintains optimistic state
     } finally {
       setLoadingIds(prev => {
         const next = new Set(prev)
@@ -91,7 +97,7 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
     }
   }
 
-  // 0ms Zero-Latency Optimistic Claim / Unclaim
+  // 0ms Zero-Latency Optimistic Claim / Unclaim with Offline Outbox
   const handleClaim = async (id: string) => {
     setLoadingIds(prev => new Set(prev).add(id))
     const currentItem = items.find(i => i.id === id)
@@ -100,14 +106,16 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
     setItems(prev => prev.map(item => item.id === id ? { ...item, assigned_to: optimisticAssignedTo } : item))
 
     try {
-      const res = await claimDeliverable(id)
-      if (res && res.success) {
-        setItems(prev => prev.map(item => item.id === id ? { ...item, assigned_to: res.claimed ? (res.userId || 'claimed') : null } : item))
-      } else {
+      const res = await executeWithOfflineOutbox(
+        'DELIVERABLE_CLAIM',
+        { id },
+        () => claimDeliverable(id)
+      )
+      if (res && !res.success && !res.queuedLocally) {
         setItems(prev => prev.map(item => item.id === id ? { ...item, assigned_to: prevAssignedTo } : item))
       }
     } catch {
-      setItems(prev => prev.map(item => item.id === id ? { ...item, assigned_to: prevAssignedTo } : item))
+      // Outbox maintains optimistic state
     } finally {
       setLoadingIds(prev => {
         const next = new Set(prev)
@@ -117,7 +125,7 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
     }
   }
 
-  // 0ms Zero-Latency Optimistic Add
+  // 0ms Zero-Latency Optimistic Add with Offline Outbox
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
     const title = newTask.trim()
@@ -140,16 +148,18 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
     setItems(prev => [...prev, optimisticItem])
 
     try {
-      const res = await addDeliverable(stageId, title)
-      if (res && !res.success) {
+      const res = await executeWithOfflineOutbox(
+        'DELIVERABLE_ADD',
+        { stageId, title },
+        () => addDeliverable(stageId, title)
+      )
+      if (res && !res.success && !res.queuedLocally) {
         // Rollback optimistic item
         setItems(prev => prev.filter(i => i.id !== tempId))
         setNewTask(title)
       }
-    } catch (error) {
-      console.error(error)
-      setItems(prev => prev.filter(i => i.id !== tempId))
-      setNewTask(title)
+    } catch {
+      // Outbox maintains optimistic state
     }
   }
 
@@ -174,6 +184,12 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
 
   return (
     <div className="flex flex-col h-full max-h-[520px]">
+      <div className="flex items-center justify-between px-4 pt-3 pb-1 flex-wrap gap-2">
+        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext">
+          Stage Deliverables ({items.filter(i => Boolean(i.is_done || i.status === 'completed')).length}/{items.length})
+        </span>
+        <SyncStatusPill />
+      </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-2">
         {items.length > 0 && items.every(item => Boolean(item.is_done || item.status === 'completed')) && (
           <div className="p-3 mb-2 rounded-lg bg-hack-mint/15 border border-hack-mint/30 font-mono text-xs font-semibold text-hack-forest flex items-center gap-2">

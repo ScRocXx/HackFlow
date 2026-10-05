@@ -10,6 +10,9 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { useToast } from '@/components/ui/use-toast'
 import { updateSquadScratchpad, getSquadScratchpad } from '@/app/actions/vault'
+import { executeWithOfflineOutbox } from '@/lib/offline/outbox'
+import { setCachedData, getCachedData } from '@/lib/offline/idb-store'
+import { SyncStatusPill } from '@/components/ui/SyncStatusPill'
 import type { SquadScratchpad as SquadScratchpadType } from '@/lib/supabase/types'
 import { ensureExternalUrl } from '@/lib/utils/url'
 import { cn } from '@/lib/utils'
@@ -48,24 +51,39 @@ export function SquadScratchpad({
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const { toast } = useToast()
 
-  // Load scratchpad if not passed or when squadId changes
+  // Load scratchpad from offline cache or network when squadId changes
   useEffect(() => {
     let isMounted = true
     const load = async () => {
+      // 1. Instant local IndexedDB offline hydration
+      const cached = await getCachedData<any>(`scratchpad-${squadId}`)
+      if (cached && isMounted) {
+        setFormData({
+          meet_url: cached.meet_url || '',
+          chat_channel_url: cached.chat_channel_url || '',
+          staging_url: cached.staging_url || '',
+          test_credentials: cached.test_credentials || '',
+          notes: cached.notes || '',
+        })
+      }
+
+      // 2. Network synchronization
       try {
         const res = await getSquadScratchpad(squadId)
         if (res.success && res.data && isMounted) {
           setScratchpad(res.data)
-          setFormData({
+          const netData = {
             meet_url: res.data.meet_url || '',
             chat_channel_url: res.data.chat_channel_url || '',
             staging_url: res.data.staging_url || '',
             test_credentials: res.data.test_credentials || '',
             notes: res.data.notes || '',
-          })
+          }
+          setFormData(netData)
+          setCachedData(`scratchpad-${squadId}`, netData)
         }
       } catch (err) {
-        console.warn('Could not load scratchpad:', err)
+        console.warn('Network scratchpad load fallback to cached store:', err)
       }
     }
     load()
@@ -136,27 +154,34 @@ export function SquadScratchpad({
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     setIsSaving(true)
+
+    // Always persist to local IndexedDB store immediately
+    await setCachedData(`scratchpad-${squadId}`, formData)
+
     try {
-      const res = await updateSquadScratchpad(squadId, {
-        meet_url: formData.meet_url,
-        chat_channel_url: formData.chat_channel_url,
-        staging_url: formData.staging_url,
-        test_credentials: formData.test_credentials,
-        notes: formData.notes,
-      })
+      const res = await executeWithOfflineOutbox(
+        'SCRATCHPAD_UPDATE',
+        { squadId, data: formData },
+        () => updateSquadScratchpad(squadId, formData)
+      )
 
-      if (!res.success) throw new Error(res.error || 'Failed to save scratchpad')
-
-      setScratchpad(res.data as SquadScratchpadType)
-      toast({
-        title: 'Scratchpad Updated!',
-        description: 'Changes are saved and pinned for all squad members.',
-      })
+      if (res.queuedLocally) {
+        toast({
+          title: 'Saved on device',
+          description: 'Network offline. Changes are saved locally and will sync once connected.',
+        })
+      } else if (res.success) {
+        toast({
+          title: 'Scratchpad Updated!',
+          description: 'Changes are saved and pinned for all squad members.',
+        })
+      } else {
+        throw new Error(res.error || 'Failed to save scratchpad')
+      }
     } catch (err: any) {
       toast({
-        title: 'Save Failed',
-        description: err.message,
-        variant: 'destructive',
+        title: 'Save Notice',
+        description: err.message || 'Changes saved to this device.',
       })
     } finally {
       setIsSaving(false)
@@ -186,14 +211,17 @@ export function SquadScratchpad({
           </div>
         </div>
 
-        <Button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="font-mono text-xs font-semibold bg-hack-coral hover:bg-hack-coral/90 text-white shadow-hack-hero rounded-lg px-4 py-2 shrink-0 transition-colors"
-        >
-          {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Save className="w-3.5 h-3.5 mr-1.5" />}
-          <span>{isSaving ? 'Saving...' : 'Save Scratchpad'}</span>
-        </Button>
+        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+          <SyncStatusPill />
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="font-mono text-xs font-semibold bg-hack-coral hover:bg-hack-coral/90 text-white shadow-hack-hero rounded-lg px-4 py-2 shrink-0 transition-colors"
+          >
+            {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Save className="w-3.5 h-3.5 mr-1.5" />}
+            <span>{isSaving ? 'Saving...' : 'Save Scratchpad'}</span>
+          </Button>
+        </div>
       </div>
 
       {/* Grid: 2 Columns */}
