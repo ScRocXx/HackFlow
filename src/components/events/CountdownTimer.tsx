@@ -130,7 +130,11 @@ export function CountdownTimer({
 
   if (timeLeft.passed || timeLeft.diffMs <= 0 || currentMilestone === 'passed') {
     return (
-      <div className={cn("inline-flex items-center text-xs font-mono font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md border border-hack-muted/60 bg-hack-sand text-hack-subtext select-none", className)}>
+      <div 
+        role="status"
+        aria-label="Deadline passed"
+        className={cn("inline-flex items-center text-xs font-mono font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md border border-hack-muted/60 bg-hack-sand text-hack-subtext select-none", className)}
+      >
         Deadline Passed
       </div>
     )
