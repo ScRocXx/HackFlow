@@ -89,6 +89,7 @@ export interface StageDeliverable {
   stage_id: string
   title: string
   is_done: boolean
+  assigned_to?: string | null
   done_by: string | null
   done_at: string | null
   sort_order: number

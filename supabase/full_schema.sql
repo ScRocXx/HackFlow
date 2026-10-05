@@ -61,6 +61,7 @@ create table if not exists public.stage_deliverables (
   stage_id uuid references public.event_stages(id) on delete cascade not null,
   title text not null,
   is_done boolean default false,
+  assigned_to uuid references public.profiles(id) on delete set null,
   done_by uuid references public.profiles(id) on delete set null,
   done_at timestamptz,
   sort_order int default 0,

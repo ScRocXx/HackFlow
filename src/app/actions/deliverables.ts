@@ -103,3 +103,32 @@ export async function deleteDeliverable(deliverableId: string) {
     return { success: false, error: error.message || 'Failed to delete deliverable' };
   }
 }
+
+export async function claimDeliverable(deliverableId: string, assignedToUserId: string | null) {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { success: false, error: 'Unauthorized' };
+
+    // Update assigned_to without changing completion status (is_done)
+    const { data, error } = await supabase
+      .from('stage_deliverables')
+      .update({ assigned_to: assignedToUserId })
+      .eq('id', deliverableId)
+      .select('stage_id')
+      .single();
+
+    if (error || !data) return { success: false, error: error?.message || 'Failed to assign deliverable' };
+
+    const { data: stage } = await supabase.from('event_stages').select('event_id').eq('id', data.stage_id).single();
+    if (stage) {
+      revalidatePath(`/events/${stage.event_id}`);
+      revalidatePath('/dashboard');
+    }
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Failed to claim deliverable' };
+  }
+}
