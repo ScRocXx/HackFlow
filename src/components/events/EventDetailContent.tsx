@@ -20,6 +20,7 @@ import { SubmissionReadiness } from '@/components/events/SubmissionReadiness'
 import { PostSubmissionConsole } from '@/components/events/PostSubmissionConsole'
 import { WorkspaceHeader } from '@/components/events/WorkspaceHeader'
 import { ActiveStagePanel } from '@/components/events/ActiveStagePanel'
+import { KeyboardShortcutsDialog } from '@/components/events/KeyboardShortcutsDialog'
 import type { EventResource, Friendship, EventWithRelations, EventStage } from '@/lib/supabase/types'
 import { ensureExternalUrl } from '@/lib/utils/url'
 import { cn } from '@/lib/utils'
@@ -1024,6 +1025,9 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          {/* Quick Keyboard Shortcuts Dialog Listener */}
+          <KeyboardShortcutsDialog />
         </div>
       </div>
     </div>

@@ -290,7 +290,8 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
       <div className="p-3 sm:p-4 border-t border-hack-muted/40 bg-hack-sand/30">
         <form onSubmit={handleAdd} className="flex gap-2">
           <Input 
-            placeholder="Add new deliverable..." 
+            id="add-deliverable-input"
+            placeholder="Add new deliverable... (press 'N')" 
             value={newTask}
             onChange={(e) => setNewTask(e.target.value)}
             className="flex-1 font-mono text-xs rounded-lg border border-hack-muted bg-white shadow-hack-sm focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25"
