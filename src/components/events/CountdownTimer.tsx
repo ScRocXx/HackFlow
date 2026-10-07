@@ -125,15 +125,16 @@ export function CountdownTimer({
   }
 
   if (!mounted) {
-    return <div className="h-7 w-28 bg-[#e4e5da] border-2 border-[#10201d] animate-pulse" />
+    return <div className="h-7 w-28 bg-hack-muted border-2 border-hack-ink animate-pulse" />
   }
 
   if (timeLeft.passed || timeLeft.diffMs <= 0 || currentMilestone === 'passed') {
     return (
       <div 
         role="status"
+        aria-live="polite"
         aria-label="Deadline passed"
-        className={cn("inline-flex items-center text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-1 border-2 border-[#10201d] bg-[#e53927] text-[#f7f7f2] shadow-[2px_2px_0_#671912]", className)}
+        className={cn("inline-flex items-center text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-1 border-2 border-hack-ink bg-destructive text-destructive-foreground shadow-[2px_2px_0_var(--hack-coral-shadow,#671912)]", className)}
       >
         Deadline Passed
       </div>
@@ -144,21 +145,21 @@ export function CountdownTimer({
   const milestone = currentMilestone
   const totalHours = days * 24 + hours
 
-  let bgClass = "bg-[#f7f7f2] text-[#10201d]"
-  let shadowClass = "shadow-[3px_3px_0_#2e4742]"
+  let bgClass = "bg-hack-panel text-hack-ink"
+  let shadowClass = "shadow-[3px_3px_0_var(--hack-forest,#2e4742)]"
   
   if (milestone === 'kickoff') {
-    bgClass = "bg-[#8bb2de] text-[#10201d]"
+    bgClass = "bg-accent text-hack-ink"
     shadowClass = "shadow-[3px_3px_0_#10201d]"
   } else if (days < 3 && days >= 1) {
-    bgClass = "bg-[#f5b726] text-[#10201d]"
+    bgClass = "bg-[#f5b726] text-hack-ink"
     shadowClass = "shadow-[3px_3px_0_#8a5d13]"
   } else if (days < 1 && totalHours >= 6) {
-    bgClass = "bg-[#e97b77] text-[#10201d]"
-    shadowClass = "shadow-[3px_3px_0_#671912]"
+    bgClass = "bg-hack-coral text-hack-ink"
+    shadowClass = "shadow-[3px_3px_0_var(--hack-coral-shadow,#671912)]"
   } else if (totalHours < 6) {
-    bgClass = "bg-[#e53927] text-[#f7f7f2] animate-pulse"
-    shadowClass = "shadow-[3px_3px_0_#671912]"
+    bgClass = "bg-destructive text-destructive-foreground animate-pulse"
+    shadowClass = "shadow-[3px_3px_0_var(--hack-coral-shadow,#671912)]"
   }
 
   const pad = (num: number) => num.toString().padStart(2, '0')
@@ -177,14 +178,14 @@ export function CountdownTimer({
   return (
     <div className="flex flex-col gap-1">
       {showMilestoneLabel && (
-        <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#34433f]">
+        <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
           {milestone === 'kickoff' ? '🚀 Sprint Kickoff in:' : '⚡ Code Freeze in:'}
         </span>
       )}
       <div 
         role="timer"
         aria-label={timeRemainingLabel}
-        className={cn("inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 border-2 border-[#10201d] font-mono font-bold text-xs select-none max-w-full overflow-hidden", bgClass, shadowClass, className)}
+        className={cn("inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 border-2 border-hack-ink font-mono font-bold text-xs select-none max-w-full overflow-hidden", bgClass, shadowClass, className)}
       >
         <div className="flex flex-col items-center" aria-hidden="true">
           <span className="leading-tight text-xs sm:text-sm font-extrabold">{pad(days)}</span>
@@ -208,8 +209,8 @@ export function CountdownTimer({
       </div>
 
       {showTimezoneBadge && targetDate && (
-        <span className="font-mono text-[9px] text-[#34433f] font-semibold flex items-center gap-1 mt-0.5">
-          <span className="px-1.5 py-0.5 border border-[#10201d]/30 bg-[#f7f7f2] font-bold text-[#10201d]">
+        <span className="font-mono text-[9px] text-muted-foreground font-semibold flex items-center gap-1 mt-0.5">
+          <span className="px-1.5 py-0.5 border border-hack-ink/30 bg-hack-panel font-bold text-hack-ink">
             {new Intl.DateTimeFormat('en-US', {
               hour: 'numeric',
               minute: 'numeric',
