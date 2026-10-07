@@ -577,6 +577,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                     stageId={activeStage.id} 
                     deliverables={event.current_stage_deliverables || activeStage.deliverables || []} 
                     eventId={event.id} 
+                    currentUserId={event.user_id}
                   />
                   
                   <div className="p-3 sm:p-4 bg-[#f7f7f2] border-t-2 border-[#10201d] flex justify-end">

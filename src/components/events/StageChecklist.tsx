@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Loader2 } from 'lucide-react'
-import { toggleDeliverable, addDeliverable, deleteDeliverable } from '@/app/actions/deliverables'
+import { Plus, Trash2, Loader2, UserCheck } from 'lucide-react'
+import { toggleDeliverable, addDeliverable, deleteDeliverable, claimDeliverable } from '@/app/actions/deliverables'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useEventRoom } from '@/lib/supabase/event-channel'
@@ -12,12 +12,14 @@ interface StageChecklistProps {
   stageId: string
   eventId: string
   deliverables: any[]
+  currentUserId?: string | null
 }
 
-export function StageChecklist({ stageId, eventId, deliverables: initialDeliverables }: StageChecklistProps) {
+export function StageChecklist({ stageId, eventId, deliverables: initialDeliverables, currentUserId }: StageChecklistProps) {
   const [items, setItems] = useState(initialDeliverables)
   const [newTask, setNewTask] = useState('')
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set())
+  const [claimingIds, setClaimingIds] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     setItems(initialDeliverables)
@@ -127,6 +129,29 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
     }
   }
 
+  // 0ms Zero-Latency Optimistic Claim (Decoupled from completion)
+  const handleClaim = async (id: string, currentAssigned: string | null) => {
+    setClaimingIds(prev => new Set(prev).add(id))
+    const nextAssigned = currentAssigned ? null : (currentUserId || 'claimed')
+    setItems(prev => prev.map(item => item.id === id ? { ...item, assigned_to: nextAssigned } : item))
+
+    try {
+      const res = await claimDeliverable(id, nextAssigned)
+      if (res && !res.success) {
+        // Rollback
+        setItems(prev => prev.map(item => item.id === id ? { ...item, assigned_to: currentAssigned } : item))
+      }
+    } catch {
+      setItems(prev => prev.map(item => item.id === id ? { ...item, assigned_to: currentAssigned } : item))
+    } finally {
+      setClaimingIds(prev => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }
+  }
+
   return (
     <div className="flex flex-col h-full max-h-[500px]">
       <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
@@ -138,6 +163,8 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
           items.map(item => {
             const isDone = Boolean(item.is_done || item.status === 'completed')
             const isLoading = loadingIds.has(item.id)
+            const isClaiming = claimingIds.has(item.id)
+            const isAssignedToMe = Boolean(currentUserId && item.assigned_to === currentUserId)
             
             return (
               <div 
@@ -150,7 +177,8 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
                 <button 
                   disabled={isLoading}
                   onClick={() => handleToggle(item.id, isDone)}
-                  className="shrink-0 w-5 h-5 border-2 border-[#10201d] bg-white flex items-center justify-center transition-colors"
+                  aria-label={isDone ? `Mark "${item.title}" as incomplete` : `Mark "${item.title}" as completed`}
+                  className="shrink-0 w-5 h-5 border-2 border-[#10201d] bg-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10201d]"
                 >
                   {isLoading ? (
                     <Loader2 className="w-3 h-3 animate-spin text-[#10201d]" />
@@ -166,8 +194,30 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
                   {item.title}
                 </span>
 
+                {/* Ownership Claim Pill */}
+                <button
+                  type="button"
+                  disabled={isClaiming}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleClaim(item.id, item.assigned_to)
+                  }}
+                  className={cn(
+                    "px-2 py-0.5 border text-[10px] font-mono font-bold transition-all shrink-0",
+                    item.assigned_to
+                      ? isAssignedToMe
+                        ? "border-[#10201d] bg-[#f5b726] text-[#10201d]"
+                        : "border-[#10201d] bg-[#8bb2de] text-[#10201d]"
+                      : "border-[#10201d]/40 bg-white hover:bg-[#e4e5da] text-[#34433f]"
+                  )}
+                  title={item.assigned_to ? (isAssignedToMe ? "Assigned to you (click to unclaim)" : "Claimed by teammate") : "Claim this deliverable"}
+                >
+                  {isClaiming ? "..." : item.assigned_to ? (isAssignedToMe ? "You" : "Teammate") : "+ Claim"}
+                </button>
+
                 <button 
                   onClick={() => handleDelete(item.id)}
+                  aria-label={`Delete deliverable "${item.title}"`}
                   className="opacity-0 group-hover:opacity-100 shrink-0 text-[#10201d] hover:text-[#e53927] transition-opacity p-1"
                   title="Delete task"
                 >
