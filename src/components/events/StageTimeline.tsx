@@ -41,11 +41,22 @@ export function StageTimeline({
         </span>
       </div>
 
-      {/* Metro Line Track Rail */}
+      {/* Animated SVG Circuit Track Rail */}
       <div className="relative px-2 hidden sm:block">
-        <div className="h-1 bg-hack-ink/15 rounded-full w-full overflow-hidden">
+        <div className="h-2 bg-hack-ink/15 rounded-full w-full overflow-hidden relative">
+          <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+            <line 
+              x1="0" 
+              y1="50%" 
+              x2="100%" 
+              y2="50%" 
+              stroke="#2B6E4E" 
+              strokeWidth="3" 
+              className="animate-circuit-trace stroke-hack-forest" 
+            />
+          </svg>
           <div 
-            className="h-full bg-hack-forest transition-all duration-500 ease-out"
+            className="h-full bg-hack-forest/90 transition-all duration-500 ease-out relative z-10 shadow-sm"
             style={{ 
               width: `${stages.length > 1 && activeIndex >= 0 ? Math.min(100, ((activeIndex) / (stages.length - 1)) * 100) : 0}%` 
             }}
