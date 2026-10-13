@@ -66,6 +66,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
 
   const [isCompleting, setIsCompleting] = useState(false)
   const [mobileWorkspaceTab, setMobileWorkspaceTab] = useState<'sprint' | 'pitch' | 'team'>('sprint')
+  const [briefTab, setBriefTab] = useState<'build' | 'stack' | 'rules'>('build')
   
   // Edit & Delete dialog states
   const [editDialogOpen, setEditDialogOpen] = useState(false)
@@ -338,125 +339,126 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 items-start">
         {/* Left Column (Dominant Workspace) */}
         <div className="space-y-6 min-w-0">
-          {/* The Brief Banner */}
+          {/* The Brief: Compact 3-Tab Index Card */}
           {event.mission_brief && (
             <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:block")}>
-              <Card className="border border-hack-muted/60 bg-hack-surface rounded-[6px] shadow-hack-card overflow-hidden">
-                <div className="bg-hack-surface p-4 border-b border-hack-muted/30 text-hack-ink flex items-center justify-between gap-3 flex-wrap">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-xl">🎯</span>
-                    <div>
-                      <h3 className="font-display text-lg font-bold tracking-tight text-hack-ink">The Brief</h3>
-                      <p className="font-mono text-[11px] text-hack-subtext">Rules, tech stack, and what you need to submit</p>
-                    </div>
+              <div className="border-2 border-hack-ink bg-white rounded-[8px] shadow-hack-card overflow-hidden">
+                {/* Tab Header Strip */}
+                <div className="bg-[#10201D] text-[#F7F7F2] px-3 py-2 flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5" role="tablist" aria-label="Brief tabs">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={briefTab === 'build'}
+                      onClick={() => setBriefTab('build')}
+                      className={cn(
+                        "px-3 py-1 rounded-full font-mono text-xs font-bold transition-all select-none",
+                        briefTab === 'build' ? "bg-hack-coral text-hack-ink shadow-sm" : "text-white/70 hover:text-white hover:bg-white/10"
+                      )}
+                    >
+                      🎯 What to Build
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={briefTab === 'stack'}
+                      onClick={() => setBriefTab('stack')}
+                      className={cn(
+                        "px-3 py-1 rounded-full font-mono text-xs font-bold transition-all select-none",
+                        briefTab === 'stack' ? "bg-hack-coral text-hack-ink shadow-sm" : "text-white/70 hover:text-white hover:bg-white/10"
+                      )}
+                    >
+                      ⚡ Tech Stack
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={briefTab === 'rules'}
+                      onClick={() => setBriefTab('rules')}
+                      className={cn(
+                        "px-3 py-1 rounded-full font-mono text-xs font-bold transition-all select-none",
+                        briefTab === 'rules' ? "bg-hack-coral text-hack-ink shadow-sm" : "text-white/70 hover:text-white hover:bg-white/10"
+                      )}
+                    >
+                      📋 Judging & Rules
+                    </button>
                   </div>
+
                   <span
                     className={cn(
-                      "font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-[4px] border",
+                      "font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[4px] border",
                       event.mission_brief.hackathon_tier === 'tech_mandate'
-                        ? 'bg-hack-gold/20 border-hack-gold text-hack-gold-dark'
-                        : event.mission_brief.hackathon_tier === 'domain_focused'
-                        ? 'bg-hack-blue/20 border-hack-blue text-hack-blue-dark'
-                        : 'bg-hack-mint/20 border-hack-mint text-hack-mint-dark'
+                        ? 'bg-hack-gold/25 border-hack-gold text-hack-gold'
+                        : 'bg-white/15 border-white/20 text-white'
                     )}
                   >
-                    {event.mission_brief.hackathon_tier === 'tech_mandate'
-                      ? '⚡ Required Stack'
-                      : event.mission_brief.hackathon_tier === 'domain_focused'
-                      ? '🎯 Domain Focused'
-                      : '🟢 Open Build'}
+                    {event.mission_brief.hackathon_tier === 'tech_mandate' ? '⚡ Restricted Stack' : '🟢 Open Build'}
                   </span>
                 </div>
 
-                <CardContent className="p-4 sm:p-5 space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
-                        What to build
-                      </span>
-                      <p className="font-sans text-sm text-hack-ink font-semibold bg-hack-sand/50 p-3 rounded-[4px] border border-hack-muted/40 leading-relaxed">
+                {/* Tab Body */}
+                <div className="p-4 bg-hack-sand/20 text-hack-ink min-h-[90px]">
+                  {briefTab === 'build' && (
+                    <div className="space-y-2 animate-cascade-in">
+                      <p className="font-sans text-sm text-hack-ink leading-relaxed font-medium">
                         {event.mission_brief.what_to_build}
                       </p>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
-                        What judges care about
-                      </span>
-                      <p className="font-sans text-sm text-hack-ink bg-hack-sand/50 p-3 rounded-[4px] border border-hack-muted/40 leading-relaxed">
-                        {event.mission_brief.why_it_exists}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Tech Stack Rules */}
-                  {event.mission_brief.tech_stack_mandate && (
-                    <div className="space-y-1.5 pt-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
-                          Required Stack
-                        </span>
-                        {event.mission_brief.tech_stack_mandate.is_stack_restricted && (
-                          <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-hack-red/10 text-hack-red border border-hack-red/30 rounded-[4px]">
-                            ⚠️ Required Stack
-                          </span>
-                        )}
-                      </div>
-
-                      {event.mission_brief.tech_stack_mandate.is_stack_restricted ? (
-                        <div className="space-y-2 p-3 bg-hack-sand/40 border border-hack-muted/40 rounded-[4px]">
-                          <p className="font-sans text-sm text-hack-ink leading-relaxed">
-                            {event.mission_brief.tech_stack_mandate.allowed_stack_summary}
-                          </p>
-                          <div className="flex flex-wrap gap-1.5 items-center">
-                            {(event.mission_brief.tech_stack_mandate.mandatory_tools || []).map((tool: string, i: number) => (
-                              <span
-                                key={i}
-                                className="font-mono text-xs font-bold px-2.5 py-1 rounded-[4px] border border-hack-red/40 bg-hack-red/15 text-hack-red flex items-center gap-1"
-                              >
-                                <span>⚡</span> {tool}
-                              </span>
-                            ))}
-                            {(event.mission_brief.tech_stack_mandate.bonus_sponsor_tools || []).map((tool: string, i: number) => (
-                              <span
-                                key={`bonus-${i}`}
-                                className="font-mono text-xs font-bold px-2.5 py-1 rounded-[4px] border border-hack-gold/40 bg-hack-gold/20 text-hack-gold-dark flex items-center gap-1"
-                              >
-                                <span>⭐</span> {tool} (Bonus Points)
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="p-3 bg-hack-sand/40 border border-hack-muted/40 rounded-[4px]">
-                          <p className="font-mono text-xs text-hack-mint-dark font-semibold flex items-center gap-1.5">
-                            <span>✨</span>
-                            {event.mission_brief.tech_stack_mandate.allowed_stack_summary || 'Any tech stack permitted (Free Choice)'}
-                          </p>
+                      {event.mission_brief.submission_deliverables && event.mission_brief.submission_deliverables.length > 0 && (
+                        <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-hack-ink/10">
+                          <span className="font-mono text-[10px] font-bold uppercase text-hack-subtext">Must Ship:</span>
+                          {event.mission_brief.submission_deliverables.map((deliv: string, i: number) => (
+                            <span
+                              key={i}
+                              className="font-mono text-[11px] font-semibold px-2 py-0.5 rounded-[4px] border border-hack-ink/20 bg-white text-hack-ink shadow-xs"
+                            >
+                              ✓ {deliv}
+                            </span>
+                          ))}
                         </div>
                       )}
                     </div>
                   )}
 
-                  {/* Submission Deliverables */}
-                  {event.mission_brief.submission_deliverables && event.mission_brief.submission_deliverables.length > 0 && (
-                    <div className="space-y-1.5 pt-1">
-                      <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
-                        Required to submit
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {event.mission_brief.submission_deliverables.map((deliv: string, i: number) => (
+                  {briefTab === 'stack' && (
+                    <div className="space-y-2.5 animate-cascade-in">
+                      <p className="font-sans text-sm text-hack-ink leading-relaxed">
+                        {event.mission_brief.tech_stack_mandate?.allowed_stack_summary || 'No restrictive stack mandate. Build with your stack of choice.'}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 items-center">
+                        {(event.mission_brief.tech_stack_mandate?.mandatory_tools || []).map((tool: string, i: number) => (
                           <span
                             key={i}
-                            className="font-mono text-xs font-semibold px-2.5 py-1 rounded-[4px] border border-hack-muted bg-hack-surface text-hack-ink flex items-center gap-1 shadow-sm"
+                            className="font-mono text-xs font-bold px-2.5 py-1 rounded-[4px] border border-hack-red/40 bg-hack-red/15 text-hack-red flex items-center gap-1"
                           >
-                            <span className="text-hack-mint-dark">✓</span> {deliv}
+                            <span>⚡ Mandatory:</span> {tool}
+                          </span>
+                        ))}
+                        {(event.mission_brief.tech_stack_mandate?.bonus_sponsor_tools || []).map((tool: string, i: number) => (
+                          <span
+                            key={`bonus-${i}`}
+                            className="font-mono text-xs font-bold px-2.5 py-1 rounded-[4px] border border-hack-gold/40 bg-hack-gold/20 text-hack-gold-dark flex items-center gap-1"
+                          >
+                            <span>⭐ Bonus:</span> {tool}
                           </span>
                         ))}
                       </div>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+
+                  {briefTab === 'rules' && (
+                    <div className="space-y-2 animate-cascade-in">
+                      <div className="space-y-1">
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
+                          What Judges Actually Care About:
+                        </span>
+                        <p className="font-sans text-sm text-hack-ink leading-relaxed">
+                          {event.mission_brief.why_it_exists || 'Functionality, execution polish, and real user value.'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
