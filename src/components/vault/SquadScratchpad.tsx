@@ -437,24 +437,24 @@ export function SquadScratchpad({
                   </button>
                 </div>
 
-                <div className="relative rounded-[4px] overflow-hidden">
+                <div className="relative rounded-[6px] overflow-hidden border-2 border-[#10201D] shadow-inner">
                   <textarea
                     value={formData.test_credentials}
                     onChange={(e) => setFormData({ ...formData, test_credentials: e.target.value })}
                     rows={4}
                     placeholder={`GEMINI_API_KEY=AIzaSy...\nGROQ_API_KEY=gsk_...\nJudge Login: judge@demo.com / pass123`}
                     className={cn(
-                      "w-full p-2.5 font-mono text-xs border border-hack-muted/40 rounded-[4px] bg-hack-surface text-hack-ink focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25 focus:outline-none resize-none leading-relaxed transition-all",
-                      !showSecrets && formData.test_credentials && "blur-[5px] select-none pointer-events-none"
+                      "w-full p-3 font-mono text-xs bg-[#10201D] text-[#93C9B8] placeholder:text-white/30 focus:outline-none resize-none leading-relaxed transition-all",
+                      !showSecrets && formData.test_credentials && "blur-[6px] select-none pointer-events-none"
                     )}
                   />
                   {!showSecrets && formData.test_credentials && (
                     <div 
                       onClick={() => setShowSecrets(true)}
-                      className="absolute inset-0 backdrop-blur-md bg-hack-ink/5 flex items-center justify-center cursor-pointer rounded-[4px] border border-dashed border-hack-muted/60 hover:bg-hack-ink/10 transition-all select-none"
+                      className="absolute inset-0 backdrop-blur-md bg-black/40 flex items-center justify-center cursor-pointer rounded-[4px] border border-dashed border-white/20 hover:bg-black/50 transition-all select-none"
                     >
-                      <span className="font-mono text-xs font-semibold px-3 py-1.5 rounded-full bg-hack-sand border border-hack-ink/20 shadow-sm text-hack-ink flex items-center gap-1.5 hover:scale-105 transition-transform">
-                        🔒 Keys hidden for screen-sharing • <span className="underline font-bold">Click to reveal</span>
+                      <span className="font-mono text-xs font-bold px-3 py-1.5 rounded-full bg-hack-coral text-hack-ink border-2 border-hack-ink shadow-md flex items-center gap-1.5 hover:scale-105 transition-transform">
+                        🔒 Keys masked for stream safety • Click to peek
                       </span>
                     </div>
                   )}
