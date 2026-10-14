@@ -70,19 +70,19 @@ export function NextUpStrip({ userName, items }: NextUpStripProps) {
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <span className={cn(
-                      "font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border",
+                      "font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border whitespace-nowrap shrink-0",
                       severity.severity === 'critical' ? "bg-hack-red/15 border-hack-red/40 text-hack-red" :
                       severity.severity === 'attention' ? "bg-hack-gold/25 border-hack-gold/40 text-hack-gold-dark" :
                       "bg-hack-blue/20 border-hack-blue/40 text-hack-blue-dark"
                     )}>
                       {dueText}
                     </span>
-                    <span className="font-mono text-[10px] font-medium text-hack-subtext truncate">
+                    <span className="font-mono text-[10px] font-medium text-hack-subtext truncate min-w-0">
                       {item.stageName}
                     </span>
                   </div>
 
-                  <h3 className="font-display text-base font-bold text-hack-ink line-clamp-2 leading-snug group-hover:text-hack-coral-dark transition-colors">
+                  <h3 className="font-display text-base font-bold text-hack-ink line-clamp-2 leading-snug group-hover:text-hack-coral-dark transition-colors first-letter:uppercase">
                     {item.deliverableTitle}
                   </h3>
 

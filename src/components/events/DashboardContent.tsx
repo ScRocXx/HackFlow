@@ -167,6 +167,33 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
     })
   }, [safeEvents, selectedFilter, selectedSquad])
 
+  // Deterministic sorting: Live upcoming deadlines first, then TBA, then expired
+  const sortedEvents = useMemo(() => {
+    const now = Date.now()
+    return [...filteredEvents].sort((a, b) => {
+      const stageA = computeActiveStage(a.stages || [], a.active_stage_id || a.active_stage?.id)
+      const stageB = computeActiveStage(b.stages || [], b.active_stage_id || b.active_stage?.id)
+      const dlA = stageA ? new Date(stageA.actionable_deadline || stageA.window_end || stageA.deadline || 0).getTime() : 0
+      const dlB = stageB ? new Date(stageB.actionable_deadline || stageB.window_end || stageB.deadline || 0).getTime() : 0
+      const isUpcomingA = dlA > now
+      const isUpcomingB = dlB > now
+
+      // 1. Live upcoming deadlines always come first, sorted soonest -> latest
+      if (isUpcomingA && !isUpcomingB) return -1
+      if (!isUpcomingA && isUpcomingB) return 1
+      if (isUpcomingA && isUpcomingB) return dlA - dlB
+
+      // 2. TBA dates (dl === 0 or NaN) come before expired deadlines
+      const isTbaA = !dlA || isNaN(dlA)
+      const isTbaB = !dlB || isNaN(dlB)
+      if (isTbaA && !isTbaB) return -1
+      if (!isTbaA && isTbaB) return 1
+
+      // 3. Both expired: sort most recently expired first
+      return dlB - dlA
+    })
+  }, [filteredEvents])
+
   // Metrics
   const activeEventsCount = safeEvents.filter(e => !['winner', 'runner_up', 'archived', 'submitted'].includes(e.status)).length
   const upcomingDeadlinesCount = urgentItems.length
@@ -278,7 +305,7 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredEvents.map((event) => (
+            {sortedEvents.map((event) => (
               <EventCard key={event.id} event={event} />
             ))}
           </div>

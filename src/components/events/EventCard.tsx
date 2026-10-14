@@ -17,9 +17,7 @@ import {
   MoreHorizontal
 } from 'lucide-react'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
-import { getDeadlineSeverity } from '@/lib/utils/deadline'
 import { cn } from '@/lib/utils'
-import { StatusPills } from '@/components/events/StatusPills'
 import { CountdownTimer } from '@/components/events/CountdownTimer'
 import { EditEventDialog } from '@/components/events/EditEventDialog'
 import { ensureExternalUrl } from '@/lib/utils/url'
@@ -46,6 +44,28 @@ type ExtendedEvent = EventWithRelations & {
 
 interface EventCardProps {
   event: ExtendedEvent
+}
+
+function getStatusBadge(status: string) {
+  switch (status) {
+    case 'registered':
+      return { label: 'Registered', className: 'bg-hack-blue/15 border-hack-blue/40 text-hack-blue-dark' }
+    case 'building':
+      return { label: 'Building', className: 'bg-hack-coral/15 border-hack-coral/40 text-hack-coral-dark' }
+    case 'submitted':
+      return { label: 'Submitted', className: 'bg-hack-mint/20 border-hack-mint/50 text-hack-mint-dark' }
+    case 'under_review':
+      return { label: 'Under Review', className: 'bg-hack-gold/20 border-hack-gold/40 text-hack-gold-dark' }
+    case 'finalist':
+      return { label: 'Finalist ⭐', className: 'bg-hack-coral/20 border-hack-coral/50 text-hack-coral-dark' }
+    case 'winner':
+      return { label: 'Winner 🏆', className: 'bg-hack-gold/25 border-hack-gold text-hack-gold-dark' }
+    case 'runner_up':
+      return { label: 'Runner Up 🥈', className: 'bg-hack-surface border-hack-muted text-hack-subtext' }
+    case 'bookmarked':
+    default:
+      return { label: 'Bookmarked', className: 'bg-hack-sand border-hack-muted/60 text-hack-subtext' }
+  }
 }
 
 export function EventCard({ event }: EventCardProps) {
@@ -90,6 +110,7 @@ export function EventCard({ event }: EventCardProps) {
   }
 
   const platformBadge = getPlatformBadge(event.source_platform || 'other')
+  const statusBadge = getStatusBadge(event.status || 'bookmarked')
   const prizeDisplay = event.prize_display_summary || event.prize_pool
 
   // Unified stage computation: consistent with workspace and dashboard
@@ -103,7 +124,7 @@ export function EventCard({ event }: EventCardProps) {
           prefetch={true}
           className="flex flex-col h-full flex-1 p-4 sm:p-5"
         >
-          {/* Card Top Header: Platform badge, mode, and overflow menu */}
+          {/* Card Top Header: Platform badge, status badge, mode, and overflow menu */}
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className={cn(
@@ -111,6 +132,12 @@ export function EventCard({ event }: EventCardProps) {
                 platformBadge.className
               )}>
                 {platformBadge.label}
+              </span>
+              <span className={cn(
+                "inline-flex items-center px-2 py-0.5 rounded-md border font-mono text-[10px] font-bold uppercase tracking-wider",
+                statusBadge.className
+              )}>
+                {statusBadge.label}
               </span>
               {event.mode && (
                 <span className="inline-flex items-center font-mono text-[10px] font-medium text-hack-subtext uppercase px-1.5 py-0.5 rounded-md bg-hack-sand border border-hack-muted/40">
@@ -165,10 +192,10 @@ export function EventCard({ event }: EventCardProps) {
 
           {/* Card Body: Title, Organizer, Prize */}
           <div className="mb-3">
-            <h3 className="font-display text-lg sm:text-xl font-bold text-hack-ink line-clamp-2 break-words group-hover:text-hack-coral-dark transition-colors" title={event.title}>
+            <h3 className="font-display text-lg sm:text-xl font-bold text-hack-ink line-clamp-2 min-h-[3.25rem] break-words group-hover:text-hack-coral-dark transition-colors" title={event.title}>
               {event.title}
             </h3>
-            <div className="flex items-center justify-between gap-2 mt-0.5">
+            <div className="flex items-center justify-between gap-2 mt-0.5 min-h-[1.5rem]">
               <p className="font-mono text-xs text-hack-subtext truncate">
                 {event.organizer || 'Independent Hackathon'}
               </p>
@@ -182,7 +209,7 @@ export function EventCard({ event }: EventCardProps) {
 
           {/* Active Round & Countdown (Auto-Rolled) */}
           {computedActiveStage ? (
-            <div className="mb-4 p-3 rounded-lg border border-hack-muted/60 bg-hack-sand/40 space-y-1.5">
+            <div className="mb-4 p-3 rounded-lg border border-hack-muted/60 bg-hack-sand/40 min-h-[108px] flex flex-col justify-center space-y-1.5">
               <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 truncate">
                   <span className="w-2 h-2 rounded-full bg-hack-coral inline-block shrink-0" />
@@ -207,7 +234,7 @@ export function EventCard({ event }: EventCardProps) {
               />
             </div>
           ) : (
-            <div className="mb-4 p-3 rounded-lg border border-dashed border-hack-muted bg-hack-sand/20 flex items-center justify-center font-mono text-hack-subtext text-xs font-medium h-[64px]">
+            <div className="mb-4 p-3 rounded-lg border border-dashed border-hack-muted bg-hack-sand/20 flex items-center justify-center font-mono text-hack-subtext text-xs font-medium min-h-[108px]">
               All clear.
             </div>
           )}
@@ -219,7 +246,11 @@ export function EventCard({ event }: EventCardProps) {
                 <span className="flex items-center gap-1">
                   <Users className="w-3.5 h-3.5" /> {event.team_count || 1} {event.team_count === 1 ? 'member' : 'members'}
                 </span>
-                <span className="font-medium">{event.deliverable_progress?.done || 0}/{event.deliverable_progress?.total || 0} tasks ({Math.round(progressPercent)}%)</span>
+                <span className="font-medium">
+                  {(event.deliverable_progress?.total || 0) === 0
+                    ? 'No tasks added'
+                    : `${event.deliverable_progress?.done || 0}/${event.deliverable_progress?.total || 0} tasks (${Math.round(progressPercent)}%)`}
+                </span>
               </div>
               <div className="w-full h-1.5 rounded-full bg-hack-muted/50 overflow-hidden">
                 <div 
@@ -237,14 +268,6 @@ export function EventCard({ event }: EventCardProps) {
             </div>
           </div>
         </Link>
-
-        {/* Status Pills */}
-        <div className="px-4 py-2.5 bg-hack-surface border-t border-hack-muted/30 relative z-10">
-          <StatusPills 
-            eventId={event.id} 
-            currentStatus={event.status || 'bookmarked'} 
-          />
-        </div>
       </div>
 
       {/* Edit Dialog */}
