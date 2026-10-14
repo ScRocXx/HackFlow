@@ -145,28 +145,26 @@ export function NotificationBell({ userId }: { userId: string }) {
   };
 
   const getUrgencyBadge = (title: string) => {
-    const t = title.toLowerCase();
-    if (title.includes('Critical') || title.includes('🚨')) {
+    const formatted = title.replace(/:(?=\S)/g, ': ');
+    const t = formatted.toLowerCase();
+
+    // 1. Critical / Urgent (<24h)
+    if (t.includes('6 hour') || t.includes('6h') || t.includes('24 hour') || t.includes('24h') || t.includes('critical') || t.includes('freeze')) {
       return (
         <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-hack-coral/15 text-hack-coral">
           <AlertTriangle className="w-2.5 h-2.5" /> Urgent
         </span>
       );
     }
-    if (title.includes('Freeze') || title.includes('TOMORROW') || t.includes('24h')) {
+    // 2. Upcoming (3d, 7d)
+    if (t.includes('3 day') || t.includes('3d') || t.includes('7 day') || t.includes('7d') || t.includes('midpoint') || t.includes('upcoming')) {
       return (
-        <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-hack-gold/15 text-hack-gold">
-          <Clock className="w-2.5 h-2.5" /> 24h Left
+        <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-hack-gold/15 text-hack-gold-dark">
+          <Clock className="w-2.5 h-2.5" /> Upcoming
         </span>
       );
     }
-    if (title.includes('Midpoint') || t.includes('3 days')) {
-      return (
-        <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-hack-blue/15 text-hack-blue">
-          <Calendar className="w-2.5 h-2.5" /> 3 Days
-        </span>
-      );
-    }
+    // 3. Team
     if (t.includes('team') || t.includes('squad') || t.includes('collaborator') || t.includes('invited')) {
       return (
         <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-hack-forest/15 text-hack-forest">
@@ -174,6 +172,7 @@ export function NotificationBell({ userId }: { userId: string }) {
         </span>
       );
     }
+    // 4. Resource
     if (t.includes('resource') || t.includes('statement') || t.includes('rulebook') || t.includes('deck') || t.includes('dataset')) {
       return (
         <span className="inline-flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-hack-sand text-hack-ink border border-hack-muted/30">
@@ -181,6 +180,7 @@ export function NotificationBell({ userId }: { userId: string }) {
         </span>
       );
     }
+    // 5. Friend
     if (t.includes('friend')) {
       return (
         <span className="inline-flex items-center gap-1 font-mono text-[10px] font-medium uppercase tracking-wider px-2 py-0.5 rounded-full bg-hack-coral/10 text-hack-coral">
@@ -295,12 +295,12 @@ export function NotificationBell({ userId }: { userId: string }) {
                     "font-display text-xs font-bold leading-snug line-clamp-2",
                     isCritical ? "text-hack-coral" : "text-hack-ink"
                   )}>
-                    {notification.title}
+                    {notification.title.replace(/:(?=\S)/g, ': ')}
                   </h4>
 
                   {notification.body && (
-                    <p className="font-mono text-[11px] text-hack-subtext line-clamp-2 leading-normal">
-                      {notification.body}
+                    <p className="font-sans text-[11px] text-hack-subtext line-clamp-2 leading-relaxed">
+                      {notification.body.replace(/:(?=\S)/g, ': ')}
                     </p>
                   )}
 

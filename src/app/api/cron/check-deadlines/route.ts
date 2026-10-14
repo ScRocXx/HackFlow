@@ -8,7 +8,14 @@ export const dynamic = 'force-dynamic';
 // Authorization: Bearer <CRON_SECRET>
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')?.trim();
-  const cronSecret = (process.env.CRON_SECRET || 'hackflow-cron-secret-change-in-production').trim();
+  const cronSecret = process.env.CRON_SECRET?.trim();
+
+  if (!cronSecret) {
+    return NextResponse.json(
+      { error: 'CRON_SECRET environment variable is not configured.' },
+      { status: 500 }
+    );
+  }
 
   // STRICT FAIL-CLOSED: Refuse execution if authorization token does not match
   if (authHeader !== `Bearer ${cronSecret}`) {
