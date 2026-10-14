@@ -51,31 +51,41 @@ export async function processPendingOutbox(): Promise<void> {
 
     for (const mutation of mutations) {
       let success = false
+      let isNetworkFailure = false
 
       try {
+        let res: any
         if (mutation.type === 'DELIVERABLE_TOGGLE') {
-          const res = await toggleDeliverable(mutation.payload.id, mutation.payload.isDone)
-          success = Boolean(res?.success)
+          res = await toggleDeliverable(mutation.payload.id, mutation.payload.isDone)
         } else if (mutation.type === 'DELIVERABLE_CLAIM') {
-          const res = await claimDeliverable(mutation.payload.id)
-          success = Boolean(res?.success)
+          res = await claimDeliverable(mutation.payload.id)
         } else if (mutation.type === 'DELIVERABLE_ADD') {
-          const res = await addDeliverable(mutation.payload.stageId, mutation.payload.title)
-          success = Boolean(res?.success)
+          res = await addDeliverable(mutation.payload.stageId, mutation.payload.title)
         } else if (mutation.type === 'SCRATCHPAD_UPDATE') {
-          const res = await updateSquadScratchpad(mutation.payload.squadId, mutation.payload.data)
-          success = Boolean(res?.success)
+          res = await updateSquadScratchpad(mutation.payload.squadId, mutation.payload.data)
         }
+        success = Boolean(res?.success)
 
-        if (success) {
-          await removeOutboxMutation(mutation.id)
-        } else {
-          // Server rejected or network failed: stop processing remaining queue
-          break
+        if (!success) {
+          const errStr = (res?.error || '').toLowerCase()
+          isNetworkFailure = (typeof navigator !== 'undefined' && !navigator.onLine) ||
+            errStr.includes('fetch') ||
+            errStr.includes('network')
         }
-      } catch (err) {
+      } catch (err: any) {
         // Network connection error during fetch: keep remaining mutations in queue
+        isNetworkFailure = true
+      }
+
+      if (success) {
+        await removeOutboxMutation(mutation.id)
+      } else if (isNetworkFailure) {
+        // Truly offline or network dropped: stop processing remaining queue
         break
+      } else {
+        // 4xx or database constraint violation: drop poison pill so queue doesn't freeze
+        console.warn(`[Outbox] Dropping rejected mutation ${mutation.id} (${mutation.type}) to unblock sync queue.`)
+        await removeOutboxMutation(mutation.id)
       }
     }
 

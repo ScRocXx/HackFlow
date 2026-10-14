@@ -78,13 +78,21 @@ export function CountdownTimer({
 
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => calculateTimeLeft(targetDate))
 
-  // Timer Reactivity: Ensure useEffect has [targetDate] in its dependency array
-  // and calls setTimeLeft(calculateTimeLeft(targetDate)) immediately upon prop change.
+  // Timer Reactivity: Only run ticker if targetDate is valid and deadline has not passed
   useEffect(() => {
-    setTimeLeft(calculateTimeLeft(targetDate))
+    const initial = calculateTimeLeft(targetDate)
+    setTimeLeft(initial)
+
+    if (!targetDate || initial.passed) {
+      return
+    }
 
     const interval = setInterval(() => {
-      setTimeLeft(calculateTimeLeft(targetDate))
+      const next = calculateTimeLeft(targetDate)
+      setTimeLeft(next)
+      if (next.passed) {
+        clearInterval(interval)
+      }
     }, 1000)
 
     return () => clearInterval(interval)
