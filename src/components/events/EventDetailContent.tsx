@@ -370,7 +370,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                       <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
                         What to Build (Target Deliverable)
                       </span>
-                      <p className="font-mono text-xs sm:text-sm text-hack-ink font-semibold bg-hack-sand/50 p-3 rounded-lg border border-hack-muted/40">
+                      <p className="font-sans text-sm text-hack-ink font-semibold bg-hack-sand/50 p-3 rounded-lg border border-hack-muted/40 leading-relaxed">
                         {event.mission_brief.what_to_build}
                       </p>
                     </div>
@@ -378,7 +378,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                       <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
                         Why It Exists (Sponsor Motive)
                       </span>
-                      <p className="font-mono text-xs sm:text-sm text-hack-ink bg-hack-sand/50 p-3 rounded-lg border border-hack-muted/40">
+                      <p className="font-sans text-sm text-hack-ink bg-hack-sand/50 p-3 rounded-lg border border-hack-muted/40 leading-relaxed">
                         {event.mission_brief.why_it_exists}
                       </p>
                     </div>
@@ -400,7 +400,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
 
                       {event.mission_brief.tech_stack_mandate.is_stack_restricted ? (
                         <div className="space-y-2 p-3 bg-hack-sand/40 border border-hack-muted/40 rounded-lg">
-                          <p className="font-mono text-xs text-hack-subtext">
+                          <p className="font-sans text-sm text-hack-ink leading-relaxed">
                             {event.mission_brief.tech_stack_mandate.allowed_stack_summary}
                           </p>
                           <div className="flex flex-wrap gap-1.5 items-center">
@@ -501,175 +501,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
             />
           </div>
 
-          {/* Resources & Attached Documents */}
-          <div className={cn(mobileWorkspaceTab !== 'team' && "hidden lg:block")}>
-            <Card className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
-              <div className="bg-hack-surface p-4 sm:p-5 border-b border-hack-muted/30 text-hack-ink">
-                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-hack-gold-dark" />
-                    <h3 className="font-display text-xl font-bold tracking-tight text-hack-ink">Resources & Shelf</h3>
-                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-full border border-hack-muted bg-hack-sand text-hack-ink">
-                      {resources.length}
-                    </span>
-                  </div>
-                  <p className="font-mono text-xs text-hack-subtext">
-                    Problem statements, rulebooks, starter kits & links
-                  </p>
-                </div>
-              </div>
 
-              <CardContent className="p-4 sm:p-5 space-y-4">
-                {/* Resources List */}
-                <div className="space-y-2">
-                  {resources.map((res) => (
-                    <div
-                      key={res.id}
-                      className="p-3 bg-hack-surface border border-hack-muted/60 rounded-lg shadow-hack-sm flex items-center justify-between gap-3 text-sm transition-all hover:border-hack-muted"
-                    >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="p-2 rounded-md border border-hack-muted/40 bg-hack-sand shrink-0 text-hack-ink">
-                          {getResourceIcon(res.resource_type)}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="font-display text-sm sm:text-base font-bold text-hack-ink truncate">
-                              {res.title}
-                            </span>
-                            <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-md uppercase tracking-wider border border-hack-muted bg-hack-sand text-hack-subtext shrink-0">
-                              {res.resource_type.replace('_', ' ')}
-                            </span>
-                            {res.is_official ? (
-                              <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-hack-blue/40 bg-hack-blue/15 text-hack-blue-dark shrink-0">
-                                Official
-                              </span>
-                            ) : (
-                              <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-hack-gold/40 bg-hack-gold/20 text-hack-gold-dark shrink-0">
-                                Team Link
-                              </span>
-                            )}
-                          </div>
-                          <a
-                            href={ensureExternalUrl(res.url)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="font-mono text-xs text-hack-subtext hover:text-hack-coral flex items-center gap-1 mt-0.5 truncate group"
-                          >
-                            <span className="truncate">{res.url}</span>
-                            <ExternalLink className="h-3 w-3 shrink-0 opacity-70 group-hover:opacity-100" />
-                          </a>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0">
-                        <a
-                          href={ensureExternalUrl(res.url)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="hidden sm:inline-flex items-center gap-1 font-mono text-xs font-semibold text-hack-ink hover:bg-hack-sand px-2.5 py-1.5 rounded-lg border border-hack-muted bg-hack-surface shadow-hack-sm transition-all"
-                        >
-                          {(res.url.toLowerCase().endsWith('.pdf') || res.url.includes('hackflow_uploads') || res.url.includes('/uploads/')) ? (
-                            <>View PDF <ExternalLink className="h-3 w-3 text-hack-subtext" /></>
-                          ) : (
-                            <>Open <ExternalLink className="h-3 w-3 text-hack-subtext" /></>
-                          )}
-                        </a>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteResource(res.id, res.title)}
-                          disabled={deletingId === res.id}
-                          className="text-hack-subtext hover:text-hack-red hover:bg-hack-red/10 rounded-lg h-8 w-8 transition-colors"
-                          title="Delete resource"
-                          aria-label={`Delete resource: ${res.title}`}
-                        >
-                          {deletingId === res.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-
-                  {resources.length === 0 && (
-                    <div className="p-6 rounded-lg border border-dashed border-hack-muted text-center space-y-1 bg-hack-sand/30">
-                      <FileText className="h-7 w-7 text-hack-subtext mx-auto opacity-60" />
-                      <p className="font-display text-sm font-bold text-hack-ink">No attached resources yet</p>
-                      <p className="font-sans text-xs text-hack-subtext">
-                        Add your problem statement PDF, team Figma, GitHub repo, or slide deck below.
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Add Custom Resource Form */}
-                <div className="p-4 bg-hack-sand/40 border border-hack-muted/60 rounded-xl space-y-3">
-                  <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <span className="font-mono text-xs font-bold uppercase tracking-wider text-hack-ink block">
-                      Add Team Resource or Link
-                    </span>
-                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold uppercase border border-hack-gold/40 bg-hack-gold/20 hover:bg-hack-gold/30 text-hack-ink shadow-hack-sm transition-all">
-                      {uploadingDoc ? <Loader2 className="w-3 h-3 animate-spin" /> : <UploadCloud className="w-3 h-3 text-hack-gold-dark" />}
-                      <span>{uploadingDoc ? 'Uploading...' : 'Upload PDF / Deck'}</span>
-                      <input
-                        type="file"
-                        accept=".pdf,.ppt,.pptx"
-                        className="hidden"
-                        onChange={handleUploadResourceFile}
-                        disabled={uploadingDoc}
-                      />
-                    </label>
-                  </div>
-                  <form onSubmit={handleAddResource} className="space-y-2.5">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_170px_auto] gap-2 items-center">
-                      <Input
-                        placeholder="Title (e.g. Team Figma, Pitch Deck)"
-                        value={newTitle}
-                        onChange={(e) => setNewTitle(e.target.value)}
-                        disabled={addingResource}
-                        className="h-9 text-xs bg-white rounded-lg border border-hack-muted font-mono shadow-hack-sm min-w-0"
-                      />
-                      <Input
-                        placeholder="URL (e.g. https://figma.com/...)"
-                        value={newUrl}
-                        onChange={(e) => setNewUrl(e.target.value)}
-                        disabled={addingResource}
-                        className="h-9 text-xs bg-white rounded-lg border border-hack-muted font-mono shadow-hack-sm min-w-0"
-                      />
-                      <select
-                        value={newType}
-                        onChange={(e) => setNewType(e.target.value)}
-                        disabled={addingResource}
-                        className="h-9 px-2.5 rounded-lg border border-hack-muted bg-white font-mono text-xs shadow-hack-sm w-full min-w-0 focus:outline-none focus:ring-1 focus:ring-hack-coral/25"
-                      >
-                        {RESOURCE_TYPES.map((type) => (
-                          <option key={type.value} value={type.value}>
-                            {type.label}
-                          </option>
-                        ))}
-                      </select>
-                      <Button
-                        type="submit"
-                        disabled={addingResource || !newTitle.trim() || !newUrl.trim()}
-                        className="h-9 text-xs px-3 font-mono font-bold rounded-lg border border-hack-coral bg-hack-coral hover:brightness-105 text-hack-ink shadow-hack-hero shrink-0 whitespace-nowrap min-w-0"
-                      >
-                        {addingResource ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <>
-                            <Plus className="h-3.5 w-3.5 mr-1" /> Add
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </form>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
 
           {/* Complete Post-Submission Lifecycle Console */}
           <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:block")}>
@@ -822,37 +654,174 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
             </Card>
           </div>
 
-          {/* Metadata */}
+          {/* Resources & Shelf (Moved to Right Rail below Team) */}
           <div className={cn(mobileWorkspaceTab !== 'team' && "hidden lg:block")}>
             <Card className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
-              <CardContent className="p-4 sm:p-5 space-y-3">
-                <h3 className="font-display text-lg font-bold tracking-tight text-hack-ink border-b border-hack-muted/30 pb-2">
-                  Event Details
-                </h3>
-                
-                {event.source_url && (
-                  <a 
-                    href={ensureExternalUrl(event.source_url)} 
-                    target="_blank" 
-                    rel="noreferrer" 
-                    className="flex items-center text-xs font-mono font-semibold text-hack-ink hover:text-hack-coral p-2.5 rounded-lg border border-hack-muted bg-hack-sand/40 shadow-hack-sm transition-all"
-                  >
-                    <ExternalLink className="w-4 h-4 mr-2 text-hack-subtext" />
-                    View Original Page
-                  </a>
-                )}
-                
-                <div className="flex items-center text-xs font-mono font-medium text-hack-ink p-2.5 rounded-lg border border-hack-muted bg-hack-sand/40 shadow-hack-sm">
-                  <Calendar className="w-4 h-4 mr-2 text-hack-subtext" />
-                  {event.start_date ? format(new Date(event.start_date), 'MMM d, yyyy') : 'TBA'}
+              <div className="bg-hack-surface p-4 sm:p-5 border-b border-hack-muted/30 text-hack-ink">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-hack-gold-dark" />
+                    <h3 className="font-display text-xl font-bold tracking-tight text-hack-ink">Resources & Shelf</h3>
+                    <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-full border border-hack-muted bg-hack-sand text-hack-ink">
+                      {resources.length}
+                    </span>
+                  </div>
+                  <p className="font-mono text-xs text-hack-subtext">
+                    Problem statements, rulebooks & links
+                  </p>
+                </div>
+              </div>
+
+              <CardContent className="p-4 sm:p-5 space-y-4">
+                {/* Resources List */}
+                <div className="space-y-2">
+                  {resources.map((res) => (
+                    <div
+                      key={res.id}
+                      className="p-3 bg-hack-surface border border-hack-muted/60 rounded-lg shadow-hack-sm flex items-center justify-between gap-3 text-sm transition-all hover:border-hack-muted"
+                    >
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="p-2 rounded-md border border-hack-muted/40 bg-hack-sand shrink-0 text-hack-ink">
+                          {getResourceIcon(res.resource_type)}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-display text-sm sm:text-base font-bold text-hack-ink truncate">
+                              {res.title}
+                            </span>
+                            <span className="font-mono text-[10px] font-medium px-2 py-0.5 rounded-md uppercase tracking-wider border border-hack-muted bg-hack-sand text-hack-subtext shrink-0">
+                              {res.resource_type.replace('_', ' ')}
+                            </span>
+                            {res.is_official ? (
+                              <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-hack-blue/40 bg-hack-blue/15 text-hack-blue-dark shrink-0">
+                                Official
+                              </span>
+                            ) : (
+                              <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider border border-hack-gold/40 bg-hack-gold/20 text-hack-gold-dark shrink-0">
+                                Team Link
+                              </span>
+                            )}
+                          </div>
+                          <a
+                            href={ensureExternalUrl(res.url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-mono text-xs text-hack-subtext hover:text-hack-coral flex items-center gap-1 mt-0.5 truncate group"
+                          >
+                            <span className="truncate">{res.url}</span>
+                            <ExternalLink className="h-3 w-3 shrink-0 opacity-70 group-hover:opacity-100" />
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        <a
+                          href={ensureExternalUrl(res.url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hidden sm:inline-flex items-center gap-1 font-mono text-xs font-semibold text-hack-ink hover:bg-hack-sand px-2.5 py-1.5 rounded-lg border border-hack-muted bg-hack-surface shadow-hack-sm transition-all"
+                        >
+                          {(res.url.toLowerCase().endsWith('.pdf') || res.url.includes('hackflow_uploads') || res.url.includes('/uploads/')) ? (
+                            <>View PDF <ExternalLink className="h-3 w-3 text-hack-subtext" /></>
+                          ) : (
+                            <>Open <ExternalLink className="h-3 w-3 text-hack-subtext" /></>
+                          )}
+                        </a>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteResource(res.id, res.title)}
+                          disabled={deletingId === res.id}
+                          className="text-hack-subtext hover:text-hack-red hover:bg-hack-red/10 rounded-lg h-8 w-8 transition-colors"
+                          title="Delete resource"
+                          aria-label={`Delete resource: ${res.title}`}
+                        >
+                          {deletingId === res.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+
+                  {resources.length === 0 && (
+                    <div className="p-6 rounded-lg border border-dashed border-hack-muted text-center space-y-1 bg-hack-sand/30">
+                      <FileText className="h-7 w-7 text-hack-subtext mx-auto opacity-60" />
+                      <p className="font-display text-sm font-bold text-hack-ink">No attached resources yet</p>
+                      <p className="font-sans text-xs text-hack-subtext">
+                        Add your problem statement PDF, team Figma, GitHub repo, or slide deck below.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
-                {event.prize_pool && (
-                  <div className="flex items-center text-xs font-mono font-bold text-hack-gold-dark p-2.5 rounded-lg border border-hack-gold/40 bg-hack-gold/20 shadow-hack-sm">
-                    <Trophy className="w-4 h-4 mr-2 text-hack-gold-dark" />
-                    Prize: {event.prize_pool}
+                {/* Add Custom Resource Form */}
+                <div className="p-4 bg-hack-sand/40 border border-hack-muted/60 rounded-xl space-y-3">
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <span className="font-mono text-xs font-bold uppercase tracking-wider text-hack-ink block">
+                      Add Team Resource or Link
+                    </span>
+                    <label className="cursor-pointer inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono text-[10px] font-bold uppercase border border-hack-gold/40 bg-hack-gold/20 hover:bg-hack-gold/30 text-hack-ink shadow-hack-sm transition-all">
+                      {uploadingDoc ? <Loader2 className="w-3 h-3 animate-spin" /> : <UploadCloud className="w-3 h-3 text-hack-gold-dark" />}
+                      <span>{uploadingDoc ? 'Uploading...' : 'Upload PDF / Deck'}</span>
+                      <input
+                        type="file"
+                        accept=".pdf,.ppt,.pptx"
+                        className="hidden"
+                        onChange={handleUploadResourceFile}
+                        disabled={uploadingDoc}
+                      />
+                    </label>
                   </div>
-                )}
+                  <form onSubmit={handleAddResource} className="space-y-2.5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center">
+                      <Input
+                        placeholder="Title (e.g. Team Figma, Pitch Deck)"
+                        value={newTitle}
+                        onChange={(e) => setNewTitle(e.target.value)}
+                        disabled={addingResource}
+                        className="h-9 text-xs bg-white rounded-lg border border-hack-muted font-mono shadow-hack-sm min-w-0"
+                      />
+                      <Input
+                        placeholder="URL (e.g. https://figma.com/...)"
+                        value={newUrl}
+                        onChange={(e) => setNewUrl(e.target.value)}
+                        disabled={addingResource}
+                        className="h-9 text-xs bg-white rounded-lg border border-hack-muted font-mono shadow-hack-sm min-w-0"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={newType}
+                        onChange={(e) => setNewType(e.target.value)}
+                        disabled={addingResource}
+                        className="h-9 px-2.5 rounded-lg border border-hack-muted bg-white font-mono text-xs shadow-hack-sm flex-1 min-w-0 focus:outline-none focus:ring-1 focus:ring-hack-coral/25"
+                      >
+                        {RESOURCE_TYPES.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
+                      <Button
+                        type="submit"
+                        disabled={addingResource || !newTitle.trim() || !newUrl.trim()}
+                        className="h-9 text-xs px-3 font-mono font-bold rounded-lg border border-hack-coral bg-hack-coral hover:brightness-105 text-hack-ink shadow-hack-hero shrink-0 whitespace-nowrap min-w-0"
+                      >
+                        {addingResource ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <>
+                            <Plus className="h-3.5 w-3.5 mr-1" /> Add
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  </form>
+                </div>
               </CardContent>
             </Card>
           </div>

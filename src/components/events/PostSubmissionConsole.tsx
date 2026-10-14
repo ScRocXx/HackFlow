@@ -158,9 +158,8 @@ export function PostSubmissionConsole({ event }: PostSubmissionConsoleProps) {
             <Trophy className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#f7f7f2] flex items-center gap-2 truncate">
-              <span className="truncate">Submission Confirmation & Follow-up</span>
-              {!isExpanded && <span className="font-mono text-xs font-normal text-[#8bb2de] shrink-0">(Click to expand)</span>}
+            <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#f7f7f2] truncate">
+              Submission Proof & Archive
             </h3>
             <p className="font-mono text-xs text-[#8bb2de] truncate">
               Keep submission proof, verify public repo access for judges, and track results.

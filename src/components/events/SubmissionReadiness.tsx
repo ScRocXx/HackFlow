@@ -8,6 +8,8 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/use-toast'
+import { useRouter } from 'next/navigation'
+import { addEventResource, updateEvent } from '@/app/actions/events'
 import type { Event } from '@/lib/supabase/types'
 import { cn } from '@/lib/utils'
 
@@ -33,10 +35,67 @@ interface SubmissionReadinessProps {
 }
 
 export function SubmissionReadiness({ event, isSubmissionStage = true }: SubmissionReadinessProps) {
+  const router = useRouter()
   const [running, setRunning] = useState(false)
   const [results, setResults] = useState<PreFlightCheck[] | null>(null)
   const [isExpanded, setIsExpanded] = useState(true)
+  const [inlineUrls, setInlineUrls] = useState<Record<string, string>>({})
+  const [savingKey, setSavingKey] = useState<string | null>(null)
   const { toast } = useToast()
+
+  const handleInlineSaveUrl = async (key: string, url: string) => {
+    if (!url?.trim()) return
+    setSavingKey(key)
+    try {
+      const trimmed = url.trim()
+      let resourceType = 'link'
+      let title = 'Resource'
+      let updatePayload: any = { eventId: event.id }
+
+      if (key === 'github') {
+        resourceType = 'github'
+        title = 'GitHub Repository'
+        updatePayload.github_repo_url = trimmed
+      } else if (key === 'demo') {
+        resourceType = 'demo'
+        title = 'Live Demo'
+        updatePayload.demo_url = trimmed
+      } else if (key === 'deck') {
+        resourceType = 'deck'
+        title = 'Pitch Deck / Slides'
+        updatePayload.pitch_deck_url = trimmed
+      }
+
+      const [resResult, eventResult] = await Promise.all([
+        addEventResource(event.id, {
+          title,
+          url: trimmed,
+          resource_type: resourceType,
+        }),
+        updateEvent(updatePayload),
+      ])
+
+      if (resResult.success || eventResult.success) {
+        toast({
+          title: 'Resource Linked',
+          description: `${title} URL saved and verified.`,
+        })
+        setInlineUrls(prev => ({ ...prev, [key]: '' }))
+        router.refresh()
+        await runDiagnostics(true)
+      } else {
+        throw new Error(resResult.error || eventResult.error || 'Failed to save link')
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Save Failed',
+        description: err.message || 'Could not save link.',
+        variant: 'destructive',
+      })
+    } finally {
+      setSavingKey(null)
+    }
+  }
 
   const runDiagnostics = async (silent = false) => {
     setRunning(true)
@@ -420,24 +479,23 @@ export function SubmissionReadiness({ event, isSubmissionStage = true }: Submiss
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
                         <span className="font-semibold text-hack-ink">{check.name}</span>
-                        <span className="text-[10px] text-hack-subtext font-normal truncate max-w-[180px]">
-                          ({check.checkedItem})
-                        </span>
+                        {check.checkedItem && !['Code Repository', 'Production URL', 'Deck Asset'].includes(check.checkedItem) && (
+                          <span className="text-[10px] text-hack-subtext font-normal truncate max-w-[160px]">
+                            ({check.checkedItem})
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5">
                         <span className={cn(
-                          "font-bold uppercase text-[9px] px-1.5 py-0.5 rounded-full border",
+                          "font-bold uppercase text-[9px] px-1.5 py-0.5 rounded-full border shrink-0",
                           check.result === 'verified' && "bg-hack-mint/25 border-hack-mint/40 text-hack-mint-dark",
                           check.result === 'inaccessible' && "bg-hack-red/20 border-hack-red/40 text-hack-red",
                           check.result === 'warning' && "bg-hack-gold/25 border-hack-gold/40 text-hack-gold-dark",
                           check.result === 'unverified' && "bg-hack-sand border-hack-muted/60 text-hack-subtext"
                         )}>
-                          {check.result}
-                        </span>
-                        <span className="font-mono text-[9px] text-hack-subtext/80 hidden sm:inline">
-                          ({check.confidence} confidence)
+                          {check.result === 'inaccessible' ? 'Inaccessible' : check.result === 'warning' ? 'Missing / Verify' : check.result}
                         </span>
                       </div>
                     </div>
@@ -446,7 +504,33 @@ export function SubmissionReadiness({ event, isSubmissionStage = true }: Submiss
                       {check.detail}
                     </p>
 
-                    {check.actionRecommendation && (
+                    {(check.result === 'warning' || check.result === 'inaccessible') && ['github', 'demo', 'deck'].includes(check.id) && (
+                      <div className="mt-2.5 flex items-center gap-1.5">
+                        <input
+                          type="url"
+                          placeholder={
+                            check.id === 'github' 
+                              ? 'https://github.com/org/repo' 
+                              : check.id === 'demo' 
+                              ? 'https://your-app.vercel.app' 
+                              : 'https://docs.google.com/presentation/...'
+                          }
+                          value={inlineUrls[check.id] || ''}
+                          onChange={(e) => setInlineUrls(prev => ({ ...prev, [check.id]: e.target.value }))}
+                          className="h-8 min-w-0 flex-1 font-mono text-xs border border-hack-muted/60 bg-white rounded-lg px-2.5 focus:outline-none focus:border-hack-ink shadow-hack-sm"
+                        />
+                        <button
+                          type="button"
+                          disabled={!inlineUrls[check.id]?.trim() || savingKey === check.id}
+                          onClick={() => handleInlineSaveUrl(check.id, inlineUrls[check.id])}
+                          className="h-8 px-3 font-mono text-[11px] font-bold uppercase bg-hack-gold text-hack-ink border border-hack-muted/60 rounded-lg shrink-0 hover:brightness-105 disabled:opacity-50 shadow-hack-sm transition-all"
+                        >
+                          {savingKey === check.id ? 'Saving...' : '+ Save'}
+                        </button>
+                      </div>
+                    )}
+
+                    {check.actionRecommendation && !['github', 'demo', 'deck'].includes(check.id) && (
                       <p className="font-sans text-[11px] text-hack-ink font-semibold mt-1 bg-white/70 p-1.5 rounded border border-hack-muted/30">
                         👉 Action: {check.actionRecommendation}
                       </p>
