@@ -82,14 +82,18 @@ export function VaultProfiles({
     setIsProfileModalOpen(true)
   }
 
-  // 1-Click Copy with 1500ms check feedback
-  const handleCopy = (fieldKey: string, value: string, label: string) => {
+  // 1-Click Copy with 1500ms check feedback & haptic vibration
+  const handleCopy = (fieldKey: string, value: string, label: string, ownerName?: string) => {
     if (!value) return
     navigator.clipboard.writeText(value)
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try { navigator.vibrate(10) } catch {}
+    }
     setCopiedKey(fieldKey)
+    const namePrefix = ownerName ? `${ownerName.split(' ')[0]}'s ` : ''
     toast({
       title: 'Copied to Clipboard!',
-      description: `${label}: "${value.length > 30 ? value.slice(0, 30) + '...' : value}"`,
+      description: `✓ Copied ${namePrefix}${label}`,
     })
 
     setTimeout(() => {
@@ -271,52 +275,52 @@ export function VaultProfiles({
   return (
     <div className="space-y-6">
       {/* Consolidated Registration Bridge & Clipboard Toolbar */}
-      <div className="p-3.5 sm:p-4 rounded-xl bg-hack-forest text-hack-sand border border-hack-ink shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5 flex-wrap">
+      <div className="p-3.5 sm:p-4 rounded-[6px] bg-hack-forest text-hack-sand border border-hack-ink shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap w-full md:w-auto">
           <div className="flex items-center gap-2 pr-2 border-r border-hack-sand/20">
             <ShieldCheck className="w-4 h-4 text-hack-mint shrink-0" />
             <span className="font-display text-sm font-bold tracking-wide uppercase text-hack-sand">
-              Registration Bridge
+              Copy all for:
             </span>
           </div>
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto">
             <CopyTeamInfoButton profiles={profiles} squadName={squadName} />
             <Button
               type="button"
               size="sm"
               disabled={profiles.length === 0}
               onClick={copySquadUnstopFormat}
-              className="h-8 text-xs font-mono font-medium rounded-lg bg-hack-sand text-hack-ink hover:bg-white border border-hack-ink/20 shadow-sm"
+              className="btn-tactile h-8 text-xs font-mono font-medium rounded-[4px] bg-hack-sand text-hack-ink hover:bg-white"
             >
               <Copy className="h-3 w-3 mr-1" />
-              Unstop Format
+              Unstop
             </Button>
             <Button
               type="button"
               size="sm"
               disabled={profiles.length === 0}
               onClick={copySquadDevfolioFormat}
-              className="h-8 text-xs font-mono font-medium rounded-lg bg-hack-sand text-hack-ink hover:bg-white border border-hack-ink/20 shadow-sm"
+              className="btn-tactile h-8 text-xs font-mono font-medium rounded-[4px] bg-hack-sand text-hack-ink hover:bg-white"
             >
               <Copy className="h-3 w-3 mr-1" />
-              Devfolio Format
+              Devfolio
             </Button>
             <Button
               type="button"
               size="sm"
               disabled={profiles.length === 0}
               onClick={copySquadTsvFormat}
-              className="h-8 text-xs font-mono font-medium rounded-lg bg-hack-sand text-hack-ink hover:bg-white border border-hack-ink/20 shadow-sm"
+              className="btn-tactile h-8 text-xs font-mono font-medium rounded-[4px] bg-hack-sand text-hack-ink hover:bg-white"
             >
               <Copy className="h-3 w-3 mr-1" />
-              Sheets / TSV
+              Sheets
             </Button>
           </div>
         </div>
 
         <Button
           onClick={handleOpenEditProfile}
-          className="h-8 font-sans text-xs font-bold rounded-lg bg-hack-coral hover:bg-hack-coral/90 text-hack-ink shadow-sm shrink-0 self-start md:self-auto"
+          className="btn-tactile h-8 font-sans text-xs font-bold rounded-[4px] bg-hack-coral text-hack-ink shrink-0 self-start md:self-auto"
         >
           <Edit3 className="w-3.5 h-3.5 mr-1.5" />
           Edit My Details
@@ -325,7 +329,7 @@ export function VaultProfiles({
 
       {/* Member Profiles Grid */}
       {profiles.length === 0 ? (
-        <div className="p-12 rounded-2xl border border-dashed border-hack-ink/20 text-center bg-hack-surface">
+        <div className="p-12 rounded-[6px] border border-dashed border-hack-ink/20 text-center bg-hack-surface">
           <User className="h-10 w-10 text-hack-subtext mx-auto opacity-40 mb-3" />
           <h3 className="font-sans text-xl font-bold text-hack-ink">Your team's info isn't here yet</h3>
           <p className="font-mono text-xs text-hack-subtext mt-1.5 max-w-md mx-auto">
@@ -333,7 +337,7 @@ export function VaultProfiles({
           </p>
           <Button
             onClick={handleOpenEditProfile}
-            className="mt-4 font-sans text-xs font-bold rounded-lg bg-hack-coral hover:bg-hack-coral/90 text-hack-ink shadow-hack-hero"
+            className="btn-tactile mt-4 font-sans text-xs font-bold rounded-[4px] bg-hack-coral text-hack-ink"
           >
             + Add Registration Details
           </Button>
@@ -368,32 +372,42 @@ export function VaultProfiles({
             const renderFieldBox = (f: { key: string; label: string; value: string | null | undefined }) => {
               const hasVal = Boolean(f.value)
               const isCopied = copiedKey === f.key
+              const firstName = p.full_name ? p.full_name.split(' ')[0] : 'Teammate'
 
               return (
-                <div 
+                <button 
+                  type="button"
                   key={f.key}
+                  disabled={!hasVal}
                   className={cn(
-                    "p-2.5 rounded-lg border flex items-center justify-between gap-2 group transition-all select-none",
+                    "p-2.5 rounded-[4px] border flex items-center justify-between gap-2 group transition-all select-none text-left relative overflow-hidden w-full",
                     isCopied
-                      ? "bg-[#E3F5EE] border-hack-mint text-hack-forest shadow-sm"
+                      ? "animate-copy-flash border-hack-mint-dark/50 text-hack-forest shadow-sm"
                       : hasVal
-                      ? "border-hack-ink/10 bg-hack-sand/30 cursor-pointer hover:bg-hack-sand/70 hover:border-hack-ink/25"
+                      ? "border-hack-ink/10 bg-hack-sand/30 cursor-pointer hover:bg-hack-sand/70 hover:border-hack-ink/25 active:scale-[0.99]"
                       : "border-hack-ink/10 bg-hack-sand/15 opacity-50 cursor-not-allowed"
                   )}
-                  onClick={() => hasVal && handleCopy(f.key, f.value!, f.label)}
+                  onClick={() => hasVal && handleCopy(f.key, f.value!, f.label, p.full_name)}
                 >
                   <div className="min-w-0 flex-1">
-                    <span className="font-mono text-[10px] text-hack-subtext font-semibold uppercase tracking-wider block">
-                      {f.label}
-                    </span>
+                    <div className="flex items-center justify-between gap-1 mb-0.5">
+                      <span className="font-mono text-[10px] text-hack-subtext font-semibold uppercase tracking-wider block">
+                        {f.label}
+                      </span>
+                      {hasVal && !isCopied && (
+                        <span className="font-mono text-[9px] text-hack-subtext/70 opacity-0 group-hover:opacity-100 transition-opacity">
+                          Click to copy
+                        </span>
+                      )}
+                    </div>
                     <span className="font-mono text-xs font-semibold text-hack-ink truncate block">
-                      {f.value || 'Not set'}
+                      {isCopied ? `✓ Copied ${firstName}'s ${f.label}` : (f.value || 'Not set')}
                     </span>
                   </div>
                   {hasVal && (
                     <div
                       className={cn(
-                        "p-1.5 rounded border shrink-0 transition-colors flex items-center gap-1 text-[10px] font-mono font-bold",
+                        "p-1.5 rounded-[4px] border shrink-0 transition-colors flex items-center gap-1 text-[10px] font-mono font-bold",
                         isCopied 
                           ? "bg-hack-mint text-hack-mint-dark border-hack-mint-dark/30" 
                           : "bg-white text-hack-ink border-hack-ink/15 group-hover:border-hack-ink/30"
@@ -409,12 +423,12 @@ export function VaultProfiles({
                       )}
                     </div>
                   )}
-                </div>
+                </button>
               )
             }
 
             return (
-              <Card key={p.user_id} className="rounded-xl border border-hack-ink/15 bg-hack-surface shadow-sm flex flex-col justify-between overflow-hidden">
+              <Card key={p.user_id} className="rounded-[6px] border border-hack-ink/15 bg-hack-surface shadow-sm flex flex-col justify-between overflow-hidden">
                 <div>
                   <div className="p-4 bg-hack-sand/80 border-b border-hack-ink/10 flex items-center justify-between">
                     <div className="flex items-center gap-3">

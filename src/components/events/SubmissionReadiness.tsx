@@ -106,19 +106,19 @@ export function SubmissionReadiness({ event, isSubmissionStage = true }: Submiss
     if (!githubUrl) {
       checks.push({
         id: 'github',
-        name: 'GitHub Repository Visibility',
+        name: 'GitHub Repo (Public)',
         checkedItem: 'Code Repository',
         result: 'warning',
         confidence: 'high',
         detail: 'No code repository URL provided.',
-        actionRecommendation: 'Add your project repository URL so evaluators can inspect codebase commits.',
+        actionRecommendation: 'Paste your GitHub repo link below so we can check if it\'s public.',
       })
     } else {
       const match = githubUrl.match(/github\.com\/([^/]+)\/([^/]+)/)
       if (!match) {
         checks.push({
           id: 'github',
-          name: 'GitHub Repository Visibility',
+          name: 'GitHub Repo (Public)',
           checkedItem: githubUrl,
           result: 'warning',
           confidence: 'high',
@@ -135,51 +135,50 @@ export function SubmissionReadiness({ event, isSubmissionStage = true }: Submiss
             if (data.private === false) {
               checks.push({
                 id: 'github',
-                name: 'GitHub Repository Visibility',
+                name: 'GitHub Repo (Public)',
                 checkedItem: `${owner}/${repo}`,
                 result: 'verified',
                 confidence: 'high',
-                detail: `Repository is publicly reachable on branch "${data.default_branch}". Evaluators and automated clone tools can access.`,
+                detail: `Public repo verified on branch "${data.default_branch}". Judges can clone and evaluate.`,
               })
             } else {
               checks.push({
                 id: 'github',
-                name: 'GitHub Repository Visibility',
+                name: 'GitHub Repo (Public)',
                 checkedItem: `${owner}/${repo}`,
                 result: 'inaccessible',
                 confidence: 'high',
-                detail: 'Repository is set to PRIVATE. Evaluators will receive a 404 Not Found error.',
+                detail: 'Repository is set to PRIVATE. Judges will receive a 404 error.',
                 actionRecommendation: 'Go to GitHub Settings -> Danger Zone -> Change repository visibility to Public.',
                 incognitoUrl: githubUrl,
               })
             }
           } else if (res.status === 404) {
-            // Note: GitHub returns 404 for private repos as well as non-existent ones
             checks.push({
               id: 'github',
-              name: 'GitHub Repository Visibility',
+              name: 'GitHub Repo (Public)',
               checkedItem: `${owner}/${repo}`,
               result: 'inaccessible',
               confidence: 'medium',
-              detail: 'Repository returned HTTP 404. Note: GitHub returns 404 for private repositories to prevent enumeration.',
-              actionRecommendation: 'Ensure spelling is correct and confirm visibility is set to Public under GitHub repo settings.',
+              detail: 'Repository returned HTTP 404. It may be private or mistyped.',
+              actionRecommendation: 'Ensure spelling is correct and confirm visibility is set to Public.',
               incognitoUrl: githubUrl,
             })
           } else if (res.status === 403) {
             checks.push({
               id: 'github',
-              name: 'GitHub Repository Visibility',
+              name: 'GitHub Repo (Public)',
               checkedItem: `${owner}/${repo}`,
               result: 'unverified',
               confidence: 'low',
-              detail: 'GitHub API rate limit reached. Automated visibility probe could not complete.',
-              actionRecommendation: 'Open the URL in an Incognito window to confirm it does not prompt for credentials.',
+              detail: 'GitHub API rate limit reached.',
+              actionRecommendation: 'Open the URL in an Incognito window to confirm public access.',
               incognitoUrl: githubUrl,
             })
           } else {
             checks.push({
               id: 'github',
-              name: 'GitHub Repository Visibility',
+              name: 'GitHub Repo (Public)',
               checkedItem: `${owner}/${repo}`,
               result: 'unverified',
               confidence: 'low',
@@ -191,7 +190,7 @@ export function SubmissionReadiness({ event, isSubmissionStage = true }: Submiss
         } catch {
           checks.push({
             id: 'github',
-            name: 'GitHub Repository Visibility',
+            name: 'GitHub Repo (Public)',
             checkedItem: githubUrl,
             result: 'unverified',
             confidence: 'low',
@@ -208,39 +207,39 @@ export function SubmissionReadiness({ event, isSubmissionStage = true }: Submiss
     if (!demoUrl) {
       checks.push({
         id: 'demo',
-        name: 'Live Demo Deployment',
+        name: 'Live Demo URL',
         checkedItem: 'Production URL',
         result: 'warning',
         confidence: 'high',
         detail: 'No live demo URL linked.',
-        actionRecommendation: 'Provide a working deployment URL (e.g., Vercel, Netlify, Cloudflare) for hands-on evaluation.',
+        actionRecommendation: 'Provide a working deployment URL (e.g., Vercel, Netlify) for hands-on evaluation.',
       })
     } else if (!demoUrl.startsWith('https://')) {
       checks.push({
         id: 'demo',
-        name: 'Live Demo Deployment',
+        name: 'Live Demo URL',
         checkedItem: demoUrl,
         result: 'warning',
         confidence: 'high',
-        detail: 'Demo URL uses insecure HTTP. Modern browsers block mixed content and flag security warnings to judges.',
-        actionRecommendation: 'Enable HTTPS / SSL certificate on your demo deployment domain.',
+        detail: 'Demo URL uses insecure HTTP. Browsers flag security warnings to judges.',
+        actionRecommendation: 'Enable HTTPS on your demo deployment domain.',
       })
     } else {
       try {
         const parsed = new URL(demoUrl)
         checks.push({
           id: 'demo',
-          name: 'Live Demo Deployment',
+          name: 'Live Demo URL',
           checkedItem: parsed.hostname,
           result: 'verified',
           confidence: 'medium',
-          detail: `Secure HTTPS deployment URL provided (${parsed.hostname}).`,
+          detail: `Live demo verified at ${parsed.hostname}.`,
           incognitoUrl: demoUrl,
         })
       } catch {
         checks.push({
           id: 'demo',
-          name: 'Live Demo Deployment',
+          name: 'Live Demo URL',
           checkedItem: demoUrl,
           result: 'inaccessible',
           confidence: 'high',
@@ -255,7 +254,7 @@ export function SubmissionReadiness({ event, isSubmissionStage = true }: Submiss
     if (!deckUrl) {
       checks.push({
         id: 'deck',
-        name: 'Pitch Deck / Slides',
+        name: 'Pitch Deck',
         checkedItem: 'Deck Asset',
         result: 'warning',
         confidence: 'high',
@@ -269,29 +268,29 @@ export function SubmissionReadiness({ event, isSubmissionStage = true }: Submiss
         checkedItem: 'Google Drive Asset',
         result: 'unverified',
         confidence: 'low',
-        detail: 'Google Drive requires explicit sharing permissions. Link sharing status cannot be cryptographically proven without evaluator account credentials.',
-        actionRecommendation: 'Ensure "General access" in Google Drive is set to "Anyone with the link" (Viewer). Test access in Incognito.',
+        detail: 'Google Drive link sharing status cannot be proven without evaluator login.',
+        actionRecommendation: 'Ensure "General access" in Google Drive is set to "Anyone with the link" (Viewer).',
         incognitoUrl: deckUrl,
       })
     } else if (deckUrl.includes('figma.com')) {
       checks.push({
         id: 'deck',
-        name: 'Pitch Deck / Design (Figma)',
+        name: 'Pitch Deck (Figma)',
         checkedItem: 'Figma File',
         result: 'unverified',
         confidence: 'low',
         detail: 'Figma link access cannot be verified automatically without workspace access tokens.',
-        actionRecommendation: 'Verify in the Figma Share dialog that "Anyone with the link" is granted "Can view".',
+        actionRecommendation: 'Verify in Figma Share dialog that "Anyone with the link" can view.',
         incognitoUrl: deckUrl,
       })
     } else {
       checks.push({
         id: 'deck',
-        name: 'Pitch Deck Deliverable',
+        name: 'Pitch Deck',
         checkedItem: deckUrl.length > 40 ? `${deckUrl.slice(0, 37)}...` : deckUrl,
         result: 'verified',
         confidence: 'medium',
-        detail: 'Presentation deliverable attached.',
+        detail: 'Pitch deck deliverable attached.',
         incognitoUrl: deckUrl.startsWith('http') ? deckUrl : undefined,
       })
     }
@@ -382,7 +381,7 @@ export function SubmissionReadiness({ event, isSubmissionStage = true }: Submiss
   const warningCount = results ? results.filter(r => r.result === 'warning').length : 0
 
   return (
-    <div className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
+    <div className="border border-hack-muted/60 bg-hack-surface rounded-[6px] shadow-hack-card overflow-hidden">
       <div 
         onClick={() => setIsExpanded(!isExpanded)}
         className="bg-hack-surface p-4 text-hack-ink flex flex-col gap-3 cursor-pointer select-none border-b border-hack-muted/30"
@@ -391,32 +390,24 @@ export function SubmissionReadiness({ event, isSubmissionStage = true }: Submiss
           <FlaskConical className="h-5 w-5 text-hack-gold-dark shrink-0" />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext">
-                PRE-FLIGHT SUBMISSION CHECK
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-hack-ink">
+                Ready to submit?
               </span>
               {results && (
                 <span className={cn(
-                  "font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border shrink-0",
+                  "font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded-[4px] border shrink-0",
                   inaccessibleCount > 0 
                     ? "bg-hack-red/15 border-hack-red/30 text-hack-red" 
                     : warningCount > 0
                     ? "bg-hack-gold/20 border-hack-gold/40 text-hack-gold-dark"
                     : "bg-hack-mint/30 border-hack-mint text-hack-mint-dark"
                 )}>
-                  {inaccessibleCount > 0 
-                    ? `${inaccessibleCount} blocking` 
-                    : warningCount > 0 
-                    ? `${warningCount} to verify` 
-                    : 'Ready to submit ✓'}
+                  {verifiedCount}/{results.length} ready
                 </span>
               )}
             </div>
             <p className="font-sans text-xs text-hack-subtext mt-0.5">
-              {inaccessibleCount > 0
-                ? `${inaccessibleCount} deliverable(s) appear inaccessible to judges.`
-                : warningCount > 0
-                ? `${warningCount} recommendation(s) to verify before final cutoff.`
-                : 'Key links and deliverables appear reachable.'}
+              Quick check before you submit to the portal.
             </p>
           </div>
         </div>
@@ -430,7 +421,7 @@ export function SubmissionReadiness({ event, isSubmissionStage = true }: Submiss
               e.stopPropagation()
               runDiagnostics(false)
             }}
-            className="font-mono text-xs font-bold bg-hack-coral hover:brightness-105 text-hack-ink shadow-hack-hero h-8 px-3 rounded-lg flex-1 justify-center"
+            className="btn-tactile font-mono text-xs font-bold bg-hack-coral text-hack-ink h-8 px-3 rounded-[4px] flex-1 justify-center"
           >
             {running ? (
               <>
@@ -438,19 +429,19 @@ export function SubmissionReadiness({ event, isSubmissionStage = true }: Submiss
               </>
             ) : (
               <>
-                <ShieldCheck className="w-3.5 h-3.5 mr-1.5" /> Check Everything
+                <ShieldCheck className="w-3.5 h-3.5 mr-1.5" /> Re-check links
               </>
             )}
           </Button>
 
           <button
             type="button"
-            className="p-1.5 text-hack-subtext hover:text-hack-ink rounded-lg border border-hack-muted/40 hover:bg-hack-sand/50 transition-colors"
+            className="p-1.5 text-hack-subtext hover:text-hack-ink rounded-[4px] border border-hack-muted/40 hover:bg-hack-sand/50 transition-colors"
             onClick={(e) => {
               e.stopPropagation()
               setIsExpanded(!isExpanded)
             }}
-            aria-label={isExpanded ? "Collapse pre-flight checks" : "Expand pre-flight checks"}
+            aria-label={isExpanded ? "Collapse checklist" : "Expand checklist"}
           >
             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
@@ -458,105 +449,102 @@ export function SubmissionReadiness({ event, isSubmissionStage = true }: Submiss
       </div>
 
       {isExpanded && (
-        <div className="p-4 bg-hack-surface space-y-2.5">
+        <div className="p-3.5 bg-hack-surface space-y-2">
           {results ? (
             <div className="space-y-2">
-              {results.map((check) => (
-                <div
-                  key={check.id}
-                  className={cn(
-                    "p-3 rounded-lg border font-mono text-xs flex items-start gap-2.5 transition-all",
-                    check.result === 'verified' && "bg-hack-mint/10 border-hack-mint/40 text-hack-ink",
-                    check.result === 'inaccessible' && "bg-hack-red/10 border-hack-red/30 text-hack-ink",
-                    check.result === 'warning' && "bg-hack-gold/15 border-hack-gold/40 text-hack-ink",
-                    check.result === 'unverified' && "bg-hack-sand/60 border-hack-muted/60 text-hack-ink"
-                  )}
-                >
-                  {check.result === 'verified' && <CheckCircle2 className="h-4 w-4 text-hack-mint-dark shrink-0 mt-0.5" />}
-                  {check.result === 'inaccessible' && <XCircle className="h-4 w-4 text-hack-red shrink-0 mt-0.5" />}
-                  {check.result === 'warning' && <AlertTriangle className="h-4 w-4 text-hack-gold-dark shrink-0 mt-0.5" />}
-                  {check.result === 'unverified' && <HelpCircle className="h-4 w-4 text-hack-subtext shrink-0 mt-0.5" />}
+              {results.map((check) => {
+                const isVerified = check.result === 'verified'
+                const isInaccessible = check.result === 'inaccessible'
+                const isWarning = check.result === 'warning'
+                const canInput = (isInaccessible || isWarning) && ['github', 'demo', 'deck'].includes(check.id)
 
-                  <div className="flex-1 min-w-0">
+                return (
+                  <div
+                    key={check.id}
+                    className={cn(
+                      "p-2.5 rounded-[4px] border font-mono text-xs flex flex-col gap-1.5 transition-all min-h-[44px]",
+                      isVerified && "border-l-4 border-l-hack-mint border-y border-r border-hack-muted/50 bg-hack-mint/5 text-hack-ink",
+                      isInaccessible && "border-l-4 border-l-hack-red border-y border-r border-hack-muted/50 bg-hack-red/5 text-hack-ink",
+                      isWarning && "border-l-4 border-l-hack-gold border-y border-r border-hack-muted/50 bg-hack-sand/40 text-hack-ink",
+                      check.result === 'unverified' && "border-l-4 border-l-hack-muted border-y border-r border-hack-muted/50 bg-hack-sand/20 text-hack-ink"
+                    )}
+                  >
                     <div className="flex items-center justify-between gap-2 flex-wrap">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="font-semibold text-hack-ink">{check.name}</span>
+                      <div className="flex items-center gap-2 min-w-0">
+                        {isVerified && <CheckCircle2 className="h-4 w-4 text-hack-mint-dark shrink-0" />}
+                        {isInaccessible && <XCircle className="h-4 w-4 text-hack-red shrink-0" />}
+                        {isWarning && <AlertTriangle className="h-4 w-4 text-hack-gold-dark shrink-0" />}
+                        {check.result === 'unverified' && <HelpCircle className="h-4 w-4 text-hack-subtext shrink-0" />}
+                        
+                        <span className="font-semibold text-hack-ink text-xs">{check.name}</span>
                         {check.checkedItem && !['Code Repository', 'Production URL', 'Deck Asset'].includes(check.checkedItem) && (
-                          <span className="text-[10px] text-hack-subtext font-normal truncate max-w-[160px]">
+                          <span className="text-[10px] text-hack-subtext font-normal truncate max-w-[140px]">
                             ({check.checkedItem})
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1.5">
+
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <span className={cn(
-                          "font-bold uppercase text-[9px] px-1.5 py-0.5 rounded-full border shrink-0",
-                          check.result === 'verified' && "bg-hack-mint/25 border-hack-mint/40 text-hack-mint-dark",
-                          check.result === 'inaccessible' && "bg-hack-red/20 border-hack-red/40 text-hack-red",
-                          check.result === 'warning' && "bg-hack-gold/25 border-hack-gold/40 text-hack-gold-dark",
-                          check.result === 'unverified' && "bg-hack-sand border-hack-muted/60 text-hack-subtext"
+                          "font-bold uppercase text-[9px] px-2 py-0.5 rounded-[4px] border",
+                          isVerified && "bg-hack-mint/30 border-hack-mint text-hack-mint-dark",
+                          isInaccessible && "bg-hack-red/20 border-hack-red/40 text-hack-red",
+                          isWarning && "bg-hack-gold/20 border-hack-gold/40 text-hack-gold-dark",
+                          check.result === 'unverified' && "bg-hack-sand border-hack-muted text-hack-subtext"
                         )}>
-                          {check.result === 'inaccessible' ? 'Inaccessible' : check.result === 'warning' ? 'Missing / Verify' : check.result}
+                          {isVerified ? '✓ Ready' : isInaccessible ? 'Inaccessible' : 'Not linked yet'}
                         </span>
+
+                        {check.incognitoUrl && (
+                          <a
+                            href={check.incognitoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 text-hack-subtext hover:text-hack-ink"
+                            title="Open link"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
                       </div>
                     </div>
 
-                    <p className="font-sans text-[11px] text-hack-subtext mt-1 leading-relaxed">
+                    <p className="font-sans text-[11px] text-hack-subtext leading-relaxed">
                       {check.detail}
                     </p>
 
-                    {(check.result === 'warning' || check.result === 'inaccessible') && ['github', 'demo', 'deck'].includes(check.id) && (
-                      <div className="mt-2.5 flex items-center gap-1.5">
+                    {canInput && (
+                      <div className="mt-1 flex items-center gap-1.5">
                         <input
                           type="url"
                           placeholder={
                             check.id === 'github' 
-                              ? 'https://github.com/org/repo' 
+                              ? 'Paste GitHub repo link...' 
                               : check.id === 'demo' 
-                              ? 'https://your-app.vercel.app' 
-                              : 'https://docs.google.com/presentation/...'
+                              ? 'Paste live demo link...' 
+                              : 'Paste pitch deck / slides link...'
                           }
                           value={inlineUrls[check.id] || ''}
                           onChange={(e) => setInlineUrls(prev => ({ ...prev, [check.id]: e.target.value }))}
-                          className="h-8 min-w-0 flex-1 font-mono text-xs border border-hack-muted/60 bg-white rounded-lg px-2.5 focus:outline-none focus:border-hack-ink shadow-hack-sm"
+                          className="h-7 min-w-0 flex-1 font-mono text-xs border border-hack-muted/60 bg-white rounded-[4px] px-2 focus:outline-none focus:border-hack-ink"
                         />
                         <button
                           type="button"
                           disabled={!inlineUrls[check.id]?.trim() || savingKey === check.id}
                           onClick={() => handleInlineSaveUrl(check.id, inlineUrls[check.id])}
-                          className="h-8 px-3 font-mono text-[11px] font-bold uppercase bg-hack-gold text-hack-ink border border-hack-muted/60 rounded-lg shrink-0 hover:brightness-105 disabled:opacity-50 shadow-hack-sm transition-all"
+                          className="btn-tactile h-7 px-2.5 font-mono text-[10px] font-bold uppercase bg-hack-gold text-hack-ink rounded-[4px] shrink-0 disabled:opacity-50"
                         >
-                          {savingKey === check.id ? 'Saving...' : '+ Save'}
+                          {savingKey === check.id ? 'Saving...' : 'Save'}
                         </button>
                       </div>
                     )}
-
-                    {check.actionRecommendation && !['github', 'demo', 'deck'].includes(check.id) && (
-                      <p className="font-sans text-[11px] text-hack-ink font-semibold mt-1 bg-white/70 p-1.5 rounded border border-hack-muted/30">
-                        👉 Action: {check.actionRecommendation}
-                      </p>
-                    )}
-
-                    {check.incognitoUrl && (
-                      <div className="mt-2 pt-1 flex items-center justify-end">
-                        <a
-                          href={check.incognitoUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 font-mono text-[10px] font-bold text-hack-ink hover:text-hack-coral-dark underline underline-offset-2"
-                        >
-                          <Eye className="w-3 h-3" />
-                          <span>Test Access in New Window</span>
-                          <ExternalLink className="w-2.5 h-2.5" />
-                        </a>
-                      </div>
-                    )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           ) : (
-            <div className="p-4 rounded-lg border border-dashed border-hack-muted text-center font-mono text-xs text-hack-subtext">
-              Click "Check Everything" to verify public repository access, YouTube privacy, and submission links.
+            <div className="p-4 rounded-[4px] border border-dashed border-hack-muted text-center font-mono text-xs text-hack-subtext">
+              Click "Re-check links" to verify public repository access and submission links.
             </div>
           )}
         </div>

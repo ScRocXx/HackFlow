@@ -292,63 +292,67 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
       />
 
       {/* Mobile Workspace Segmented Controller (lg:hidden) */}
-      <div className="flex lg:hidden border border-hack-muted/60 bg-hack-surface p-1 rounded-xl shadow-hack-sm gap-1 overflow-x-auto no-scrollbar">
+      <div className="sticky top-14 sm:top-16 z-30 flex lg:hidden border border-hack-muted/60 bg-hack-surface/95 backdrop-blur-md p-1 rounded-[6px] shadow-sm gap-1 overflow-x-auto no-scrollbar">
         <button
           type="button"
           onClick={() => setMobileWorkspaceTab('sprint')}
           className={cn(
-            "flex-1 py-2 px-3 text-center font-mono text-xs font-bold uppercase tracking-wider rounded-lg transition-all whitespace-nowrap select-none",
+            "flex-1 py-2 px-3 text-center font-mono text-xs font-bold uppercase tracking-wider rounded-[4px] transition-all whitespace-nowrap select-none",
             mobileWorkspaceTab === 'sprint'
-              ? "bg-hack-coral text-hack-ink shadow-hack-hero font-extrabold"
+              ? "bg-hack-coral text-hack-ink shadow-sm font-extrabold"
               : "text-hack-subtext hover:bg-hack-sand"
           )}
         >
-          ⚡ Tasks & Stage
+          {(() => {
+            const delivs = (currentDisplayStage as any)?.deliverables || (currentDisplayStage as any)?.stage_deliverables || []
+            const done = delivs.filter((d: any) => d.is_done || d.is_completed || d.completed).length
+            return delivs.length > 0 ? `⚡ Tasks (${done}/${delivs.length})` : '⚡ Tasks'
+          })()}
         </button>
         <button
           type="button"
           onClick={() => setMobileWorkspaceTab('pitch')}
           className={cn(
-            "flex-1 py-2 px-3 text-center font-mono text-xs font-bold uppercase tracking-wider rounded-lg transition-all whitespace-nowrap select-none",
+            "flex-1 py-2 px-3 text-center font-mono text-xs font-bold uppercase tracking-wider rounded-[4px] transition-all whitespace-nowrap select-none",
             mobileWorkspaceTab === 'pitch'
-              ? "bg-hack-blue text-hack-ink shadow-hack-sm font-extrabold"
+              ? "bg-hack-gold text-hack-ink shadow-sm font-extrabold"
               : "text-hack-subtext hover:bg-hack-sand"
           )}
         >
-          💡 Ideas & Canvas
+          🛡️ Submit Check
         </button>
         <button
           type="button"
           onClick={() => setMobileWorkspaceTab('team')}
           className={cn(
-            "flex-1 py-2 px-3 text-center font-mono text-xs font-bold uppercase tracking-wider rounded-lg transition-all whitespace-nowrap select-none",
+            "flex-1 py-2 px-3 text-center font-mono text-xs font-bold uppercase tracking-wider rounded-[4px] transition-all whitespace-nowrap select-none",
             mobileWorkspaceTab === 'team'
-              ? "bg-hack-gold text-hack-ink shadow-hack-sm font-extrabold"
+              ? "bg-hack-blue text-hack-ink shadow-sm font-extrabold"
               : "text-hack-subtext hover:bg-hack-sand"
           )}
         >
-          👥 Team & Shelf
+          👥 Team & Links
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 items-start">
         {/* Left Column (Dominant Workspace) */}
         <div className="space-y-6 min-w-0">
-          {/* Hackathon Brief Banner */}
+          {/* The Brief Banner */}
           {event.mission_brief && (
             <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:block")}>
-              <Card className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
+              <Card className="border border-hack-muted/60 bg-hack-surface rounded-[6px] shadow-hack-card overflow-hidden">
                 <div className="bg-hack-surface p-4 border-b border-hack-muted/30 text-hack-ink flex items-center justify-between gap-3 flex-wrap">
                   <div className="flex items-center gap-2.5">
                     <span className="text-xl">🎯</span>
                     <div>
-                      <h3 className="font-display text-lg font-bold tracking-tight text-hack-ink">Hackathon Brief</h3>
-                      <p className="font-mono text-[11px] text-hack-subtext">Key constraints & target deliverable</p>
+                      <h3 className="font-display text-lg font-bold tracking-tight text-hack-ink">The Brief</h3>
+                      <p className="font-mono text-[11px] text-hack-subtext">Rules, tech stack, and what you need to submit</p>
                     </div>
                   </div>
                   <span
                     className={cn(
-                      "font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border",
+                      "font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-[4px] border",
                       event.mission_brief.hackathon_tier === 'tech_mandate'
                         ? 'bg-hack-gold/20 border-hack-gold text-hack-gold-dark'
                         : event.mission_brief.hackathon_tier === 'domain_focused'
@@ -357,7 +361,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                     )}
                   >
                     {event.mission_brief.hackathon_tier === 'tech_mandate'
-                      ? '🔧 Tech Mandated'
+                      ? '⚡ Required Stack'
                       : event.mission_brief.hackathon_tier === 'domain_focused'
                       ? '🎯 Domain Focused'
                       : '🟢 Open Build'}
@@ -368,17 +372,17 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
-                        What to Build (Target Deliverable)
+                        What to build
                       </span>
-                      <p className="font-sans text-sm text-hack-ink font-semibold bg-hack-sand/50 p-3 rounded-lg border border-hack-muted/40 leading-relaxed">
+                      <p className="font-sans text-sm text-hack-ink font-semibold bg-hack-sand/50 p-3 rounded-[4px] border border-hack-muted/40 leading-relaxed">
                         {event.mission_brief.what_to_build}
                       </p>
                     </div>
                     <div className="space-y-1">
                       <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
-                        Why It Exists (Sponsor Motive)
+                        What judges care about
                       </span>
-                      <p className="font-sans text-sm text-hack-ink bg-hack-sand/50 p-3 rounded-lg border border-hack-muted/40 leading-relaxed">
+                      <p className="font-sans text-sm text-hack-ink bg-hack-sand/50 p-3 rounded-[4px] border border-hack-muted/40 leading-relaxed">
                         {event.mission_brief.why_it_exists}
                       </p>
                     </div>
@@ -389,17 +393,17 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                     <div className="space-y-1.5 pt-1">
                       <div className="flex items-center justify-between">
                         <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
-                          Tech Stack Rules
+                          Required Stack
                         </span>
                         {event.mission_brief.tech_stack_mandate.is_stack_restricted && (
-                          <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-hack-red/10 text-hack-red border border-hack-red/30 rounded-full">
-                            ⚠️ Stack Restricted Challenge
+                          <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-hack-red/10 text-hack-red border border-hack-red/30 rounded-[4px]">
+                            ⚠️ Required Stack
                           </span>
                         )}
                       </div>
 
                       {event.mission_brief.tech_stack_mandate.is_stack_restricted ? (
-                        <div className="space-y-2 p-3 bg-hack-sand/40 border border-hack-muted/40 rounded-lg">
+                        <div className="space-y-2 p-3 bg-hack-sand/40 border border-hack-muted/40 rounded-[4px]">
                           <p className="font-sans text-sm text-hack-ink leading-relaxed">
                             {event.mission_brief.tech_stack_mandate.allowed_stack_summary}
                           </p>
@@ -407,7 +411,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                             {(event.mission_brief.tech_stack_mandate.mandatory_tools || []).map((tool: string, i: number) => (
                               <span
                                 key={i}
-                                className="font-mono text-xs font-bold px-2.5 py-1 rounded-md border border-hack-red/40 bg-hack-red/15 text-hack-red flex items-center gap-1"
+                                className="font-mono text-xs font-bold px-2.5 py-1 rounded-[4px] border border-hack-red/40 bg-hack-red/15 text-hack-red flex items-center gap-1"
                               >
                                 <span>⚡</span> {tool}
                               </span>
@@ -415,7 +419,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                             {(event.mission_brief.tech_stack_mandate.bonus_sponsor_tools || []).map((tool: string, i: number) => (
                               <span
                                 key={`bonus-${i}`}
-                                className="font-mono text-xs font-bold px-2.5 py-1 rounded-md border border-hack-gold/40 bg-hack-gold/20 text-hack-gold-dark flex items-center gap-1"
+                                className="font-mono text-xs font-bold px-2.5 py-1 rounded-[4px] border border-hack-gold/40 bg-hack-gold/20 text-hack-gold-dark flex items-center gap-1"
                               >
                                 <span>⭐</span> {tool} (Bonus Points)
                               </span>
@@ -423,7 +427,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                           </div>
                         </div>
                       ) : (
-                        <div className="p-3 bg-hack-sand/40 border border-hack-muted/40 rounded-lg">
+                        <div className="p-3 bg-hack-sand/40 border border-hack-muted/40 rounded-[4px]">
                           <p className="font-mono text-xs text-hack-mint-dark font-semibold flex items-center gap-1.5">
                             <span>✨</span>
                             {event.mission_brief.tech_stack_mandate.allowed_stack_summary || 'Any tech stack permitted (Free Choice)'}
@@ -437,13 +441,13 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
                   {event.mission_brief.submission_deliverables && event.mission_brief.submission_deliverables.length > 0 && (
                     <div className="space-y-1.5 pt-1">
                       <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
-                        Required Submission Deliverables
+                        Required to submit
                       </span>
                       <div className="flex flex-wrap gap-1.5">
                         {event.mission_brief.submission_deliverables.map((deliv: string, i: number) => (
                           <span
                             key={i}
-                            className="font-mono text-xs font-semibold px-2.5 py-1 rounded-md border border-hack-muted bg-hack-surface text-hack-ink flex items-center gap-1 shadow-hack-sm"
+                            className="font-mono text-xs font-semibold px-2.5 py-1 rounded-[4px] border border-hack-muted bg-hack-surface text-hack-ink flex items-center gap-1 shadow-sm"
                           >
                             <span className="text-hack-mint-dark">✓</span> {deliv}
                           </span>
@@ -485,9 +489,9 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
             />
           )}
 
-          {/* Submission Readiness Pre-Flight Diagnostic (Visible in mobile sprint tab directly under checklist) */}
+          {/* Submission Readiness Pre-Flight Diagnostic (Visible in mobile pitch/submit check tab) */}
           {['registered', 'building', 'submitted', 'under_review'].includes(currentEvent.status) && (
-            <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:hidden", "block lg:hidden")}>
+            <div className={cn(mobileWorkspaceTab !== 'pitch' && "hidden lg:hidden", "block lg:hidden")}>
               <SubmissionReadiness event={currentEvent} />
             </div>
           )}
@@ -654,20 +658,20 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
             </Card>
           </div>
 
-          {/* Resources & Shelf (Moved to Right Rail below Team) */}
+          {/* Links & Files (Moved to Right Rail below Team) */}
           <div className={cn(mobileWorkspaceTab !== 'team' && "hidden lg:block")}>
-            <Card className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
+            <Card className="border border-hack-muted/60 bg-hack-surface rounded-[6px] shadow-hack-card overflow-hidden">
               <div className="bg-hack-surface p-4 sm:p-5 border-b border-hack-muted/30 text-hack-ink">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                   <div className="flex items-center gap-2">
                     <FileText className="h-5 w-5 text-hack-gold-dark" />
-                    <h3 className="font-display text-xl font-bold tracking-tight text-hack-ink">Resources & Shelf</h3>
+                    <h3 className="font-display text-xl font-bold tracking-tight text-hack-ink">Links & Files</h3>
                     <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-full border border-hack-muted bg-hack-sand text-hack-ink">
                       {resources.length}
                     </span>
                   </div>
                   <p className="font-mono text-xs text-hack-subtext">
-                    Problem statements, rulebooks & links
+                    Repo, Figma, deck, and rulebooks
                   </p>
                 </div>
               </div>

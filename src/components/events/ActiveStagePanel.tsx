@@ -47,24 +47,24 @@ export function ActiveStagePanel({
 
   return (
     <div className={className}>
-      <Card className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
+      <Card className="border border-hack-muted/60 bg-hack-surface rounded-[6px] shadow-hack-card overflow-hidden">
         <div className="bg-hack-surface p-4 sm:p-6 border-b border-hack-muted/40 text-hack-ink">
           <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
             <div>
               <div className="flex items-center gap-2 mb-2 flex-wrap">
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border border-hack-coral/40 bg-hack-coral/15 text-hack-coral-dark">
-                  WHAT MATTERS NOW
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[4px] border border-hack-coral/40 bg-hack-coral/15 text-hack-coral-dark">
+                  Current Round
                 </span>
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border border-hack-gold/40 bg-hack-gold/15 text-hack-gold-dark">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[4px] border border-hack-gold/40 bg-hack-gold/15 text-hack-gold-dark">
                   {currentDisplayStage.stage_type}
                 </span>
                 {formatStageDeadline(currentDisplayStage) && (
-                  <span className="font-mono text-[10px] font-medium tracking-wider px-2 py-0.5 rounded-md border border-hack-muted bg-hack-sand text-hack-subtext">
+                  <span className="font-mono text-[10px] font-medium tracking-wider px-2 py-0.5 rounded-[4px] border border-hack-muted bg-hack-sand text-hack-subtext">
                     🗓️ {formatStageDeadline(currentDisplayStage)}
                   </span>
                 )}
                 {focusedStageId && focusedStageId !== activeStage?.id && (
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border border-hack-blue/50 bg-hack-blue/15 text-hack-blue-dark">
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[4px] border border-hack-blue/50 bg-hack-blue/15 text-hack-blue-dark">
                     Viewing Round {currentDisplayStage.round_number || ''}
                   </span>
                 )}
@@ -104,13 +104,13 @@ export function ActiveStagePanel({
               onClick={onCompleteStage} 
               disabled={isCompleting || currentDisplayStage.is_completed}
               className={cn(
-                "font-mono text-xs font-bold rounded-lg transition-all",
+                "font-mono text-xs font-bold rounded-[4px] transition-all",
                 currentDisplayStage.is_completed 
                   ? "bg-hack-mint/30 text-hack-mint-dark border border-hack-mint" 
-                  : "bg-hack-coral text-hack-ink shadow-hack-hero hover:brightness-105"
+                  : "btn-tactile bg-hack-coral text-hack-ink hover:brightness-105"
               )}
             >
-              {currentDisplayStage.is_completed ? 'Stage Completed ✓' : 'Mark Stage Complete'}
+              {currentDisplayStage.is_completed ? 'Round Completed ✓' : 'Complete Round ✓'}
             </Button>
           </div>
         </CardContent>

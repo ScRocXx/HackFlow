@@ -124,7 +124,7 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
         riskList.push({
           eventTitle: ev.title,
           eventId: ev.id,
-          message: `${incomplete.length} deliverables pending with under 48h remaining (${Math.round(hoursLeft)}h left).`,
+          message: `${incomplete.length} task${incomplete.length === 1 ? '' : 's'} left — due in ${Math.round(hoursLeft)}h`,
           severity: hoursLeft < 24 ? 'critical' : 'warning'
         })
       }
@@ -136,7 +136,7 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
           riskList.push({
             eventTitle: ev.title,
             eventId: ev.id,
-            message: `Final freeze in ${Math.round(hoursLeft)}h! ${incomplete.length} deliverables remaining.`,
+            message: `${incomplete.length} task${incomplete.length === 1 ? '' : 's'} left — due in ${Math.round(hoursLeft)}h`,
             severity: 'critical'
           })
         }
@@ -238,7 +238,7 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
       {/* Filter Tabs & Section Header with Horizontal Scroll on Mobile */}
       <div className="space-y-3 sm:space-y-4">
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2.5 sm:gap-3">
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth pb-1 -mx-3 px-3 sm:mx-0 sm:px-0 sm:flex-wrap">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth pb-1 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
             <div className="flex items-center gap-1.5 shrink-0 sm:shrink sm:flex-wrap" role="tablist" aria-label="Hackathon status filter">
               {filters.map((f) => (
                 <button
@@ -278,11 +278,11 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
           </div>
 
           <p className="font-mono text-xs text-hack-subtext shrink-0">
-            Showing {filteredEvents.length} of {safeEvents.length} competitions
+            {filteredEvents.length} hackathons
           </p>
         </div>
 
-        {/* Events Grid */}
+        {/* Events Grid: 1 col on mobile, 2 col on tablet/small laptop (768px-1279px), 3 col on desktop (>=1280px) */}
         {filteredEvents.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4 text-center border border-dashed border-hack-muted bg-hack-surface rounded-xl shadow-hack-sm">
             <div className="h-14 w-14 rounded-full bg-hack-sand border border-hack-muted flex items-center justify-center mb-3 text-hack-gold-dark">
@@ -304,7 +304,7 @@ export function DashboardContent({ events = [], userName = '' }: DashboardConten
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
             {sortedEvents.map((event) => (
               <EventCard key={event.id} event={event} />
             ))}

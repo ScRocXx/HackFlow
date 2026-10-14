@@ -153,7 +153,7 @@ export function WorkspaceHeader({
       <div className="border border-hack-muted/60 bg-hack-sand/60 rounded-lg p-3 sm:p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="min-w-0">
           <span className="font-mono text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-hack-subtext block">
-            Next Actionable Deadline
+            Next deadline
           </span>
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
             <span className="font-mono text-sm sm:text-base font-bold text-hack-coral-dark">
@@ -192,7 +192,7 @@ export function WorkspaceHeader({
                 className="font-mono text-xs font-semibold rounded-lg border border-hack-muted/60 bg-hack-surface hover:bg-hack-sand text-hack-ink shadow-hack-sm h-8 px-2.5 flex items-center gap-1.5 active:scale-95"
               >
                 <Calendar className="w-3.5 h-3.5 text-hack-gold-dark shrink-0" />
-                <span>Sync Schedule</span>
+                <span>Add to calendar</span>
                 <ChevronDown className="w-3 h-3 text-hack-subtext shrink-0" />
               </Button>
             </DropdownMenuTrigger>

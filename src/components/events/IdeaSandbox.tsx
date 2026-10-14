@@ -343,25 +343,25 @@ export function IdeaSandbox({ eventId, problemStatements = [], missionBrief }: I
   }
 
   return (
-    <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[7px_7px_0_#671912] overflow-hidden">
+    <Card className="border border-hack-muted/60 bg-hack-surface rounded-[6px] shadow-hack-card overflow-hidden">
       <div 
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="bg-[#2e4742] p-5 border-b-2 border-[#10201d] text-[#f7f7f2] flex flex-col sm:flex-row justify-between sm:items-center gap-3 cursor-pointer select-none"
+        className="bg-hack-forest p-4 sm:p-5 border-b border-hack-muted/30 text-hack-sand flex flex-col sm:flex-row justify-between sm:items-center gap-3 cursor-pointer select-none"
       >
         <div className="flex items-center gap-2.5 min-w-0">
-          <Lightbulb className="h-5 w-5 text-[#f5b726] shrink-0" />
+          <Lightbulb className="h-5 w-5 text-hack-gold shrink-0" />
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-[#f7f7f2]">
-                Problem Statement & Brainstorming
+              <h3 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-hack-sand">
+                Ideas & Tracks
               </h3>
               {missionBrief?.tech_stack_mandate?.is_stack_restricted && (
-                <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full border border-hack-coral/40 bg-hack-coral/20 text-[#f7f7f2] shrink-0">
+                <span className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-[4px] border border-hack-coral/40 bg-hack-coral/20 text-hack-sand shrink-0">
                   ⚡ Stack: {missionBrief.tech_stack_mandate.mandatory_tools?.join(', ')}
                 </span>
               )}
             </div>
-            <p className="font-mono text-xs text-[#8bb2de]">
+            <p className="font-mono text-xs text-hack-sand/70">
               Pick your problem statement track and outline what you're actually building.
             </p>
           </div>
@@ -376,15 +376,15 @@ export function IdeaSandbox({ eventId, problemStatements = [], missionBrief }: I
               setIsCollapsed(false);
               fileInputRef.current?.click();
             }}
-            className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#8bb2de] hover:bg-[#a9c9f0] text-[#10201d] shadow-[2px_2px_0_#10201d] shrink-0"
+            className="btn-tactile font-mono text-xs font-bold bg-hack-sky text-hack-ink rounded-[4px] shrink-0"
           >
             {isUploadingPdf ? (
               <>
-                <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Ingesting PDF...
+                <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Uploading PDF...
               </>
             ) : (
               <>
-                <Sparkles className="h-3.5 w-3.5 mr-1 text-[#10201d]" /> Ingest PDF Brochure
+                <Sparkles className="h-3.5 w-3.5 mr-1 text-hack-ink" /> Upload Problem PDF
               </>
             )}
           </Button>
@@ -402,7 +402,7 @@ export function IdeaSandbox({ eventId, problemStatements = [], missionBrief }: I
               setIsCollapsed(false);
               setIsAddModalOpen(true);
             }}
-            className="font-mono text-xs font-bold border-2 border-[#10201d] bg-[#f5b726] hover:bg-[#ffcf66] text-[#10201d] shadow-[2px_2px_0_#8a5d13] shrink-0"
+            className="btn-tactile font-mono text-xs font-bold bg-hack-gold text-hack-ink rounded-[4px] shrink-0"
           >
             <Plus className="h-3.5 w-3.5 mr-1" /> Add Track / Idea
           </Button>
@@ -410,8 +410,8 @@ export function IdeaSandbox({ eventId, problemStatements = [], missionBrief }: I
           <button
             type="button"
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="p-1.5 rounded-lg border-2 border-[#10201d] bg-[#f7f7f2] text-[#10201d] hover:bg-[#f2f2eb] transition-colors shrink-0"
-            aria-label={isCollapsed ? "Expand brainstorming section" : "Collapse brainstorming section"}
+            className="p-1.5 rounded-[4px] border border-hack-muted/40 bg-hack-surface text-hack-ink hover:bg-hack-sand transition-colors shrink-0"
+            aria-label={isCollapsed ? "Expand ideas section" : "Collapse ideas section"}
           >
             {isCollapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
           </button>

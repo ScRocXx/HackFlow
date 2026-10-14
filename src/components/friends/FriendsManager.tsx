@@ -161,9 +161,9 @@ export function FriendsManager({
             <Button
               type="submit"
               disabled={sending}
-              className="font-mono text-xs font-semibold bg-hack-coral hover:bg-hack-coral/90 text-white shadow-hack-hero rounded-lg px-4 py-2 shrink-0 transition-colors"
+              className="btn-tactile font-mono text-xs font-semibold bg-hack-coral text-hack-ink rounded-[4px] px-4 py-2 shrink-0 transition-colors"
             >
-              {sending ? 'Sending...' : 'Send Friend Request'}
+              {sending ? 'Sending...' : 'Add Teammate'}
             </Button>
           </form>
           <p className="mt-2 text-xs font-mono text-hack-subtext">
