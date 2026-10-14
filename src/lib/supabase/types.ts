@@ -82,11 +82,33 @@ export interface EventStage {
   is_completed: boolean
   completed_at: string | null
   created_at: string
+  deliverables?: StageDeliverable[]
+  stage_deliverables?: StageDeliverable[]
+  status?: string
+}
+
+export interface EventWithRelations extends Event {
+  stages?: (EventStage & { deliverables?: StageDeliverable[] })[]
+  active_stage?: EventStage | null
+  current_stage_deliverables?: StageDeliverable[]
+  team_members?: TeamMember[]
+  event_participants?: (EventParticipant & { profile?: Profile })[]
+  event_resources?: EventResource[]
+  resources?: EventResource[]
+  squad?: Squad | null
+  mission_brief?: MissionBrief | null
+  deliverable_progress?: { done: number; total: number }
+  problem_statements?: EventProblemStatement[]
+  current_user_id?: string
+  start_date?: string | null
+  end_date?: string | null
+  squad_name?: string | null
 }
 
 export interface StageDeliverable {
   id: string
   stage_id: string
+  event_id?: string
   title: string
   is_done: boolean
   assigned_to?: string | null
@@ -94,6 +116,7 @@ export interface StageDeliverable {
   done_at: string | null
   sort_order: number
   created_at: string
+  status?: string
 }
 
 export interface TeamMember {
@@ -207,6 +230,7 @@ export interface Squad {
   name: string
   created_by: string
   created_at: string
+  invite_code?: string
   members?: SquadMember[]
   member_count?: number
 }

@@ -36,14 +36,14 @@ export default async function FriendsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="font-mono text-xs font-bold px-2 py-0.5 bg-[#f5b726] text-[#10201d] uppercase">
-                Social Layer
+              <span className="font-mono text-xs font-bold px-2 py-0.5 bg-[#93C9B8] text-[#10201d] uppercase">
+                Teammates
               </span>
-              <span className="font-mono text-xs text-[#8bb2de]">HackFlow Network</span>
+              <span className="font-mono text-xs text-[#8bb2de]">HackFlow Teams</span>
             </div>
-            <h1 className="font-display font-bold text-2xl tracking-wide">Squads & Teammates Network</h1>
+            <h1 className="font-display font-bold text-2xl tracking-wide">Your Teams & Teammates</h1>
             <p className="font-mono text-xs text-[#f2f2eb]/70 mt-1">
-              Connect with teammates, form multi-disciplinary squads, and share one-click vaults across competitions.
+              Form squads, invite friends, and share vaults across competitions.
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -67,14 +67,14 @@ export default async function FriendsPage() {
             className="font-mono text-xs font-bold py-2 px-4 data-[state=active]:bg-[#2e4742] data-[state=active]:text-[#f2f2eb] border-2 border-transparent data-[state=active]:border-[#10201d]"
           >
             <Shield className="h-4 w-4 mr-2" />
-            Squad Units ({squads.length})
+            Squads ({squads.length})
           </TabsTrigger>
           <TabsTrigger
             value="friends"
             className="font-mono text-xs font-bold py-2 px-4 data-[state=active]:bg-[#2e4742] data-[state=active]:text-[#f2f2eb] border-2 border-transparent data-[state=active]:border-[#10201d] relative"
           >
             <Users className="h-4 w-4 mr-2" />
-            Friends Network ({friends.length})
+            People ({friends.length})
             {incoming.length > 0 && (
               <span className="ml-2 px-1.5 py-0.2 bg-[#e53927] text-white text-[10px] font-bold rounded-full">
                 {incoming.length}

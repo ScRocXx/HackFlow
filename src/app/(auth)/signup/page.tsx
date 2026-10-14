@@ -79,33 +79,33 @@ export default function SignupPage() {
   };
 
   return (
-    <Card className="border-2 border-[#10201d] bg-[#f7f7f2] shadow-[8px_8px_0_#671912]">
-      <CardHeader className="space-y-1 text-center border-b-2 border-[#10201d] pb-5">
-        <CardTitle className="font-display text-3xl font-extrabold uppercase tracking-tight text-[#10201d]">
-          Create Account
+    <Card className="border border-hack-muted/30 bg-hack-surface shadow-hack-lg rounded-xl overflow-hidden">
+      <CardHeader className="space-y-1.5 text-center border-b border-hack-muted/20 pb-5 pt-6 bg-hack-sand/30">
+        <CardTitle className="font-display text-2xl font-bold tracking-tight text-hack-ink">
+          Create your account
         </CardTitle>
-        <CardDescription className="font-mono text-xs text-[#34433f]">
-          Never lose track of a hackathon round again
+        <CardDescription className="font-mono text-xs text-hack-subtext">
+          Built for people who keep saying &ldquo;we&apos;ll do it later.&rdquo;
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4 pt-6">
+      <CardContent className="space-y-4 p-6">
         {error && (
-          <div className="border-2 border-[#10201d] bg-[#e53927] text-[#f7f7f2] p-3 text-xs font-mono font-bold flex gap-2 items-start shadow-[3px_3px_0_#671912]">
-            <AlertCircle className="h-4 w-4 text-white shrink-0 mt-0.5" />
+          <div className="border border-hack-coral/40 bg-hack-coral/10 text-hack-coral p-3 rounded-lg text-xs font-mono font-medium flex gap-2 items-start">
+            <AlertCircle className="h-4 w-4 text-hack-coral shrink-0 mt-0.5" />
             <span className="flex-1">{error}</span>
           </div>
         )}
 
         {success ? (
-          <div className="border-2 border-[#10201d] bg-[#8bb2de] p-5 text-center space-y-3 shadow-[4px_4px_0_#2e4742]">
-            <CheckCircle2 className="h-8 w-8 text-[#10201d] mx-auto" />
-            <h4 className="font-display text-2xl font-bold text-[#10201d]">Account Created!</h4>
-            <p className="font-mono text-xs text-[#10201d] leading-relaxed">
+          <div className="rounded-xl border border-hack-blue/30 bg-hack-blue/10 p-6 text-center space-y-3">
+            <CheckCircle2 className="h-8 w-8 text-hack-forest mx-auto" />
+            <h4 className="font-display text-xl font-bold text-hack-ink">Account Created!</h4>
+            <p className="font-mono text-xs text-hack-subtext leading-relaxed">
               Please check your inbox at <strong>{email}</strong> for the confirmation link.
             </p>
             <div className="pt-2">
               <Link href="/login">
-                <Button variant="default" size="sm">
+                <Button className="rounded-lg bg-hack-coral hover:bg-hack-coral/90 text-white font-mono text-xs font-semibold shadow-hack-hero" size="sm">
                   Proceed to Sign In
                 </Button>
               </Link>
@@ -114,7 +114,7 @@ export default function SignupPage() {
         ) : (
           <form onSubmit={handleEmailSignup} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d]">
+              <label className="font-mono text-xs font-bold uppercase tracking-wider text-hack-ink">
                 Full Name
               </label>
               <Input
@@ -124,10 +124,11 @@ export default function SignupPage() {
                 onChange={(e) => setFullName(e.target.value)}
                 required
                 disabled={loading || googleLoading}
+                className="rounded-lg border border-hack-muted/40 bg-hack-surface font-mono text-sm focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d]">
+              <label className="font-mono text-xs font-bold uppercase tracking-wider text-hack-ink">
                 Email Address
               </label>
               <Input
@@ -137,10 +138,11 @@ export default function SignupPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading || googleLoading}
+                className="rounded-lg border border-hack-muted/40 bg-hack-surface font-mono text-sm focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25"
               />
             </div>
             <div className="space-y-1.5">
-              <label className="font-mono text-xs font-bold uppercase tracking-wider text-[#10201d]">
+              <label className="font-mono text-xs font-bold uppercase tracking-wider text-hack-ink">
                 Password
               </label>
               <Input
@@ -151,9 +153,14 @@ export default function SignupPage() {
                 required
                 minLength={6}
                 disabled={loading || googleLoading}
+                className="rounded-lg border border-hack-muted/40 bg-hack-surface font-mono text-sm focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25"
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading || googleLoading}>
+            <Button
+              type="submit"
+              className="w-full rounded-lg bg-hack-coral hover:bg-hack-coral/90 text-white shadow-hack-hero font-semibold font-mono text-xs h-10 transition-colors"
+              disabled={loading || googleLoading}
+            >
               {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               Create Account
             </Button>
@@ -164,10 +171,10 @@ export default function SignupPage() {
           <>
             <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t-2 border-[#10201d]" />
+                <span className="w-full border-t border-hack-muted/30" />
               </div>
               <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-[#f7f7f2] px-3 font-mono font-bold text-[#10201d]">
+                <span className="bg-hack-surface px-3 font-mono font-medium text-hack-subtext text-[11px]">
                   or
                 </span>
               </div>
@@ -176,7 +183,7 @@ export default function SignupPage() {
             <Button 
               variant="outline" 
               type="button" 
-              className="w-full" 
+              className="w-full rounded-lg border border-hack-muted/40 hover:bg-hack-sand font-mono text-xs font-semibold text-hack-ink h-10 transition-colors" 
               onClick={handleGoogleLogin}
               disabled={loading || googleLoading}
             >
@@ -207,10 +214,10 @@ export default function SignupPage() {
           </>
         )}
       </CardContent>
-      <CardFooter className="flex justify-center border-t-2 border-[#10201d] pt-4">
-        <p className="font-mono text-xs text-[#34433f]">
+      <CardFooter className="flex justify-center border-t border-hack-muted/20 py-4 bg-hack-sand/20">
+        <p className="font-mono text-xs text-hack-subtext">
           Already have an account?{' '}
-          <Link href="/login" className="text-[#10201d] font-bold underline decoration-2 underline-offset-3 hover:text-[#e53927]">
+          <Link href="/login" className="text-hack-coral font-bold hover:underline">
             Sign in
           </Link>
         </p>

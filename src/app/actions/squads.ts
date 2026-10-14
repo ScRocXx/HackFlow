@@ -20,11 +20,13 @@ export async function createSquad(name: string, memberIds: string[] = []) {
     }
 
     // 1. Create the squad
+    const inviteCode = Math.random().toString(36).substring(2, 10).toUpperCase()
     const { data: squad, error: squadErr } = await supabase
       .from('squads')
       .insert({
         name: trimmedName,
         created_by: user.id,
+        invite_code: inviteCode,
       })
       .select()
       .single()
@@ -384,5 +386,78 @@ export async function getSquadVaultAssets(squadId: string): Promise<{ success: b
     return { success: true, data: assets || [] }
   } catch (err: any) {
     return { success: false, data: [], error: err.message }
+  }
+}
+
+export async function joinSquadByInviteCode(code: string): Promise<{ success: boolean; squad?: any; error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    const cleanCode = code.trim().toUpperCase()
+    if (!cleanCode) {
+      return { success: false, error: 'Invite code is required' }
+    }
+
+    // 1. Find squad by invite_code
+    const { data: squad, error: squadErr } = await supabase
+      .from('squads')
+      .select('id, name, created_by, invite_code')
+      .eq('invite_code', cleanCode)
+      .single()
+
+    if (squadErr || !squad) {
+      return { success: false, error: 'Squad not found with this invite link' }
+    }
+
+    // 2. Check if user is already a member
+    const { data: existingMember } = await supabase
+      .from('squad_members')
+      .select('id')
+      .eq('squad_id', squad.id)
+      .eq('user_id', user.id)
+      .maybeSingle()
+
+    if (!existingMember) {
+      const { error: joinErr } = await supabase
+        .from('squad_members')
+        .insert({
+          squad_id: squad.id,
+          user_id: user.id,
+          role: 'member',
+        })
+
+      if (joinErr) {
+        return { success: false, error: joinErr.message }
+      }
+
+      // Notify squad creator
+      if (squad.created_by && squad.created_by !== user.id) {
+        try {
+          const { data: joinerProfile } = await supabase.from('profiles').select('full_name').eq('id', user.id).single()
+          const joinerName = joinerProfile?.full_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'A new teammate'
+          await createInAppNotification({
+            userId: squad.created_by,
+            title: `Teammate Joined Squad: ${squad.name}`,
+            body: `${joinerName} joined "${squad.name}" via invite link.`,
+            link: '/friends',
+          })
+        } catch (notifErr) {
+          console.error('Error sending squad join notification:', notifErr)
+        }
+      }
+    }
+
+    revalidatePath('/vault')
+    revalidatePath('/friends')
+    revalidatePath('/dashboard')
+
+    return { success: true, squad }
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Failed to join squad' }
   }
 }

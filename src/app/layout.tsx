@@ -1,13 +1,13 @@
 import type { Metadata, Viewport } from 'next'
-import { Barlow_Semi_Condensed, Martian_Mono, Inter } from 'next/font/google'
+import { Space_Grotesk, Martian_Mono, Inter } from 'next/font/google'
 import './globals.css'
 import { cn } from '@/lib/utils'
 import { ToastProvider } from '@/components/ui/toast'
 
-const barlow = Barlow_Semi_Condensed({
+const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
-  weight: ['700', '800'],
-  variable: '--font-barlow',
+  weight: ['500', '600', '700'],
+  variable: '--font-space',
   display: 'swap',
 })
 
@@ -26,7 +26,7 @@ const inter = Inter({
 })
 
 export const viewport: Viewport = {
-  themeColor: '#10201d',
+  themeColor: '#172522',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
@@ -54,14 +54,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={cn(barlow.variable, martianMono.variable, inter.variable)}>
+    <html lang="en" className={cn(spaceGrotesk.variable, martianMono.variable, inter.variable, '[--font-barlow:var(--font-space)]')}>
       <head>
         <link rel="icon" type="image/png" href="/brand/hackflow_emblem.png?v=3" />
         <link rel="icon" type="image/jpeg" href="/brand/hackflow_emblem.jpg?v=3" />
         <link rel="shortcut icon" href="/brand/hackflow_emblem.png?v=3" />
         <link rel="apple-touch-icon" href="/apple-icon.png?v=3" />
       </head>
-      <body className="min-h-screen bg-[#f2f2eb] text-[#10201d] font-sans antialiased">
+      <body className="min-h-screen bg-[#F6F1E7] text-[#172522] font-sans antialiased">
         <ToastProvider>
           {children}
         </ToastProvider>

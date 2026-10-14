@@ -93,6 +93,7 @@ export const DialogContent = React.forwardRef<HTMLDivElement, React.HTMLAttribut
           {children}
           <button
             onClick={() => setOpen(false)}
+            aria-label="Close dialog"
             className="absolute right-3 top-3 sm:right-4 sm:top-4 p-1.5 border-2 border-[#10201d] bg-[#f7f7f2] hover:bg-[#e97b77] text-[#10201d] shadow-[2px_2px_0_#10201d] transition-colors focus:outline-none active:scale-95 touch-manipulation min-w-[32px] min-h-[32px] flex items-center justify-center"
           >
             <X className="h-4 w-4" />

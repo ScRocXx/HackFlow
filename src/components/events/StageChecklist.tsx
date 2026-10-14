@@ -1,25 +1,40 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Trash2, Loader2, UserCheck } from 'lucide-react'
+import { Plus, Trash2, Loader2, CheckCircle2 } from 'lucide-react'
 import { toggleDeliverable, addDeliverable, deleteDeliverable, claimDeliverable } from '@/app/actions/deliverables'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useEventRoom } from '@/lib/supabase/event-channel'
+import { createClient } from '@/lib/supabase/client'
+import { executeWithOfflineOutbox } from '@/lib/offline/outbox'
+import { SyncStatusPill } from '@/components/ui/SyncStatusPill'
 import { cn } from '@/lib/utils'
+import type { StageDeliverable } from '@/lib/supabase/types'
 
 interface StageChecklistProps {
   stageId: string
   eventId: string
-  deliverables: any[]
-  currentUserId?: string | null
+  deliverables: StageDeliverable[]
+  currentUserId?: string
 }
 
 export function StageChecklist({ stageId, eventId, deliverables: initialDeliverables, currentUserId }: StageChecklistProps) {
-  const [items, setItems] = useState(initialDeliverables)
+  const [items, setItems] = useState<StageDeliverable[]>(initialDeliverables)
   const [newTask, setNewTask] = useState('')
   const [loadingIds, setLoadingIds] = useState<Set<string>>(new Set())
-  const [claimingIds, setClaimingIds] = useState<Set<string>>(new Set())
+  const [activeUserId, setActiveUserId] = useState<string | null>(currentUserId || null)
+
+  useEffect(() => {
+    if (currentUserId) {
+      setActiveUserId(currentUserId)
+      return
+    }
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) setActiveUserId(data.user.id)
+    })
+  }, [currentUserId])
 
   useEffect(() => {
     setItems(initialDeliverables)
@@ -55,20 +70,24 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
     }
   })
 
-  // 0ms Zero-Latency Optimistic Toggle
+  // 0ms Zero-Latency Optimistic Toggle with Offline Outbox
   const handleToggle = async (id: string, currentIsDone: boolean) => {
     setLoadingIds(prev => new Set(prev).add(id))
     const newIsDone = !currentIsDone
     setItems(prev => prev.map(item => item.id === id ? { ...item, is_done: newIsDone } : item))
     
     try {
-      const res = await toggleDeliverable(id, newIsDone)
-      if (res && !res.success) {
+      const res = await executeWithOfflineOutbox(
+        'DELIVERABLE_TOGGLE',
+        { id, isDone: newIsDone },
+        () => toggleDeliverable(id, newIsDone)
+      )
+      if (res && !res.success && !res.queuedLocally) {
         // Rollback
         setItems(prev => prev.map(item => item.id === id ? { ...item, is_done: currentIsDone } : item))
       }
     } catch {
-      setItems(prev => prev.map(item => item.id === id ? { ...item, is_done: currentIsDone } : item))
+      // Outbox maintains optimistic state
     } finally {
       setLoadingIds(prev => {
         const next = new Set(prev)
@@ -78,35 +97,69 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
     }
   }
 
-  // 0ms Zero-Latency Optimistic Add
+  // 0ms Zero-Latency Optimistic Claim / Unclaim with Offline Outbox
+  const handleClaim = async (id: string) => {
+    setLoadingIds(prev => new Set(prev).add(id))
+    const currentItem = items.find(i => i.id === id)
+    const prevAssignedTo = currentItem?.assigned_to ?? currentItem?.done_by ?? null
+    const optimisticAssignedTo = prevAssignedTo ? null : (activeUserId || 'claimed')
+    setItems(prev => prev.map(item => item.id === id ? { ...item, assigned_to: optimisticAssignedTo } : item))
+
+    try {
+      const res = await executeWithOfflineOutbox(
+        'DELIVERABLE_CLAIM',
+        { id },
+        () => claimDeliverable(id)
+      )
+      if (res && !res.success && !res.queuedLocally) {
+        setItems(prev => prev.map(item => item.id === id ? { ...item, assigned_to: prevAssignedTo } : item))
+      }
+    } catch {
+      // Outbox maintains optimistic state
+    } finally {
+      setLoadingIds(prev => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }
+  }
+
+  // 0ms Zero-Latency Optimistic Add with Offline Outbox
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault()
     const title = newTask.trim()
     if (!title) return
 
     const tempId = `temp-${Date.now()}`
-    const optimisticItem = {
+    const optimisticItem: StageDeliverable = {
       id: tempId,
       stage_id: stageId,
       title: title,
       is_done: false,
+      assigned_to: null,
+      done_by: null,
+      done_at: null,
       sort_order: items.length + 1,
+      created_at: new Date().toISOString(),
     }
 
     setNewTask('')
     setItems(prev => [...prev, optimisticItem])
 
     try {
-      const res = await addDeliverable(stageId, title)
-      if (res && !res.success) {
+      const res = await executeWithOfflineOutbox(
+        'DELIVERABLE_ADD',
+        { stageId, title },
+        () => addDeliverable(stageId, title)
+      )
+      if (res && !res.success && !res.queuedLocally) {
         // Rollback optimistic item
         setItems(prev => prev.filter(i => i.id !== tempId))
         setNewTask(title)
       }
-    } catch (error) {
-      console.error(error)
-      setItems(prev => prev.filter(i => i.id !== tempId))
-      setNewTask(title)
+    } catch {
+      // Outbox maintains optimistic state
     }
   }
 
@@ -129,97 +182,118 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
     }
   }
 
-  // 0ms Zero-Latency Optimistic Claim (Decoupled from completion)
-  const handleClaim = async (id: string, currentAssigned: string | null) => {
-    setClaimingIds(prev => new Set(prev).add(id))
-    const nextAssigned = currentAssigned ? null : (currentUserId || 'claimed')
-    setItems(prev => prev.map(item => item.id === id ? { ...item, assigned_to: nextAssigned } : item))
-
-    try {
-      const res = await claimDeliverable(id, nextAssigned)
-      if (res && !res.success) {
-        // Rollback
-        setItems(prev => prev.map(item => item.id === id ? { ...item, assigned_to: currentAssigned } : item))
-      }
-    } catch {
-      setItems(prev => prev.map(item => item.id === id ? { ...item, assigned_to: currentAssigned } : item))
-    } finally {
-      setClaimingIds(prev => {
-        const next = new Set(prev)
-        next.delete(id)
-        return next
-      })
-    }
-  }
-
   return (
-    <div className="flex flex-col h-full max-h-[500px]">
-      <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
+    <div className="flex flex-col h-full max-h-[520px]">
+      <div className="flex items-center justify-between px-4 pt-3 pb-1 flex-wrap gap-2">
+        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext">
+          Stage Deliverables ({items.filter(i => Boolean(i.is_done || i.status === 'completed')).length}/{items.length})
+        </span>
+        <SyncStatusPill />
+      </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        {items.length > 0 && items.every(item => Boolean(item.is_done || item.status === 'completed')) && (
+          <div className="p-3 mb-2 rounded-lg bg-hack-mint/15 border border-hack-mint/30 font-mono text-xs font-semibold text-hack-forest flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-hack-mint shrink-0" />
+            <span>Nice. Round is done.</span>
+          </div>
+        )}
         {items.length === 0 ? (
-          <div className="text-center font-mono text-[#34433f] py-8 text-xs font-bold">
-            No tasks for this stage yet. Add one below!
+          <div className="text-center font-mono text-hack-subtext py-8 text-xs font-medium">
+            No deliverables for this round yet. Add what needs to get done.
           </div>
         ) : (
           items.map(item => {
             const isDone = Boolean(item.is_done || item.status === 'completed')
             const isLoading = loadingIds.has(item.id)
-            const isClaiming = claimingIds.has(item.id)
-            const isAssignedToMe = Boolean(currentUserId && item.assigned_to === currentUserId)
+            const assigneeId = item.assigned_to ?? item.done_by ?? null
+            const isClaimedByMe = Boolean(activeUserId && assigneeId === activeUserId) || assigneeId === 'claimed'
+            const isClaimedByOther = Boolean(assigneeId && !isClaimedByMe)
             
             return (
               <div 
                 key={item.id} 
                 className={cn(
-                  "flex items-center gap-3 p-3 border-2 border-[#10201d] transition-all group font-mono text-xs",
-                  isDone ? "bg-[#e4e5da] text-[#34433f] opacity-75" : "bg-[#f7f7f2] text-[#10201d] shadow-[2px_2px_0_#10201d]"
+                  "flex items-center gap-3 p-3 rounded-lg border transition-all group font-mono text-xs min-h-[46px]",
+                  isDone 
+                    ? "bg-hack-sand/50 border-hack-muted/40 text-hack-subtext" 
+                    : "bg-hack-surface border-hack-muted/60 text-hack-ink shadow-hack-sm hover:border-hack-muted"
                 )}
               >
                 <button 
                   disabled={isLoading}
                   onClick={() => handleToggle(item.id, isDone)}
-                  aria-label={isDone ? `Mark "${item.title}" as incomplete` : `Mark "${item.title}" as completed`}
-                  className="shrink-0 w-5 h-5 border-2 border-[#10201d] bg-white flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#10201d]"
+                  className={cn(
+                    "shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-all touch-manipulation select-none",
+                    isDone 
+                      ? "bg-hack-mint border-hack-mint-dark/40 text-hack-ink" 
+                      : "bg-white border-hack-muted hover:border-hack-coral"
+                  )}
+                  title={isDone ? "Mark incomplete" : "Mark complete"}
+                  aria-label={isDone ? `Mark "${item.title}" incomplete` : `Mark "${item.title}" complete`}
                 >
                   {isLoading ? (
-                    <Loader2 className="w-3 h-3 animate-spin text-[#10201d]" />
+                    <Loader2 className="w-3 h-3 animate-spin text-hack-ink" />
                   ) : isDone ? (
-                    <span className="w-3 h-3 bg-[#e53927] inline-block" />
+                    <span className="w-2 h-2 rounded-xs bg-hack-ink inline-block" />
                   ) : null}
                 </button>
                 
                 <span className={cn(
-                  "flex-1 font-mono text-xs font-bold transition-all",
-                  isDone ? "line-through text-[#34433f]" : "text-[#10201d]"
-                )}>
+                  "flex-1 font-mono text-xs sm:text-sm font-medium transition-all select-none line-clamp-2 break-words",
+                  isDone ? "deliverable-done text-hack-subtext/70" : "text-hack-ink font-semibold"
+                )} title={item.title}>
                   {item.title}
                 </span>
 
-                {/* Ownership Claim Pill */}
-                <button
-                  type="button"
-                  disabled={isClaiming}
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleClaim(item.id, item.assigned_to)
-                  }}
-                  className={cn(
-                    "px-2 py-0.5 border text-[10px] font-mono font-bold transition-all shrink-0",
-                    item.assigned_to
-                      ? isAssignedToMe
-                        ? "border-[#10201d] bg-[#f5b726] text-[#10201d]"
-                        : "border-[#10201d] bg-[#8bb2de] text-[#10201d]"
-                      : "border-[#10201d]/40 bg-white hover:bg-[#e4e5da] text-[#34433f]"
-                  )}
-                  title={item.assigned_to ? (isAssignedToMe ? "Assigned to you (click to unclaim)" : "Claimed by teammate") : "Claim this deliverable"}
-                >
-                  {isClaiming ? "..." : item.assigned_to ? (isAssignedToMe ? "You" : "Teammate") : "+ Claim"}
-                </button>
+                {/* Independent Ownership / Assignee Badge */}
+                {isClaimedByMe ? (
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={() => handleClaim(item.id)}
+                    title="Claimed by you. Click to release."
+                    aria-label={`Claimed by you: "${item.title}". Click to release.`}
+                    className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-hack-coral/15 text-hack-coral-dark border border-hack-coral/40 shrink-0 hover:bg-hack-coral/25 active:scale-95 transition-all"
+                  >
+                    You
+                  </button>
+                ) : isClaimedByOther ? (
+                  <span
+                    title="Claimed by teammate"
+                    aria-label={`Claimed by teammate: "${item.title}"`}
+                    className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-md bg-hack-sky/20 text-hack-blue-dark border border-hack-sky/40 shrink-0"
+                  >
+                    Teammate
+                  </span>
+                ) : !isDone ? (
+                  <button
+                    type="button"
+                    disabled={isLoading}
+                    onClick={() => handleClaim(item.id)}
+                    title="Claim this task for yourself"
+                    aria-label={`Claim task: "${item.title}"`}
+                    className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-md border border-dashed border-hack-muted/80 hover:border-hack-coral text-hack-subtext hover:text-hack-ink hover:bg-hack-sand shrink-0 transition-colors flex items-center gap-1 active:scale-95"
+                  >
+                    <span className="text-hack-coral font-bold">+</span>
+                    <span>Claim</span>
+                  </button>
+                ) : null}
+
+                {/* Independent Completion Status Badge */}
+                <span className={cn(
+                  "font-mono text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md border shrink-0",
+                  isDone 
+                    ? "bg-hack-mint/20 border-hack-mint/40 text-hack-mint-dark" 
+                    : "bg-hack-gold/20 border-hack-gold/40 text-hack-gold-dark"
+                )}>
+                  {isDone ? 'Cleared' : 'Pending'}
+                </span>
 
                 <button 
                   onClick={() => handleDelete(item.id)}
-                  aria-label={`Delete deliverable "${item.title}"`}
-                  className="opacity-0 group-hover:opacity-100 shrink-0 text-[#10201d] hover:text-[#e53927] transition-opacity p-1"
+                  className="opacity-50 hover:opacity-100 sm:opacity-0 sm:group-hover:opacity-100 shrink-0 text-hack-subtext hover:text-hack-red transition-opacity p-1 touch-manipulation"
                   title="Delete task"
+                  aria-label={`Delete task: ${item.title}`}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -229,21 +303,23 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
         )}
       </div>
 
-      <div className="p-4 border-t-2 border-[#10201d] bg-[#f7f7f2]">
+      <div className="p-3 sm:p-4 border-t border-hack-muted/40 bg-hack-sand/30">
         <form onSubmit={handleAdd} className="flex gap-2">
           <Input 
-            placeholder="Add new deliverable..." 
+            id="add-deliverable-input"
+            placeholder="Add new deliverable... (press 'N')" 
             value={newTask}
             onChange={(e) => setNewTask(e.target.value)}
-            className="flex-1 font-mono text-xs border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
+            className="flex-1 font-mono text-xs rounded-lg border border-hack-muted bg-white shadow-hack-sm focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25"
           />
           <Button 
             type="submit" 
             size="icon" 
             disabled={!newTask.trim()}
-            className="border-2 border-[#10201d] shadow-[2px_2px_0_#10201d]"
+            className="rounded-lg border border-hack-coral bg-hack-coral hover:brightness-105 text-hack-ink shadow-hack-sm shrink-0"
+            aria-label="Add deliverable"
           >
-            <Plus className="w-4 h-4 stroke-[3]" />
+            <Plus className="w-4 h-4 stroke-[2.5]" />
           </Button>
         </form>
       </div>

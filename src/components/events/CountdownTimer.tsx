@@ -118,23 +118,22 @@ export function CountdownTimer({
 
   if (!hasAnyDate || !targetDate) {
     return (
-      <div className={cn("inline-flex items-center gap-1 text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-1 border-2 border-[#10201d] bg-[#e4e5da] text-[#10201d] shadow-[2px_2px_0_#10201d] select-none", className)}>
+      <div className={cn("inline-flex items-center gap-1.5 text-xs font-mono font-medium tracking-wide px-2.5 py-1 rounded-md border border-hack-muted/60 bg-hack-sand text-hack-subtext select-none", className)}>
         <span>📅 Dates TBA</span>
       </div>
     )
   }
 
   if (!mounted) {
-    return <div className="h-7 w-28 bg-hack-muted border-2 border-hack-ink animate-pulse" />
+    return <div className="h-7 w-28 bg-hack-sand rounded-md border border-hack-muted/40 animate-pulse" />
   }
 
   if (timeLeft.passed || timeLeft.diffMs <= 0 || currentMilestone === 'passed') {
     return (
       <div 
         role="status"
-        aria-live="polite"
         aria-label="Deadline passed"
-        className={cn("inline-flex items-center text-xs font-mono font-bold uppercase tracking-wider px-2.5 py-1 border-2 border-hack-ink bg-destructive text-destructive-foreground shadow-[2px_2px_0_var(--hack-coral-shadow,#671912)]", className)}
+        className={cn("inline-flex items-center text-xs font-mono font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md border border-hack-muted/60 bg-hack-sand text-hack-subtext select-none", className)}
       >
         Deadline Passed
       </div>
@@ -145,72 +144,63 @@ export function CountdownTimer({
   const milestone = currentMilestone
   const totalHours = days * 24 + hours
 
-  let bgClass = "bg-hack-panel text-hack-ink"
-  let shadowClass = "shadow-[3px_3px_0_var(--hack-forest,#2e4742)]"
+  let tierClass = "bg-hack-surface text-hack-ink border-hack-muted/60 shadow-hack-sm"
   
   if (milestone === 'kickoff') {
-    bgClass = "bg-accent text-hack-ink"
-    shadowClass = "shadow-[3px_3px_0_#10201d]"
-  } else if (days < 3 && days >= 1) {
-    bgClass = "bg-[#f5b726] text-hack-ink"
-    shadowClass = "shadow-[3px_3px_0_#8a5d13]"
-  } else if (days < 1 && totalHours >= 6) {
-    bgClass = "bg-hack-coral text-hack-ink"
-    shadowClass = "shadow-[3px_3px_0_var(--hack-coral-shadow,#671912)]"
-  } else if (totalHours < 6) {
-    bgClass = "bg-destructive text-destructive-foreground animate-pulse"
-    shadowClass = "shadow-[3px_3px_0_var(--hack-coral-shadow,#671912)]"
+    tierClass = "bg-hack-sky/20 text-hack-ink border-hack-sky/40"
+  } else if (totalHours < 3) {
+    // Under 3h: pulse + critical coral
+    tierClass = "bg-hack-coral/25 text-hack-coral-dark border-hack-coral animate-pulse"
+  } else if (totalHours < 24) {
+    // Critical (<24h)
+    tierClass = "bg-hack-coral/15 text-hack-coral-dark border-hack-coral/40"
+  } else if (days < 3) {
+    // Approaching (24–72h)
+    tierClass = "bg-hack-gold/20 text-hack-gold-dark border-hack-gold/40"
+  } else {
+    // Calm (>72h)
+    tierClass = "bg-hack-surface text-hack-ink border-hack-muted/60"
   }
 
   const pad = (num: number) => num.toString().padStart(2, '0')
-
-  // Screen-reader friendly time description
-  const timeRemainingLabel = useMemo(() => {
-    const parts: string[] = []
-    if (days > 0) parts.push(`${days} ${days === 1 ? 'day' : 'days'}`)
-    if (hours > 0) parts.push(`${hours} ${hours === 1 ? 'hour' : 'hours'}`)
-    if (minutes > 0) parts.push(`${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`)
-    parts.push(`${seconds} ${seconds === 1 ? 'second' : 'seconds'}`)
-    const prefix = milestone === 'kickoff' ? 'Sprint kickoff in ' : 'Deadline in '
-    return `${prefix}${parts.join(', ')}`
-  }, [days, hours, minutes, seconds, milestone])
+  const humanTimeRemaining = `${days > 0 ? `${days} day${days === 1 ? '' : 's'}, ` : ''}${hours} hour${hours === 1 ? '' : 's'}, ${minutes} minute${minutes === 1 ? '' : 's'} remaining`
 
   return (
     <div className="flex flex-col gap-1">
       {showMilestoneLabel && (
-        <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-hack-subtext">
           {milestone === 'kickoff' ? '🚀 Sprint Kickoff in:' : '⚡ Code Freeze in:'}
         </span>
       )}
       <div 
         role="timer"
-        aria-label={timeRemainingLabel}
-        className={cn("inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 border-2 border-hack-ink font-mono font-bold text-xs select-none max-w-full overflow-hidden", bgClass, shadowClass, className)}
+        aria-label={humanTimeRemaining}
+        className={cn("inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md border font-mono font-bold text-xs select-none max-w-full overflow-hidden transition-colors", tierClass, className)}
       >
         <div className="flex flex-col items-center" aria-hidden="true">
-          <span className="leading-tight text-xs sm:text-sm font-extrabold">{pad(days)}</span>
-          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-80">d</span>
+          <span className="leading-tight text-xs sm:text-sm font-bold">{pad(days)}</span>
+          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-70">d</span>
         </div>
-        <span className="opacity-50 font-bold -mt-1 text-xs sm:text-sm" aria-hidden="true">:</span>
+        <span className="opacity-40 font-bold -mt-1 text-xs sm:text-sm" aria-hidden="true">:</span>
         <div className="flex flex-col items-center" aria-hidden="true">
-          <span className="leading-tight text-xs sm:text-sm font-extrabold">{pad(hours)}</span>
-          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-80">h</span>
+          <span className="leading-tight text-xs sm:text-sm font-bold">{pad(hours)}</span>
+          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-70">h</span>
         </div>
-        <span className="opacity-50 font-bold -mt-1 text-xs sm:text-sm" aria-hidden="true">:</span>
+        <span className="opacity-40 font-bold -mt-1 text-xs sm:text-sm" aria-hidden="true">:</span>
         <div className="flex flex-col items-center" aria-hidden="true">
-          <span className="leading-tight text-xs sm:text-sm font-extrabold">{pad(minutes)}</span>
-          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-80">m</span>
+          <span className="leading-tight text-xs sm:text-sm font-bold">{pad(minutes)}</span>
+          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-70">m</span>
         </div>
-        <span className="opacity-50 font-bold -mt-1 text-xs sm:text-sm" aria-hidden="true">:</span>
+        <span className="opacity-40 font-bold -mt-1 text-xs sm:text-sm" aria-hidden="true">:</span>
         <div className="flex flex-col items-center" aria-hidden="true">
-          <span className="leading-tight text-xs sm:text-sm font-extrabold">{pad(seconds)}</span>
-          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-80">s</span>
+          <span className="leading-tight text-xs sm:text-sm font-bold">{pad(seconds)}</span>
+          <span className="text-[8px] sm:text-[9px] uppercase tracking-wider opacity-70">s</span>
         </div>
       </div>
 
       {showTimezoneBadge && targetDate && (
-        <span className="font-mono text-[9px] text-muted-foreground font-semibold flex items-center gap-1 mt-0.5">
-          <span className="px-1.5 py-0.5 border border-hack-ink/30 bg-hack-panel font-bold text-hack-ink">
+        <span className="font-mono text-[9px] text-hack-subtext font-semibold flex items-center gap-1 mt-0.5">
+          <span className="px-1.5 py-0.5 border border-hack-muted/60 bg-hack-sand rounded font-bold text-hack-ink">
             {new Intl.DateTimeFormat('en-US', {
               hour: 'numeric',
               minute: 'numeric',
@@ -218,7 +208,7 @@ export function CountdownTimer({
               timeZoneName: 'short',
             }).format(targetDate)}
           </span>
-          <span className="opacity-75">
+          <span className="opacity-80">
             ({new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(targetDate)})
           </span>
         </span>
