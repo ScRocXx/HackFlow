@@ -3,6 +3,7 @@
 import { Check, Clock, Calendar } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
+import { formatStageDeadline } from '@/lib/utils/deadline'
 import type { EventStage } from '@/lib/supabase/types'
 
 interface StageTimelineProps {
@@ -18,7 +19,8 @@ export function StageTimeline({
   selectedStageId,
   onStageSelect 
 }: StageTimelineProps) {
-  if (!stages || stages.length === 0) return null
+  // If event has 0 or 1 stage, do not render redundant Stage Journey
+  if (!stages || stages.length <= 1) return null
 
   // activeIndex tracks which round the competition is currently in chronologically
   const activeIndex = stages.findIndex(s => s.id === activeStageId)
@@ -46,18 +48,12 @@ export function StageTimeline({
             const isSelected = stage.id === currentFocusId
             const isCompleted = index < activeIndex || stage.is_completed || stage.status === 'completed'
             
-            const deliverables = (stage as any).stage_deliverables || stage.deliverables || []
+            const deliverables = (stage as any).deliverables || (stage as any).stage_deliverables || []
             const totalTasks = deliverables.length
-            const doneTasks = deliverables.filter((d: { is_done?: boolean; completed?: boolean }) => d.is_done || d.completed).length
+            const doneTasks = deliverables.filter((d: { is_done?: boolean; completed?: boolean; is_completed?: boolean }) => d.is_done || d.is_completed || d.completed).length
 
-            // Format deadline date
-            const dateDisplay = stage.raw_date_snippet || (stage.deadline ? (() => {
-              try {
-                return format(new Date(stage.actionable_deadline || stage.deadline), 'dd MMM, HH:mm')
-              } catch {
-                return null
-              }
-            })() : null)
+            // Format deadline date using centralized priority
+            const dateDisplay = formatStageDeadline(stage)
 
             return (
               <button

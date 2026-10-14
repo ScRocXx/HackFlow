@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button'
 import { CountdownTimer } from '@/components/events/CountdownTimer'
 import { StageChecklist } from '@/components/events/StageChecklist'
 import { cn } from '@/lib/utils'
+import { formatStageDeadline } from '@/lib/utils/deadline'
 import type { EventStage, StageDeliverable } from '@/lib/supabase/types'
+
 
 interface ActiveStagePanelProps {
   currentDisplayStage: EventStage
@@ -56,9 +58,9 @@ export function ActiveStagePanel({
                 <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border border-hack-gold/40 bg-hack-gold/15 text-hack-gold-dark">
                   {currentDisplayStage.stage_type}
                 </span>
-                {currentDisplayStage.raw_date_snippet && (
+                {formatStageDeadline(currentDisplayStage) && (
                   <span className="font-mono text-[10px] font-medium tracking-wider px-2 py-0.5 rounded-md border border-hack-muted bg-hack-sand text-hack-subtext">
-                    🗓️ {currentDisplayStage.raw_date_snippet}
+                    🗓️ {formatStageDeadline(currentDisplayStage)}
                   </span>
                 )}
                 {focusedStageId && focusedStageId !== activeStage?.id && (

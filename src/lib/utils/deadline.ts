@@ -73,3 +73,23 @@ export function getDeadlineSeverity(deadlineInput: Date | string | null | undefi
     hoursLeft: hours,
   }
 }
+
+export function formatStageDeadline(stage: any): string | null {
+  if (!stage) return null;
+  const rawDate = stage.actionable_deadline || stage.window_end || stage.deadline;
+  if (rawDate) {
+    try {
+      const d = new Date(rawDate);
+      if (!isNaN(d.getTime())) {
+        return format(d, 'dd MMM, HH:mm');
+      }
+    } catch {
+      // fallback
+    }
+  }
+  if (stage.raw_date_snippet && !stage.raw_date_snippet.toLowerCase().includes('tba')) {
+    return stage.raw_date_snippet;
+  }
+  return null;
+}
+

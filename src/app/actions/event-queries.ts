@@ -32,14 +32,14 @@ export async function getEventWithDetails(eventId: string) {
       return { success: false, error: eventError?.message || 'Event not found' };
     }
 
-    // Parallel Batch 2: Fetch squad, squad_members, creator profile, and active stage deliverables concurrently
-    const activeStageId = event.active_stage_id || stages?.[0]?.id;
+    // Parallel Batch 2: Fetch squad, squad_members, creator profile, and all stage deliverables concurrently
+    const stageIds = (stages || []).map((s: any) => s.id);
     const [squadRes, delivRes, creatorProfileRes, squadMembersRes] = await Promise.all([
       event.squad_id
         ? supabase.from('squads').select('*').eq('id', event.squad_id).maybeSingle()
         : Promise.resolve({ data: null }),
-      activeStageId
-        ? supabase.from('stage_deliverables').select('*').eq('stage_id', activeStageId).order('sort_order', { ascending: true })
+      stageIds.length > 0
+        ? supabase.from('stage_deliverables').select('*').in('stage_id', stageIds).order('sort_order', { ascending: true })
         : Promise.resolve({ data: [] }),
       event.created_by
         ? supabase.from('profiles').select('id, email, full_name, avatar_url').eq('id', event.created_by).maybeSingle()
@@ -50,9 +50,10 @@ export async function getEventWithDetails(eventId: string) {
     ]);
 
     const squad = squadRes?.data || null;
-    const deliverables = delivRes?.data || [];
+    const allEventDeliverables = delivRes?.data || [];
     const creatorProfile = creatorProfileRes?.data || null;
     const squadMembers = squadMembersRes?.data || [];
+
 
     // Build Profile Cache for all candidate roster members
     const profileMap = new Map<string, any>();
@@ -183,16 +184,32 @@ export async function getEventWithDetails(eventId: string) {
       return (a.full_name || '').localeCompare(b.full_name || '');
     });
 
+    const stagesWithDeliverables = (stages || [])
+      .sort((a: any, b: any) => a.round_number - b.round_number)
+      .map((stage: any) => {
+        const stageDelivs = (allEventDeliverables || []).filter((d: any) => d.stage_id === stage.id);
+        return {
+          ...stage,
+          deliverables: stageDelivs,
+          stage_deliverables: stageDelivs,
+        };
+      });
+
+    const activeStageObj = computeActiveStage(stagesWithDeliverables, event.active_stage_id);
+    const activeDeliverables = activeStageObj
+      ? stagesWithDeliverables.find((s: any) => s.id === activeStageObj.id)?.deliverables || []
+      : (stagesWithDeliverables[0]?.deliverables || []);
+
     return { 
       success: true, 
       data: { 
         ...event, 
         current_user_id: user.id,
-        stages: stages || [], 
+        stages: stagesWithDeliverables, 
         event_participants: teamMembersList,
         team_members: teamMembersList,
         squad: squad,
-        current_stage_deliverables: deliverables,
+        current_stage_deliverables: activeDeliverables,
         resources: resources || [],
         problem_statements: problemStatements || []
       } 
