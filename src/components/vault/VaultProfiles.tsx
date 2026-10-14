@@ -270,71 +270,57 @@ export function VaultProfiles({
 
   return (
     <div className="space-y-6">
-      {/* Helper Banner */}
-      <div className="p-4 rounded-xl border border-hack-ink/15 bg-hack-surface shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <ShieldCheck className="w-5 h-5 text-hack-mint-dark shrink-0" />
-          <div>
-            <span className="font-sans text-xs text-hack-ink font-bold block">
-              1-Click Registration Clipboard: Click any field to copy instantly into Unstop / Devfolio forms.
-            </span>
-            <span className="font-mono text-[11px] text-hack-subtext">
-              Keep teammate profiles complete so anyone in the squad can register the whole team in seconds.
+      {/* Consolidated Registration Bridge & Clipboard Toolbar */}
+      <div className="p-3.5 sm:p-4 rounded-xl bg-hack-forest text-hack-sand border border-hack-ink shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="flex items-center gap-2 pr-2 border-r border-hack-sand/20">
+            <ShieldCheck className="w-4 h-4 text-hack-mint shrink-0" />
+            <span className="font-display text-sm font-bold tracking-wide uppercase text-hack-sand">
+              Registration Bridge
             </span>
           </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <CopyTeamInfoButton profiles={profiles} squadName={squadName} />
+            <Button
+              type="button"
+              size="sm"
+              disabled={profiles.length === 0}
+              onClick={copySquadUnstopFormat}
+              className="h-8 text-xs font-mono font-medium rounded-lg bg-hack-sand text-hack-ink hover:bg-white border border-hack-ink/20 shadow-sm"
+            >
+              <Copy className="h-3 w-3 mr-1" />
+              Unstop Format
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={profiles.length === 0}
+              onClick={copySquadDevfolioFormat}
+              className="h-8 text-xs font-mono font-medium rounded-lg bg-hack-sand text-hack-ink hover:bg-white border border-hack-ink/20 shadow-sm"
+            >
+              <Copy className="h-3 w-3 mr-1" />
+              Devfolio Format
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              disabled={profiles.length === 0}
+              onClick={copySquadTsvFormat}
+              className="h-8 text-xs font-mono font-medium rounded-lg bg-hack-sand text-hack-ink hover:bg-white border border-hack-ink/20 shadow-sm"
+            >
+              <Copy className="h-3 w-3 mr-1" />
+              Sheets / TSV
+            </Button>
+          </div>
         </div>
+
         <Button
           onClick={handleOpenEditProfile}
-          className="font-sans text-xs font-bold rounded-lg border border-hack-ink/20 bg-white hover:bg-hack-sand text-hack-ink shadow-sm shrink-0"
+          className="h-8 font-sans text-xs font-bold rounded-lg bg-hack-coral hover:bg-hack-coral/90 text-hack-ink shadow-sm shrink-0 self-start md:self-auto"
         >
           <Edit3 className="w-3.5 h-3.5 mr-1.5" />
           Edit My Details
         </Button>
-      </div>
-
-      {/* 1-Click Squad Registration Bridge Bar */}
-      <div className="p-3.5 rounded-xl bg-hack-sand/60 border border-hack-ink/15 shadow-sm flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Users className="h-4 w-4 text-hack-ink" />
-          <span className="font-sans text-xs font-bold uppercase tracking-wider text-hack-ink">
-            Squad Registration Bridge
-          </span>
-        </div>
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* Copy Team Info Clean Summary Button */}
-          <CopyTeamInfoButton profiles={profiles} squadName={squadName} />
-
-          <Button
-            type="button"
-            size="sm"
-            disabled={profiles.length === 0}
-            onClick={copySquadUnstopFormat}
-            className="h-8 text-xs font-mono font-medium rounded-lg bg-white text-hack-ink border border-hack-ink/20 shadow-sm hover:bg-hack-sand"
-          >
-            <Copy className="h-3 w-3 mr-1" />
-            Unstop Format
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={profiles.length === 0}
-            onClick={copySquadDevfolioFormat}
-            className="h-8 text-xs font-mono font-medium rounded-lg bg-white text-hack-ink border border-hack-ink/20 shadow-sm hover:bg-hack-sand"
-          >
-            <Copy className="h-3 w-3 mr-1" />
-            Devfolio Format
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            disabled={profiles.length === 0}
-            onClick={copySquadTsvFormat}
-            className="h-8 text-xs font-mono font-medium rounded-lg bg-white text-hack-ink border border-hack-ink/20 shadow-sm hover:bg-hack-sand"
-          >
-            <Copy className="h-3 w-3 mr-1" />
-            Sheets / TSV
-          </Button>
-        </div>
       </div>
 
       {/* Member Profiles Grid */}
@@ -376,6 +362,9 @@ export function VaultProfiles({
               { key: `${p.user_id}-resume`, label: 'Resume PDF Link', value: p.resume_url },
             ]
 
+            const setFieldsCount = [p.phone, p.college, p.roll_number, p.github_url, p.linkedin_url, p.portfolio_url, p.resume_url].filter(Boolean).length
+            const isCompletelyUnconfigured = setFieldsCount === 0
+
             const renderFieldBox = (f: { key: string; label: string; value: string | null | undefined }) => {
               const hasVal = Boolean(f.value)
               const isCopied = copiedKey === f.key
@@ -384,8 +373,12 @@ export function VaultProfiles({
                 <div 
                   key={f.key}
                   className={cn(
-                    "p-2.5 rounded-lg border border-hack-ink/10 bg-hack-sand/30 flex items-center justify-between gap-2 group transition-all",
-                    hasVal ? "cursor-pointer hover:bg-hack-sand/60" : "opacity-50"
+                    "p-2.5 rounded-lg border flex items-center justify-between gap-2 group transition-all select-none",
+                    isCopied
+                      ? "bg-[#E3F5EE] border-hack-mint text-hack-forest shadow-sm"
+                      : hasVal
+                      ? "border-hack-ink/10 bg-hack-sand/30 cursor-pointer hover:bg-hack-sand/70 hover:border-hack-ink/25"
+                      : "border-hack-ink/10 bg-hack-sand/15 opacity-50 cursor-not-allowed"
                   )}
                   onClick={() => hasVal && handleCopy(f.key, f.value!, f.label)}
                 >
@@ -398,19 +391,23 @@ export function VaultProfiles({
                     </span>
                   </div>
                   {hasVal && (
-                    <button
-                      type="button"
-                      aria-label={`Copy ${f.label}`}
+                    <div
                       className={cn(
-                        "p-1.5 rounded border shrink-0 transition-colors",
+                        "p-1.5 rounded border shrink-0 transition-colors flex items-center gap-1 text-[10px] font-mono font-bold",
                         isCopied 
                           ? "bg-hack-mint text-hack-mint-dark border-hack-mint-dark/30" 
                           : "bg-white text-hack-ink border-hack-ink/15 group-hover:border-hack-ink/30"
                       )}
-                      title={`Copy ${f.label}`}
                     >
-                      {isCopied ? <Check className="w-3.5 h-3.5 text-hack-mint-dark stroke-[3]" /> : <Copy className="w-3.5 h-3.5 text-hack-subtext" />}
-                    </button>
+                      {isCopied ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-hack-mint-dark stroke-[3]" />
+                          <span className="hidden sm:inline text-hack-mint-dark">Copied</span>
+                        </>
+                      ) : (
+                        <Copy className="w-3.5 h-3.5 text-hack-subtext group-hover:text-hack-ink" />
+                      )}
+                    </div>
                   )}
                 </div>
               )
@@ -453,87 +450,97 @@ export function VaultProfiles({
                     </div>
                   </div>
 
-                  <CardContent className="p-4 space-y-3">
-                    {/* If details are missing, show nudge or edit banner */}
-                    {isPending && (
-                      <div className="p-2.5 rounded-lg border border-hack-gold/50 bg-hack-gold/15 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5 text-hack-gold-dark">
-                          <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                          <span className="font-mono text-[11px] font-semibold">
-                            {isMe ? 'Your registration details are incomplete' : 'Teammate details not yet added'}
+                  {isCompletelyUnconfigured && !isMe ? (
+                    <CardContent className="p-4 space-y-3">
+                      <div className="p-3.5 rounded-lg border border-hack-ink/15 bg-hack-sand/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-2 text-hack-subtext">
+                          <AlertTriangle className="w-4 h-4 text-hack-gold-dark shrink-0" />
+                          <span className="font-mono text-xs">
+                            Teammate hasn&apos;t added their registration profile yet.
                           </span>
                         </div>
-                        {isMe ? (
-                          <Button
-                            size="sm"
-                            onClick={handleOpenEditProfile}
-                            className="h-6 text-[10px] font-sans font-bold bg-hack-coral hover:bg-hack-coral/90 text-hack-ink rounded shrink-0 shadow-sm"
-                          >
-                            <Edit3 className="w-3 h-3 mr-1" />
-                            Edit Details
-                          </Button>
-                        ) : (
-                          <Button
-                            size="sm"
-                            disabled={nudgingUserId === p.user_id}
-                            onClick={() => handleNudge(p.user_id, p.full_name)}
-                            className="h-6 text-[10px] font-mono font-bold bg-hack-gold hover:bg-hack-gold/90 text-hack-ink rounded border border-hack-ink/20 shrink-0 shadow-sm"
-                          >
-                            {nudgingUserId === p.user_id ? (
-                              <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                            ) : null}
-                            <span>📢 Nudge</span>
-                          </Button>
-                        )}
+                        <Button
+                          size="sm"
+                          disabled={nudgingUserId === p.user_id}
+                          onClick={() => handleNudge(p.user_id, p.full_name || 'Teammate')}
+                          className="h-7 text-xs font-mono font-bold bg-hack-gold hover:bg-hack-gold/90 text-hack-ink rounded border border-hack-ink/20 shrink-0 shadow-sm"
+                        >
+                          {nudgingUserId === p.user_id ? (
+                            <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                          ) : null}
+                          <span>🔔 Nudge Teammate</span>
+                        </Button>
                       </div>
-                    )}
-
-                    {/* Primary Visible Fields (Name, Email, College, GitHub) */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {primaryFields.map(renderFieldBox)}
-                    </div>
-
-                    {/* Progressive Disclosure Section for Secondary Details */}
-                    {isExpanded && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-dashed border-hack-ink/20">
-                        {secondaryFields.map(renderFieldBox)}
-                      </div>
-                    )}
-
-                    {/* Toggle Button for More Details */}
-                    <button
-                      type="button"
-                      onClick={() => toggleCardExpansion(p.user_id)}
-                      className="w-full py-1.5 px-2 font-mono text-[11px] font-medium text-hack-subtext hover:text-hack-ink bg-hack-sand/40 hover:bg-hack-sand rounded-lg border border-hack-ink/10 flex items-center justify-center gap-1.5 transition-colors"
-                    >
-                      {isExpanded ? (
-                        <>
-                          <ChevronUp className="w-3.5 h-3.5" />
-                          <span>Show fewer details</span>
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDown className="w-3.5 h-3.5" />
-                          <span>Show more details ({secondaryFields.filter(f => f.value).length}/{secondaryFields.length} set)</span>
-                        </>
+                    </CardContent>
+                  ) : (
+                    <CardContent className="p-4 space-y-3">
+                      {/* If details are missing, show nudge or edit banner */}
+                      {isPending && (
+                        <div className="p-2.5 rounded-lg border border-hack-gold/50 bg-hack-gold/15 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5 text-hack-gold-dark">
+                            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                            <span className="font-mono text-[11px] font-semibold">
+                              {isMe ? 'Your registration details are incomplete' : 'Teammate details not yet added'}
+                            </span>
+                          </div>
+                          {isMe ? (
+                            <Button
+                              size="sm"
+                              onClick={handleOpenEditProfile}
+                              className="h-6 text-[10px] font-sans font-bold bg-hack-coral hover:bg-hack-coral/90 text-hack-ink rounded shrink-0 shadow-sm"
+                            >
+                              <Edit3 className="w-3 h-3 mr-1" />
+                              Edit Details
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              disabled={nudgingUserId === p.user_id}
+                              onClick={() => handleNudge(p.user_id, p.full_name)}
+                              className="h-6 text-[10px] font-mono font-bold bg-hack-gold hover:bg-hack-gold/90 text-hack-ink rounded border border-hack-ink/20 shrink-0 shadow-sm"
+                            >
+                              {nudgingUserId === p.user_id ? (
+                                <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                              ) : null}
+                              <span>📢 Nudge</span>
+                            </Button>
+                          )}
+                        </div>
                       )}
-                    </button>
-                  </CardContent>
-                </div>
 
-                {/* Dedicated Edit Footer for own card */}
-                {isMe && !isPending && (
-                  <div className="px-4 py-2 bg-hack-sand/30 border-t border-hack-ink/10 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={handleOpenEditProfile}
-                      className="font-mono text-xs font-semibold text-hack-coral-dark hover:underline flex items-center gap-1.5"
-                    >
-                      <Edit3 className="w-3.5 h-3.5" />
-                      <span>Edit My Details</span>
-                    </button>
-                  </div>
-                )}
+                      {/* Primary Visible Fields (Name, Email, College, GitHub) */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {primaryFields.map(renderFieldBox)}
+                      </div>
+
+                      {/* Progressive Disclosure Section for Secondary Details */}
+                      {isExpanded && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-dashed border-hack-ink/20">
+                          {secondaryFields.map(renderFieldBox)}
+                        </div>
+                      )}
+
+                      {/* Toggle Button for More Details */}
+                      <button
+                        type="button"
+                        onClick={() => toggleCardExpansion(p.user_id)}
+                        className="w-full py-1.5 px-2 font-mono text-[11px] font-medium text-hack-subtext hover:text-hack-ink bg-hack-sand/40 hover:bg-hack-sand rounded-lg border border-hack-ink/10 flex items-center justify-center gap-1.5 transition-colors"
+                      >
+                        {isExpanded ? (
+                          <>
+                            <ChevronUp className="w-3.5 h-3.5" />
+                            <span>Show fewer details</span>
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown className="w-3.5 h-3.5" />
+                            <span>Show more details ({secondaryFields.filter(f => f.value).length}/{secondaryFields.length} set)</span>
+                          </>
+                        )}
+                      </button>
+                    </CardContent>
+                  )}
+                </div>
               </Card>
             )
           })}

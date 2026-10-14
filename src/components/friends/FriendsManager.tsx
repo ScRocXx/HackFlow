@@ -44,7 +44,7 @@ export function FriendsManager({
       if (res.success && res.data) {
         toast({
           title: 'Invite sent. Now go build.',
-          description: `Squad invitation sent to ${targetEmail}`,
+          description: `Friend request sent to ${targetEmail}`,
           variant: 'success',
         })
         setOutgoing([res.data as Friendship, ...outgoing])
@@ -163,7 +163,7 @@ export function FriendsManager({
               disabled={sending}
               className="font-mono text-xs font-semibold bg-hack-coral hover:bg-hack-coral/90 text-white shadow-hack-hero rounded-lg px-4 py-2 shrink-0 transition-colors"
             >
-              {sending ? 'Sending...' : 'Send Squad Invite'}
+              {sending ? 'Sending...' : 'Send Friend Request'}
             </Button>
           </form>
           <p className="mt-2 text-xs font-mono text-hack-subtext">

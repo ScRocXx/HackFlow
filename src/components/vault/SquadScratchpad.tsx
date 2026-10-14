@@ -49,6 +49,7 @@ export function SquadScratchpad({
   })
   const [isSaving, setIsSaving] = useState(false)
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
+  const [showSecrets, setShowSecrets] = useState(false)
   const { toast } = useToast()
 
   // Load scratchpad from offline cache or network when squadId changes
@@ -369,7 +370,16 @@ export function SquadScratchpad({
                     <span>Squad Keyring & Shared Credentials</span>
                   </label>
                   
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => setShowSecrets(!showSecrets)}
+                      className="h-6 text-[10px] font-mono font-semibold bg-hack-sand hover:bg-hack-sand/80 text-hack-ink border border-hack-muted/40 px-2 rounded-md shadow-sm"
+                      title={showSecrets ? 'Mask credentials on screen' : 'Reveal credentials on screen'}
+                    >
+                      {showSecrets ? '🙈 Mask Keys' : '👁️ Reveal Keys'}
+                    </Button>
                     <Button
                       type="button"
                       size="sm"
@@ -432,7 +442,10 @@ export function SquadScratchpad({
                   onChange={(e) => setFormData({ ...formData, test_credentials: e.target.value })}
                   rows={4}
                   placeholder={`GEMINI_API_KEY=AIzaSy...\nGROQ_API_KEY=gsk_...\nJudge Login: judge@demo.com / pass123`}
-                  className="w-full p-2.5 font-mono text-xs border border-hack-muted/40 rounded-lg bg-hack-surface text-hack-ink focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25 focus:outline-none resize-none leading-relaxed"
+                  className={cn(
+                    "w-full p-2.5 font-mono text-xs border border-hack-muted/40 rounded-lg bg-hack-surface text-hack-ink focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25 focus:outline-none resize-none leading-relaxed transition-all",
+                    !showSecrets && formData.test_credentials && "blur-[4px] select-none focus:blur-none"
+                  )}
                 />
               </div>
             </CardContent>

@@ -282,7 +282,7 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
                     {/* Shareable Team Invite Link */}
                     <div className="pt-2 border-t border-hack-muted/20">
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-hack-sand/40 p-2.5 rounded-lg border border-hack-muted/25">
-                        <div className="flex items-center gap-2 overflow-hidden">
+                        <div className="flex items-center gap-2 overflow-hidden flex-1 min-w-0">
                           <LinkIcon className="h-3.5 w-3.5 text-hack-subtext shrink-0" />
                           <span className="font-mono text-[11px] text-hack-subtext truncate">
                             {typeof window !== 'undefined'
@@ -290,22 +290,35 @@ export function SquadManager({ initialSquads, friends, currentUserId }: SquadMan
                               : `hackflow.app/join/${squad.invite_code || squad.id.slice(0, 8).toUpperCase()}`}
                           </span>
                         </div>
-                        <Button
-                          type="button"
-                          onClick={() => handleCopyInviteLink(squad)}
-                          size="sm"
-                          className="font-mono text-xs font-medium border border-hack-muted/30 bg-hack-surface text-hack-ink hover:bg-hack-sand shadow-sm rounded-md shrink-0 h-7 px-2.5 transition-colors"
-                        >
-                          {copiedSquadId === squad.id ? (
-                            <>
-                              <Check className="h-3 w-3 mr-1 text-hack-mint" /> Copied!
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="h-3 w-3 mr-1" /> Copy link
-                            </>
-                          )}
-                        </Button>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <Button
+                            type="button"
+                            onClick={() => handleCopyInviteLink(squad)}
+                            size="sm"
+                            className="font-mono text-xs font-medium border border-hack-muted/30 bg-hack-surface text-hack-ink hover:bg-hack-sand shadow-sm rounded-md shrink-0 h-7 px-2.5 transition-colors"
+                          >
+                            {copiedSquadId === squad.id ? (
+                              <>
+                                <Check className="h-3 w-3 mr-1 text-hack-mint" /> Copied!
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="h-3 w-3 mr-1" /> Copy link
+                              </>
+                            )}
+                          </Button>
+                          <a
+                            href={`https://api.whatsapp.com/send?text=${encodeURIComponent(
+                              `Join our ${squad.name || 'hackathon'} squad on HackFlow: ${typeof window !== 'undefined' ? `${window.location.origin}/join/${squad.invite_code || squad.id.slice(0, 8).toUpperCase()}` : `https://hackflow.app/join/${squad.invite_code || squad.id.slice(0, 8).toUpperCase()}`}`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center font-mono text-xs font-medium border border-hack-muted/30 bg-hack-surface text-hack-ink hover:bg-hack-sand shadow-sm rounded-md h-7 px-2.5 transition-colors shrink-0"
+                            title="Share invite on WhatsApp"
+                          >
+                            💬 WhatsApp
+                          </a>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
