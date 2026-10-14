@@ -37,18 +37,18 @@ export default async function ArchivePage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header Banner */}
-      <div className="border border-hack-muted/30 bg-hack-surface p-6 rounded-xl shadow-hack-card flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+      <div className="border border-hack-muted/30 bg-hack-surface p-5 sm:p-6 rounded-[6px] shadow-hack-card flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
           <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-hack-ink">
-            Trophy Case & Archive
+            Past Hackathons & Wins
           </h1>
           <p className="font-mono text-xs text-hack-subtext mt-1">
-            Indexed portfolio of concluded hackathons, repos, pitch decks, and retro learnings.
+            Every hackathon your team has shipped, all in one place.
           </p>
         </div>
 
-        <div className="px-3.5 py-1.5 rounded-lg bg-hack-sand border border-hack-muted/30 text-hack-ink font-mono text-xs font-semibold shrink-0">
-          🏆 {concludedEvents.length} Concluded Sprints
+        <div className="px-3.5 py-1.5 rounded-[4px] bg-hack-sand border border-hack-muted/30 text-hack-ink font-mono text-xs font-semibold shrink-0">
+          🏆 {concludedEvents.length} finished
         </div>
       </div>
 

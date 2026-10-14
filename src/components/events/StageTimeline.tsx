@@ -28,20 +28,43 @@ export function StageTimeline({
   const currentFocusId = selectedStageId || activeStageId || stages[0]?.id
 
   return (
-    <div className="border border-hack-muted/60 bg-hack-surface p-4 sm:p-5 rounded-xl shadow-hack-card space-y-3">
+    <div className="border border-hack-muted/60 bg-hack-surface p-4 sm:p-5 rounded-[6px] shadow-hack-card space-y-4">
       <div className="flex items-center justify-between border-b border-hack-muted/30 pb-2.5">
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-hack-coral inline-block" />
           <h3 className="font-display text-base sm:text-lg font-bold tracking-tight text-hack-ink">
-            Stage Journey
+            Rounds
           </h3>
         </div>
         <span className="font-mono text-[10px] sm:text-[11px] font-semibold text-hack-subtext uppercase">
-          Tap any round to view tasks
+          Click a round to switch tasks
         </span>
       </div>
 
-      <div className="relative overflow-x-auto pb-2 pt-1 no-scrollbar">
+      {/* Animated SVG Circuit Track Rail */}
+      <div className="relative px-2 hidden sm:block">
+        <div className="h-2 bg-hack-ink/15 rounded-full w-full overflow-hidden relative">
+          <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+            <line 
+              x1="0" 
+              y1="50%" 
+              x2="100%" 
+              y2="50%" 
+              stroke="#2B6E4E" 
+              strokeWidth="3" 
+              className="animate-circuit-trace stroke-hack-forest" 
+            />
+          </svg>
+          <div 
+            className="h-full bg-hack-forest/90 transition-all duration-500 ease-out relative z-10 shadow-sm"
+            style={{ 
+              width: `${stages.length > 1 && activeIndex >= 0 ? Math.min(100, ((activeIndex) / (stages.length - 1)) * 100) : 0}%` 
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="relative overflow-x-auto pb-2 pt-1 flex snap-x snap-mandatory gap-3 sm:gap-4 no-scrollbar">
         <div className="flex items-stretch min-w-max gap-3 sm:gap-4 px-1">
           {stages.map((stage, index) => {
             const isChronologicallyActive = stage.id === activeStageId
@@ -63,38 +86,38 @@ export function StageTimeline({
                 aria-label={`Select stage: ${stage.title}`}
                 aria-current={isChronologicallyActive ? 'step' : undefined}
                 className={cn(
-                  "flex-1 min-w-[190px] sm:min-w-[220px] p-3 sm:p-3.5 rounded-xl border text-left transition-all relative flex flex-col justify-between group touch-manipulation select-none",
+                  "flex-1 min-w-[190px] sm:min-w-[220px] p-3 sm:p-3.5 rounded-[6px] border text-left transition-all relative flex flex-col justify-between group touch-manipulation select-none snap-center",
                   isSelected
                     ? "bg-hack-sand border-hack-coral/60 shadow-hack-hero -translate-y-0.5"
                     : "bg-white border-hack-muted/60 hover:border-hack-muted shadow-hack-card-quiet opacity-95 hover:opacity-100",
-                  isChronologicallyActive && !isSelected && "border-hack-coral/40 ring-1 ring-hack-coral/30"
+                  isChronologicallyActive && "ring-4 ring-hack-gold/30 border-hack-coral/50"
                 )}
               >
-                {/* Active Indicator Dot */}
+                {/* Active Indicator Badge */}
                 {isChronologicallyActive && (
-                  <div className="absolute -top-2 left-3 bg-hack-coral text-hack-ink font-mono text-[9px] font-bold uppercase px-2 py-0.5 rounded-full shadow-hack-sm tracking-wider z-20">
-                    Active Round
+                  <div className="absolute -top-2.5 left-3 bg-hack-coral text-hack-ink font-mono text-[9px] font-bold uppercase px-2 py-0.5 rounded-[4px] shadow-sm tracking-wider z-20">
+                    Current Round
                   </div>
                 )}
 
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">
                     <div className={cn(
-                      "w-7 h-7 rounded-lg border flex items-center justify-center font-mono text-xs font-bold shrink-0 transition-transform group-hover:scale-105",
-                      isCompleted ? "bg-hack-mint border-hack-mint-dark/30 text-hack-ink" :
-                      isChronologicallyActive ? "bg-hack-coral border-hack-coral text-hack-ink shadow-hack-sm" :
+                      "w-7 h-7 rounded-full border flex items-center justify-center font-mono text-xs font-bold shrink-0 transition-transform group-hover:scale-105",
+                      isCompleted ? "bg-hack-mint border-hack-mint-dark/40 text-hack-ink" :
+                      isChronologicallyActive ? "bg-hack-coral border-hack-coral text-hack-ink shadow-sm" :
                       "bg-hack-sand border-hack-muted text-hack-subtext"
                     )}>
                       {isCompleted ? <Check className="w-4 h-4 stroke-[2.5]" /> : <span>{index + 1}</span>}
                     </div>
 
                     <span className={cn(
-                      "font-mono text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border",
+                      "font-mono text-[9px] font-bold uppercase px-2 py-0.5 rounded-[4px] border",
                       isCompleted ? "bg-hack-mint/30 border-hack-mint text-hack-mint-dark" :
                       isChronologicallyActive ? "bg-hack-gold/25 border-hack-gold text-hack-gold-dark" :
                       "bg-hack-sand border-hack-muted text-hack-subtext"
                     )}>
-                      {isCompleted ? 'Cleared' : isChronologicallyActive ? 'Current' : 'Upcoming'}
+                      {isCompleted ? 'Cleared' : isChronologicallyActive ? 'Active' : 'Upcoming'}
                     </span>
                   </div>
 
@@ -117,12 +140,12 @@ export function StageTimeline({
                 <div className="mt-3 pt-2 border-t border-hack-muted/30">
                   <div className="flex justify-between items-center font-mono text-[10px] font-medium text-hack-subtext mb-1">
                     <span>Tasks</span>
-                    <span>{totalTasks > 0 ? `${doneTasks}/${totalTasks}` : '0 tasks'}</span>
+                    <span>{totalTasks > 0 ? `${doneTasks}/${totalTasks} done` : 'No tasks'}</span>
                   </div>
                   {totalTasks > 0 ? (
                     <div className="w-full h-1.5 rounded-full bg-hack-muted/50 overflow-hidden">
                       <div 
-                        className={cn("h-full transition-all rounded-full", isCompleted ? "bg-hack-mint" : "bg-hack-coral")}
+                        className={cn("h-full transition-all duration-500 ease-out rounded-full", isCompleted ? "bg-hack-mint" : "bg-hack-coral")}
                         style={{ width: `${(doneTasks / totalTasks) * 100}%` }}
                       />
                     </div>

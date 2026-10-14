@@ -82,14 +82,18 @@ export function VaultProfiles({
     setIsProfileModalOpen(true)
   }
 
-  // 1-Click Copy with 1500ms check feedback
-  const handleCopy = (fieldKey: string, value: string, label: string) => {
+  // 1-Click Copy with 1500ms check feedback & haptic vibration
+  const handleCopy = (fieldKey: string, value: string, label: string, ownerName?: string) => {
     if (!value) return
     navigator.clipboard.writeText(value)
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try { navigator.vibrate(10) } catch {}
+    }
     setCopiedKey(fieldKey)
+    const namePrefix = ownerName ? `${ownerName.split(' ')[0]}'s ` : ''
     toast({
       title: 'Copied to Clipboard!',
-      description: `${label}: "${value.length > 30 ? value.slice(0, 30) + '...' : value}"`,
+      description: `✓ Copied ${namePrefix}${label}`,
     })
 
     setTimeout(() => {
@@ -271,52 +275,52 @@ export function VaultProfiles({
   return (
     <div className="space-y-6">
       {/* Consolidated Registration Bridge & Clipboard Toolbar */}
-      <div className="p-3.5 sm:p-4 rounded-xl bg-hack-forest text-hack-sand border border-hack-ink shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5 flex-wrap">
+      <div className="p-3.5 sm:p-4 rounded-[6px] bg-hack-forest text-hack-sand border border-hack-ink shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 flex-wrap w-full md:w-auto">
           <div className="flex items-center gap-2 pr-2 border-r border-hack-sand/20">
             <ShieldCheck className="w-4 h-4 text-hack-mint shrink-0" />
             <span className="font-display text-sm font-bold tracking-wide uppercase text-hack-sand">
-              Registration Bridge
+              Copy all for:
             </span>
           </div>
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2 w-full sm:w-auto">
             <CopyTeamInfoButton profiles={profiles} squadName={squadName} />
             <Button
               type="button"
               size="sm"
               disabled={profiles.length === 0}
               onClick={copySquadUnstopFormat}
-              className="h-8 text-xs font-mono font-medium rounded-lg bg-hack-sand text-hack-ink hover:bg-white border border-hack-ink/20 shadow-sm"
+              className="btn-tactile h-8 text-xs font-mono font-medium rounded-[4px] bg-hack-sand text-hack-ink hover:bg-white"
             >
               <Copy className="h-3 w-3 mr-1" />
-              Unstop Format
+              Unstop
             </Button>
             <Button
               type="button"
               size="sm"
               disabled={profiles.length === 0}
               onClick={copySquadDevfolioFormat}
-              className="h-8 text-xs font-mono font-medium rounded-lg bg-hack-sand text-hack-ink hover:bg-white border border-hack-ink/20 shadow-sm"
+              className="btn-tactile h-8 text-xs font-mono font-medium rounded-[4px] bg-hack-sand text-hack-ink hover:bg-white"
             >
               <Copy className="h-3 w-3 mr-1" />
-              Devfolio Format
+              Devfolio
             </Button>
             <Button
               type="button"
               size="sm"
               disabled={profiles.length === 0}
               onClick={copySquadTsvFormat}
-              className="h-8 text-xs font-mono font-medium rounded-lg bg-hack-sand text-hack-ink hover:bg-white border border-hack-ink/20 shadow-sm"
+              className="btn-tactile h-8 text-xs font-mono font-medium rounded-[4px] bg-hack-sand text-hack-ink hover:bg-white"
             >
               <Copy className="h-3 w-3 mr-1" />
-              Sheets / TSV
+              Sheets
             </Button>
           </div>
         </div>
 
         <Button
           onClick={handleOpenEditProfile}
-          className="h-8 font-sans text-xs font-bold rounded-lg bg-hack-coral hover:bg-hack-coral/90 text-hack-ink shadow-sm shrink-0 self-start md:self-auto"
+          className="btn-tactile h-8 font-sans text-xs font-bold rounded-[4px] bg-hack-coral text-hack-ink shrink-0 self-start md:self-auto"
         >
           <Edit3 className="w-3.5 h-3.5 mr-1.5" />
           Edit My Details
@@ -325,7 +329,7 @@ export function VaultProfiles({
 
       {/* Member Profiles Grid */}
       {profiles.length === 0 ? (
-        <div className="p-12 rounded-2xl border border-dashed border-hack-ink/20 text-center bg-hack-surface">
+        <div className="p-12 rounded-[6px] border border-dashed border-hack-ink/20 text-center bg-hack-surface">
           <User className="h-10 w-10 text-hack-subtext mx-auto opacity-40 mb-3" />
           <h3 className="font-sans text-xl font-bold text-hack-ink">Your team's info isn't here yet</h3>
           <p className="font-mono text-xs text-hack-subtext mt-1.5 max-w-md mx-auto">
@@ -333,7 +337,7 @@ export function VaultProfiles({
           </p>
           <Button
             onClick={handleOpenEditProfile}
-            className="mt-4 font-sans text-xs font-bold rounded-lg bg-hack-coral hover:bg-hack-coral/90 text-hack-ink shadow-hack-hero"
+            className="btn-tactile mt-4 font-sans text-xs font-bold rounded-[4px] bg-hack-coral text-hack-ink"
           >
             + Add Registration Details
           </Button>
@@ -364,184 +368,148 @@ export function VaultProfiles({
 
             const setFieldsCount = [p.phone, p.college, p.roll_number, p.github_url, p.linkedin_url, p.portfolio_url, p.resume_url].filter(Boolean).length
             const isCompletelyUnconfigured = setFieldsCount === 0
+            const firstName = p.full_name ? p.full_name.split(' ')[0] : 'Teammate'
 
-            const renderFieldBox = (f: { key: string; label: string; value: string | null | undefined }) => {
+            const renderPillKey = (f: { key: string; label: string; value: string | null | undefined; icon?: string }) => {
               const hasVal = Boolean(f.value)
               const isCopied = copiedKey === f.key
 
+              if (!hasVal) return null
+
               return (
-                <div 
+                <button 
+                  type="button"
                   key={f.key}
+                  disabled={!hasVal}
                   className={cn(
-                    "p-2.5 rounded-lg border flex items-center justify-between gap-2 group transition-all select-none",
+                    "p-2 rounded-[6px] border flex items-center justify-between gap-2 transition-all select-none text-left relative overflow-hidden w-full",
                     isCopied
-                      ? "bg-[#E3F5EE] border-hack-mint text-hack-forest shadow-sm"
-                      : hasVal
-                      ? "border-hack-ink/10 bg-hack-sand/30 cursor-pointer hover:bg-hack-sand/70 hover:border-hack-ink/25"
-                      : "border-hack-ink/10 bg-hack-sand/15 opacity-50 cursor-not-allowed"
+                      ? "animate-pill-copy border-hack-forest bg-hack-mint/40 text-hack-forest font-bold shadow-xs"
+                      : "border-hack-ink/15 bg-white cursor-pointer hover:bg-hack-sand/60 hover:border-hack-ink active:scale-[0.98]"
                   )}
-                  onClick={() => hasVal && handleCopy(f.key, f.value!, f.label)}
+                  onClick={() => hasVal && handleCopy(f.key, f.value!, f.label, p.full_name)}
                 >
-                  <div className="min-w-0 flex-1">
-                    <span className="font-mono text-[10px] text-hack-subtext font-semibold uppercase tracking-wider block">
-                      {f.label}
+                  <div className="min-w-0 flex-1 flex items-center gap-1.5 truncate">
+                    <span className="font-mono text-[10px] text-hack-subtext font-bold uppercase shrink-0">
+                      {f.label}:
                     </span>
-                    <span className="font-mono text-xs font-semibold text-hack-ink truncate block">
-                      {f.value || 'Not set'}
+                    <span className="font-mono text-xs font-semibold text-hack-ink truncate">
+                      {isCopied ? `✓ Copied ${f.label}!` : f.value}
                     </span>
                   </div>
-                  {hasVal && (
-                    <div
-                      className={cn(
-                        "p-1.5 rounded border shrink-0 transition-colors flex items-center gap-1 text-[10px] font-mono font-bold",
-                        isCopied 
-                          ? "bg-hack-mint text-hack-mint-dark border-hack-mint-dark/30" 
-                          : "bg-white text-hack-ink border-hack-ink/15 group-hover:border-hack-ink/30"
-                      )}
-                    >
-                      {isCopied ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-hack-mint-dark stroke-[3]" />
-                          <span className="hidden sm:inline text-hack-mint-dark">Copied</span>
-                        </>
-                      ) : (
-                        <Copy className="w-3.5 h-3.5 text-hack-subtext group-hover:text-hack-ink" />
-                      )}
-                    </div>
-                  )}
-                </div>
+                  <div className={cn(
+                    "p-1 rounded shrink-0 transition-colors flex items-center",
+                    isCopied ? "text-hack-forest" : "text-hack-subtext"
+                  )}>
+                    {isCopied ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : <Copy className="w-3.5 h-3.5" />}
+                  </div>
+                </button>
               )
             }
 
             return (
-              <Card key={p.user_id} className="rounded-xl border border-hack-ink/15 bg-hack-surface shadow-sm flex flex-col justify-between overflow-hidden">
+              <div key={p.user_id} className="lanyard-card pt-5 pb-4 px-4 bg-[#FBF9F3] flex flex-col justify-between">
                 <div>
-                  <div className="p-4 bg-hack-sand/80 border-b border-hack-ink/10 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-hack-ink text-hack-sand font-mono text-sm font-bold flex items-center justify-center">
+                  {/* Lanyard punch-out hole */}
+                  <div className="lanyard-slot mx-auto mb-3" />
+
+                  {/* Header info */}
+                  <div className="text-center pb-2 border-b-2 border-dashed border-hack-ink/15 mb-3">
+                    <span className="font-mono text-[9px] font-black uppercase tracking-widest text-hack-subtext block">
+                      {squadName} PASS
+                    </span>
+                    <div className="flex items-center justify-center gap-2 mt-1">
+                      <div className="w-8 h-8 rounded-full bg-hack-ink text-hack-sand font-mono text-sm font-bold flex items-center justify-center">
                         {p.full_name ? p.full_name.charAt(0).toUpperCase() : 'U'}
                       </div>
-                      <div>
-                        <h3 className="font-sans text-base font-bold text-hack-ink leading-tight">
-                          {p.full_name || 'Hacker'}
+                      <div className="text-left">
+                        <h3 className="font-display text-sm font-extrabold text-hack-ink leading-tight">
+                          {p.full_name || 'Teammate'}
                         </h3>
-                        <p className="font-mono text-[11px] text-hack-subtext mt-0.5">
-                          {p.college || (p.role === 'leader' ? 'Squad Leader' : 'Squad Member')}
+                        <p className="font-mono text-[10px] text-hack-subtext">
+                          {p.college || (p.role === 'leader' ? 'Squad Lead' : 'Squad Member')}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center justify-center gap-1.5 mt-2">
                       {p.role === 'leader' && (
-                        <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-hack-gold/50 bg-hack-gold/15 text-hack-gold-dark">
+                        <span className="font-mono text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border border-hack-gold/50 bg-hack-gold/20 text-hack-gold-dark">
                           Leader
                         </span>
                       )}
                       {isMe && (
-                        <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-hack-ink/20 bg-hack-ink text-hack-sand">
+                        <span className="font-mono text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border border-hack-ink/20 bg-hack-ink text-hack-sand">
                           You
                         </span>
                       )}
-                      {isPending && (
-                        <span className="font-mono text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border border-hack-coral/40 bg-hack-coral/15 text-hack-coral-dark flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3 text-hack-coral-dark" /> Details Pending
+                      {isPending && !isCompletelyUnconfigured && (
+                        <span className="font-mono text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border border-hack-coral/40 bg-hack-coral/15 text-hack-coral-dark">
+                          Partial
                         </span>
                       )}
                     </div>
                   </div>
 
                   {isCompletelyUnconfigured && !isMe ? (
-                    <CardContent className="p-4 space-y-3">
-                      <div className="p-3.5 rounded-lg border border-hack-ink/15 bg-hack-sand/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="flex items-center gap-2 text-hack-subtext">
-                          <AlertTriangle className="w-4 h-4 text-hack-gold-dark shrink-0" />
-                          <span className="font-mono text-xs">
-                            Teammate hasn&apos;t added their registration profile yet.
-                          </span>
-                        </div>
-                        <Button
-                          size="sm"
-                          disabled={nudgingUserId === p.user_id}
-                          onClick={() => handleNudge(p.user_id, p.full_name || 'Teammate')}
-                          className="h-7 text-xs font-mono font-bold bg-hack-gold hover:bg-hack-gold/90 text-hack-ink rounded border border-hack-ink/20 shrink-0 shadow-sm"
-                        >
-                          {nudgingUserId === p.user_id ? (
-                            <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                          ) : null}
-                          <span>🔔 Nudge Teammate</span>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  ) : (
-                    <CardContent className="p-4 space-y-3">
-                      {/* If details are missing, show nudge or edit banner */}
-                      {isPending && (
-                        <div className="p-2.5 rounded-lg border border-hack-gold/50 bg-hack-gold/15 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                          <div className="flex items-center gap-1.5 text-hack-gold-dark">
-                            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                            <span className="font-mono text-[11px] font-semibold">
-                              {isMe ? 'Your registration details are incomplete' : 'Teammate details not yet added'}
-                            </span>
-                          </div>
-                          {isMe ? (
-                            <Button
-                              size="sm"
-                              onClick={handleOpenEditProfile}
-                              className="h-6 text-[10px] font-sans font-bold bg-hack-coral hover:bg-hack-coral/90 text-hack-ink rounded shrink-0 shadow-sm"
-                            >
-                              <Edit3 className="w-3 h-3 mr-1" />
-                              Edit Details
-                            </Button>
-                          ) : (
-                            <Button
-                              size="sm"
-                              disabled={nudgingUserId === p.user_id}
-                              onClick={() => handleNudge(p.user_id, p.full_name)}
-                              className="h-6 text-[10px] font-mono font-bold bg-hack-gold hover:bg-hack-gold/90 text-hack-ink rounded border border-hack-ink/20 shrink-0 shadow-sm"
-                            >
-                              {nudgingUserId === p.user_id ? (
-                                <Loader2 className="w-3 h-3 animate-spin mr-1" />
-                              ) : null}
-                              <span>📢 Nudge</span>
-                            </Button>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Primary Visible Fields (Name, Email, College, GitHub) */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {primaryFields.map(renderFieldBox)}
-                      </div>
-
-                      {/* Progressive Disclosure Section for Secondary Details */}
-                      {isExpanded && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1 border-t border-dashed border-hack-ink/20">
-                          {secondaryFields.map(renderFieldBox)}
-                        </div>
-                      )}
-
-                      {/* Toggle Button for More Details */}
+                    <div className="p-6 text-center space-y-3 bg-hack-sand/30 rounded-[8px] border border-dashed border-hack-ink/20">
+                      <span className="font-mono text-xs font-bold text-hack-ink block">
+                        ⏳ Pass is Empty
+                      </span>
+                      <p className="font-sans text-xs text-hack-subtext">
+                        {firstName} hasn&apos;t filled their registration details yet.
+                      </p>
                       <button
                         type="button"
-                        onClick={() => toggleCardExpansion(p.user_id)}
-                        className="w-full py-1.5 px-2 font-mono text-[11px] font-medium text-hack-subtext hover:text-hack-ink bg-hack-sand/40 hover:bg-hack-sand rounded-lg border border-hack-ink/10 flex items-center justify-center gap-1.5 transition-colors"
+                        disabled={nudgingUserId === p.user_id}
+                        onClick={() => handleNudge(p.user_id, p.full_name || 'Teammate')}
+                        className="keycap-btn px-3 py-1.5 rounded-[4px] bg-hack-gold text-hack-ink font-mono text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5 shadow-sm"
                       >
-                        {isExpanded ? (
-                          <>
-                            <ChevronUp className="w-3.5 h-3.5" />
-                            <span>Show fewer details</span>
-                          </>
-                        ) : (
-                          <>
-                            <ChevronDown className="w-3.5 h-3.5" />
-                            <span>Show more details ({secondaryFields.filter(f => f.value).length}/{secondaryFields.length} set)</span>
-                          </>
-                        )}
+                        {nudgingUserId === p.user_id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                        <span>🔔 Nudge {firstName}</span>
                       </button>
-                    </CardContent>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <span className="font-mono text-[10px] font-bold uppercase text-hack-subtext block text-center">
+                        Tap any chip to copy:
+                      </span>
+                      {/* Populated Tactile Pill Keys */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {primaryFields.map(renderPillKey)}
+                      </div>
+
+                      {/* Expanded secondary fields */}
+                      {isExpanded && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-dashed border-hack-ink/20">
+                          {secondaryFields.map(renderPillKey)}
+                        </div>
+                      )}
+
+                      {/* Progressive disclosure toggle */}
+                      {secondaryFields.some(f => f.value) && (
+                        <button
+                          type="button"
+                          onClick={() => toggleCardExpansion(p.user_id)}
+                          className="w-full py-1 px-2 font-mono text-[10px] font-semibold text-hack-subtext hover:text-hack-ink bg-hack-sand/40 hover:bg-hack-sand rounded-[4px] border border-hack-ink/10 flex items-center justify-center gap-1 transition-colors mt-2"
+                        >
+                          {isExpanded ? (
+                            <>
+                              <ChevronUp className="w-3 h-3" />
+                              <span>Show fewer details</span>
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="w-3 h-3" />
+                              <span>Show more details ({secondaryFields.filter(f => f.value).length} more)</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
-              </Card>
+              </div>
             )
           })}
         </div>

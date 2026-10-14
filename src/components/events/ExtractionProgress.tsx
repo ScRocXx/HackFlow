@@ -27,11 +27,9 @@ interface ExtractionProgressProps {
 }
 
 const STEPS = [
-  { id: 'read', label: 'Reading competition page...', delay: 0 },
-  { id: 'event', label: 'Event & organizer detected', delay: 600 },
-  { id: 'rounds', label: 'Parsing round milestones...', delay: 1200 },
-  { id: 'deadlines', label: 'Extracting cutoff timestamps...', delay: 1800 },
-  { id: 'deliverables', label: 'Structuring required deliverables...', delay: 2400 },
+  { id: 'read', label: 'Reading the hackathon page...', delay: 0 },
+  { id: 'rounds', label: 'Found rounds & deadlines', delay: 800 },
+  { id: 'workspace', label: 'Building your workspace...', delay: 1800 },
 ]
 
 export function ExtractionProgress({ isExtracting, confidence, stages = [], eventTitle }: ExtractionProgressProps) {
@@ -56,11 +54,11 @@ export function ExtractionProgress({ isExtracting, confidence, stages = [], even
 
   if (isExtracting) {
     return (
-      <div className="rounded-lg border border-hack-ink/20 bg-hack-panel p-4 sm:p-5 shadow-sm space-y-3">
+      <div className="rounded-[6px] border border-hack-ink/20 bg-hack-panel p-4 sm:p-5 shadow-sm space-y-3">
         <div className="flex items-center gap-2 text-hack-ink">
           <Loader2 className="w-4 h-4 animate-spin text-hack-coral-dark" />
           <span className="font-mono text-xs font-bold uppercase tracking-wider text-hack-ink">
-            Extracting Competition Details...
+            Reading hackathon details...
           </span>
         </div>
 

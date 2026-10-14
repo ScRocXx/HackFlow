@@ -48,12 +48,12 @@ export function ProfileSidebarWidget({ user }: UserProfileSidebarWidgetProps) {
   }
 
   return (
-    <div className="border-t border-hack-muted/20 p-3 bg-hack-ink/80 relative">
+    <div className="border-t border-hack-muted/20 p-2 lg:p-3 bg-hack-ink/80 relative">
       {/* Profile Bar */}
-      <div className="flex items-center w-full">
+      <div className="flex items-center w-full justify-center lg:justify-start">
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="w-full flex items-center gap-2.5 overflow-hidden min-w-0 text-left p-2 rounded-lg bg-hack-surface/90 hover:bg-hack-surface text-hack-ink border border-hack-muted/40 shadow-hack-sm transition-all active:scale-[0.98]"
+          className="w-full flex items-center justify-center lg:justify-start gap-2.5 overflow-hidden min-w-0 text-left p-1.5 lg:p-2 rounded-lg bg-hack-surface/90 hover:bg-hack-surface text-hack-ink border border-hack-muted/40 shadow-hack-sm transition-all active:scale-[0.98]"
           title="Open Profile Menu"
         >
           <Avatar className="h-8 w-8 border border-hack-muted/40 shrink-0 bg-white">
@@ -62,7 +62,7 @@ export function ProfileSidebarWidget({ user }: UserProfileSidebarWidgetProps) {
               {userInitials}
             </AvatarFallback>
           </Avatar>
-          <div className="flex flex-col min-w-0 flex-1 overflow-hidden">
+          <div className="flex flex-col min-w-0 flex-1 overflow-hidden hidden lg:flex">
             <span 
               className="truncate text-xs font-bold text-hack-ink font-mono tracking-tight block"
               title={user?.full_name || 'Hacker'}
@@ -76,13 +76,13 @@ export function ProfileSidebarWidget({ user }: UserProfileSidebarWidgetProps) {
               {user?.email}
             </span>
           </div>
-          <ChevronUp className={cn("h-4 w-4 text-hack-subtext shrink-0 transition-transform", isMenuOpen && "rotate-180")} />
+          <ChevronUp className={cn("h-4 w-4 text-hack-subtext shrink-0 transition-transform hidden lg:block", isMenuOpen && "rotate-180")} />
         </button>
       </div>
 
       {/* Profile Popup Menu */}
       {isMenuOpen && (
-        <div className="absolute left-3 right-3 bottom-full mb-2 bg-hack-surface border border-hack-muted/60 rounded-xl shadow-hack-dialog p-2 z-50 space-y-2">
+        <div className="absolute left-2 lg:left-3 w-56 lg:right-3 lg:w-auto bottom-full mb-2 bg-hack-surface border border-hack-muted/60 rounded-xl shadow-hack-dialog p-2 z-50 space-y-2">
           <div className="px-2 py-1.5 border-b border-hack-muted/40 bg-hack-sand/50 rounded-lg">
             <p className="font-mono text-xs font-bold text-hack-ink truncate">
               {user?.full_name || 'Hacker Profile'}

@@ -3,13 +3,28 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, Menu, X, FolderKanban, Trophy, Users } from 'lucide-react'
+import { 
+  LayoutDashboard, 
+  FolderKanban, 
+  Trophy, 
+  Users, 
+  Plus, 
+  LogOut, 
+  User as UserIcon,
+  ChevronDown
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
-import { HackFlowLogo, HackFlowImageLogo } from '@/components/brand/Logo'
+import { HackFlowImageLogo } from '@/components/brand/Logo'
 import { NotificationToast } from '@/components/notifications/NotificationToast'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
-import { ProfileSidebarWidget } from '@/components/profile/ProfileSidebarWidget'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 export interface UserData {
   id?: string
@@ -24,7 +39,6 @@ interface DashboardShellProps {
 }
 
 export function DashboardShell({ user, children }: DashboardShellProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -41,186 +55,239 @@ export function DashboardShell({ user, children }: DashboardShellProps) {
   }
 
   const navItems = [
-    { name: 'Home', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Hackathons', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Vault', href: '/vault', icon: FolderKanban },
-    { name: 'People', href: '/friends', icon: Users },
-    { name: 'Trophies', href: '/archive', icon: Trophy },
+    { name: 'Squads', href: '/friends', icon: Users },
+    { name: 'Wins', href: '/archive', icon: Trophy },
   ]
 
-  // Compute breadcrumb info
-  const getBreadcrumb = () => {
-    if (pathname === '/dashboard') return { parent: 'Home', current: 'Hackathons' }
-    if (pathname === '/vault') return { parent: 'Home', current: 'Vault' }
-    if (pathname === '/friends') return { parent: 'Home', current: 'People' }
-    if (pathname === '/archive') return { parent: 'Home', current: 'Trophies' }
-    if (pathname.startsWith('/events/')) return { parent: 'Home', current: 'Workspace' }
-    return { parent: 'Home', current: 'HackFlow' }
+  const isNavActive = (href: string) => {
+    if (href === '/dashboard') return pathname === '/dashboard' || pathname.startsWith('/events/')
+    return pathname === href || pathname.startsWith(`${href}/`)
   }
-  const breadcrumb = getBreadcrumb()
 
   return (
-    <div className="flex h-screen overflow-hidden bg-hack-sand text-hack-ink">
+    <div className="min-h-screen bg-workbench-canvas text-hack-ink flex flex-col relative antialiased selection:bg-hack-coral selection:text-hack-ink">
       {/* Global Realtime Notification Toast */}
       {user?.id && <NotificationToast userId={user.id} />}
 
-      {/* Mobile menu backdrop */}
-      {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-hack-ink/50 backdrop-blur-xs lg:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* Sidebar Navigation */}
-      <aside className={cn(
-        "fixed inset-y-0 left-0 z-50 w-64 transform flex-col bg-hack-ink text-hack-surface border-r border-hack-muted/30 transition-transform duration-200 ease-in-out lg:static lg:flex lg:translate-x-0 shadow-hack-lg",
-        isMobileMenuOpen ? "flex translate-x-0" : "-translate-x-full"
-      )}>
-        {/* Brand Header */}
-        <div className="flex h-16 shrink-0 items-center justify-between px-6 border-b border-hack-muted/20 bg-hack-ink/40">
-          <Link href="/dashboard" prefetch={true} className="flex items-center">
-            <HackFlowLogo textClassName="text-hack-surface text-xl" />
-          </Link>
-          <button 
-            className="p-1.5 text-hack-sky hover:text-white rounded-lg lg:hidden"
-            onClick={() => setIsMobileMenuOpen(false)}
-            aria-label="Close menu"
+      {/* =========================================================================
+          DESKTOP & TABLET: THE FLOATING COMMAND ISLAND (Top-Center Dock)
+          ========================================================================= */}
+      <header className="hidden md:flex fixed top-3.5 inset-x-0 z-50 justify-center pointer-events-none px-4">
+        <div className="pointer-events-auto flex items-center gap-1.5 sm:gap-2.5 px-3 py-1.5 rounded-full bg-[#10201D] text-[#F7F7F2] border-2 border-[#10201D] shadow-[0_12px_32px_-4px_rgba(16,32,29,0.4)] backdrop-blur-md">
+          {/* Brand Emblem */}
+          <Link 
+            href="/dashboard" 
+            prefetch={true}
+            className="flex items-center gap-2 pl-1.5 pr-2 py-1 rounded-full hover:bg-white/10 transition-colors group"
+            title="HackFlow Workbench"
           >
-            <X className="h-5 w-5" />
+            <HackFlowImageLogo className="w-6 h-6 shrink-0 transition-transform group-hover:scale-105" />
+            <span className="font-display font-extrabold text-sm tracking-tight text-white hidden lg:inline">
+              HackFlow
+            </span>
+          </Link>
+
+          <div className="w-[1px] h-5 bg-white/15 mx-0.5" />
+
+          {/* Segmented Navigation Pills */}
+          <nav className="flex items-center gap-1" aria-label="Main Navigation">
+            {navItems.map((item) => {
+              const active = isNavActive(item.href)
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  prefetch={true}
+                  className={cn(
+                    "flex items-center gap-1.5 px-3 py-1.5 rounded-full font-mono text-xs font-bold transition-all select-none touch-manipulation",
+                    active
+                      ? "bg-hack-coral text-hack-ink shadow-sm scale-[1.02]"
+                      : "text-white/75 hover:text-white hover:bg-white/10"
+                  )}
+                >
+                  <item.icon className={cn("w-3.5 h-3.5", active ? "text-hack-ink" : "text-white/60")} />
+                  <span>{item.name}</span>
+                </Link>
+              )
+            })}
+          </nav>
+
+          <div className="w-[1px] h-5 bg-white/15 mx-0.5" />
+
+          {/* Quick Action Keycap Button: [+ Add] */}
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('hackflow:open-add-hack'))
+              }
+            }}
+            className="keycap-btn inline-flex items-center gap-1 px-3 py-1 rounded-full bg-hack-coral text-hack-ink font-mono text-xs font-bold tracking-tight hover:brightness-105 active:scale-95 transition-all shrink-0"
+            title="Add New Hackathon"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>Add</span>
           </button>
-        </div>
 
-        {/* Nav Links */}
-        <nav className="flex-1 space-y-1.5 px-3 py-6">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(`${item.href}/`))
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                prefetch={true}
-                className={cn(
-                  "flex items-center px-3.5 py-2.5 rounded-lg font-mono text-xs font-bold uppercase tracking-wider transition-all",
-                  isActive 
-                    ? "bg-hack-coral text-hack-ink shadow-hack-hero font-extrabold" 
-                    : "text-hack-surface/80 hover:text-hack-surface hover:bg-hack-navy/60"
-                )}
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <item.icon className={cn("mr-3 h-4 w-4", isActive ? "text-hack-ink" : "text-hack-sky")} />
-                {item.name}
-              </Link>
-            )
-          })}
-
-          <div className="pt-4 px-1">
-            <Link
-              href="/dashboard?action=add"
-              prefetch={true}
-              onClick={() => {
-                setIsMobileMenuOpen(false)
-                if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new CustomEvent('hackflow:open-add-hack'))
-                }
-              }}
-              className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-lg bg-hack-coral text-hack-ink font-mono text-xs font-bold uppercase tracking-wider shadow-hack-hero hover:brightness-105 active:scale-[0.98] transition-all"
-            >
-              <span>+ Add Hackathon</span>
-            </Link>
-          </div>
-        </nav>
-
-        {/* Sidebar Bottom Profile Widget */}
-        <ProfileSidebarWidget user={user} />
-      </aside>
-
-      {/* Main Content Area */}
-      <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Top Navbar */}
-        <header className="flex h-14 sm:h-16 shrink-0 items-center justify-between border-b border-hack-muted/60 bg-hack-surface text-hack-ink px-4 sm:px-8 shadow-hack-sm">
-          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-            <button
-              className="p-1.5 text-hack-ink hover:bg-hack-sand border border-hack-muted rounded-lg bg-hack-surface shadow-hack-sm lg:hidden active:scale-95 transition-transform shrink-0 touch-manipulation"
-              onClick={() => setIsMobileMenuOpen(true)}
-              aria-label="Toggle navigation menu"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-
-            {/* Mobile Brand Emblem */}
-            <Link href="/dashboard" prefetch={true} className="flex items-center lg:hidden shrink-0 active:scale-90 transition-transform">
-              <HackFlowImageLogo className="w-8 h-8" />
-            </Link>
-
-            {/* Breadcrumb + Title */}
-            <div className="flex flex-col min-w-0">
-              <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[11px] font-mono text-hack-subtext uppercase tracking-wider">
-                <span>{breadcrumb.parent}</span>
-                <span>/</span>
-                <span className="text-hack-ink font-semibold">{breadcrumb.current}</span>
-              </nav>
-              <h1 className="font-display text-base sm:text-xl font-bold tracking-tight text-hack-ink truncate hidden sm:block">
-                {breadcrumb.current === 'Hackathons' ? 'Active Competitions' :
-                 breadcrumb.current === 'Vault' ? 'Squad Vault' :
-                 breadcrumb.current === 'People' ? 'Teammates & Friends' :
-                 breadcrumb.current === 'Trophies' ? 'Trophy Case' :
-                 'Workspace Console'}
-              </h1>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-            <Link
-              href="/dashboard?action=add"
-              prefetch={true}
-              onClick={() => {
-                if (typeof window !== 'undefined') {
-                  window.dispatchEvent(new CustomEvent('hackflow:open-add-hack'))
-                }
-              }}
-              className="inline-flex lg:hidden items-center gap-1.5 px-3 py-1.5 rounded-lg bg-hack-coral text-hack-ink font-mono text-xs font-bold uppercase tracking-wider shadow-hack-hero hover:brightness-105 active:scale-[0.98] transition-all"
-            >
-              <span>+ Add Hack</span>
-            </Link>
-            {user?.id && (
+          {/* Notification Bell */}
+          {user?.id && (
+            <div className="text-white hover:text-hack-coral transition-colors flex items-center">
               <NotificationBell userId={user.id} />
-            )}
-          </div>
-        </header>
+            </div>
+          )}
 
-        {/* Main View with bottom dock clearance on mobile */}
-        <main className="flex-1 overflow-y-auto bg-hack-sand p-3 sm:p-6 lg:p-8 pb-24 lg:pb-8 overscroll-contain page-enter">
-          {children}
-        </main>
-
-        {/* Fixed Mobile Bottom Navigation Dock (lg:hidden) */}
-        <nav className="fixed bottom-0 left-0 right-0 z-40 bg-hack-ink/95 backdrop-blur-md border-t border-hack-muted/30 shadow-[0_-4px_16px_rgba(23,37,34,0.25)] px-2 py-1.5 pb-[max(env(safe-area-inset-bottom),0.65rem)] flex items-center justify-around lg:hidden">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(`${item.href}/`))
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                prefetch={true}
-                className={cn(
-                  "relative flex flex-col items-center justify-center flex-1 py-1 px-1 font-mono transition-all rounded-lg select-none min-h-[46px] active:scale-95 touch-manipulation",
-                  isActive
-                    ? "bg-hack-coral text-hack-ink shadow-hack-sm"
-                    : "text-hack-surface/75 hover:text-hack-surface active:bg-hack-navy/50"
-                )}
+          {/* User Profile Pill / Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button 
+                type="button" 
+                className="flex items-center gap-1.5 pl-1.5 pr-2 py-1 rounded-full bg-white/10 hover:bg-white/15 border border-white/10 transition-colors focus:outline-none"
               >
-                <item.icon className={cn("h-4 w-4 mb-0.5 transition-transform", isActive ? "text-hack-ink scale-110" : "text-hack-sky")} />
-                <span className={cn(
-                  "text-[10px] font-bold uppercase tracking-tight truncate max-w-[70px]",
-                  isActive ? "text-hack-ink" : "text-hack-surface/90"
-                )}>
-                  {item.name}
+                <div className="w-5 h-5 rounded-full bg-hack-coral text-hack-ink font-mono text-[10px] font-bold flex items-center justify-center shrink-0">
+                  {user?.full_name ? user.full_name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || 'U'}
+                </div>
+                <span className="font-mono text-xs font-semibold text-white/90 max-w-[80px] truncate hidden xl:inline">
+                  {user?.full_name?.split(' ')[0] || 'You'}
                 </span>
-              </Link>
-            )
-          })}
-        </nav>
-      </div>
+                <ChevronDown className="w-3 h-3 text-white/60" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52 bg-hack-surface border-2 border-hack-ink rounded-[8px] shadow-hack-lg p-1.5 font-mono text-xs">
+              <div className="font-sans font-bold text-hack-ink px-2 py-1">
+                <p className="truncate text-sm">{user?.full_name || 'Hacker'}</p>
+                <p className="font-mono text-[11px] text-hack-subtext font-normal truncate">{user?.email}</p>
+              </div>
+              <DropdownMenuSeparator className="bg-hack-muted/50 my-1" />
+              <DropdownMenuItem onClick={() => router.push('/vault')} className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer hover:bg-hack-sand">
+                <UserIcon className="w-3.5 h-3.5 text-hack-subtext" />
+                <span>My Vault Profile</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => router.push('/friends')} className="flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer hover:bg-hack-sand">
+                <Users className="w-3.5 h-3.5 text-hack-subtext" />
+                <span>Squads & Crew</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-hack-muted/50 my-1" />
+              <DropdownMenuItem 
+                onClick={handleSignOut} 
+                className="flex items-center gap-2 px-2 py-1.5 rounded text-hack-coral-dark hover:bg-hack-coral/10 cursor-pointer font-bold"
+              >
+                <LogOut className="w-3.5 h-3.5 text-hack-coral-dark" />
+                <span>Log Out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </header>
+
+      {/* =========================================================================
+          MOBILE TOP COMPACT BAR (<768px)
+          ========================================================================= */}
+      <header className="flex md:hidden h-14 shrink-0 items-center justify-between px-4 border-b border-hack-ink/15 bg-hack-surface/90 backdrop-blur-md sticky top-0 z-40">
+        <Link href="/dashboard" prefetch={true} className="flex items-center gap-2">
+          <HackFlowImageLogo className="w-7 h-7" />
+          <span className="font-display font-extrabold text-base tracking-tight text-hack-ink">
+            HackFlow
+          </span>
+        </Link>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== 'undefined') {
+                window.dispatchEvent(new CustomEvent('hackflow:open-add-hack'))
+              }
+            }}
+            className="keycap-btn px-2.5 py-1 rounded-[6px] bg-hack-coral text-hack-ink font-mono text-xs font-bold shadow-sm"
+          >
+            + Add
+          </button>
+          {user?.id && <NotificationBell userId={user.id} />}
+        </div>
+      </header>
+
+      {/* =========================================================================
+          MAIN WORKBENCH CANVAS (100% Full-Viewport Breathing Room)
+          ========================================================================= */}
+      <main className="flex-1 w-full max-w-7xl mx-auto p-3 sm:p-6 lg:p-8 pt-4 md:pt-20 pb-24 md:pb-12 overscroll-contain">
+        {children}
+      </main>
+
+      {/* =========================================================================
+          MOBILE FLOATING COMMAND THUMB ISLAND (<768px, Bottom-Center Dock)
+          ========================================================================= */}
+      <nav 
+        className="fixed bottom-4 inset-x-3 z-50 h-14 rounded-full bg-[#10201D]/95 backdrop-blur-md border-2 border-[#10201D] shadow-[0_10px_25px_rgba(0,0,0,0.4)] px-3 flex items-center justify-around md:hidden"
+        aria-label="Mobile Navigation Dock"
+      >
+        {/* Slot 1: Home */}
+        <Link
+          href="/dashboard"
+          prefetch={true}
+          className={cn(
+            "flex flex-col items-center justify-center py-1 font-mono transition-all rounded-full select-none active:scale-90 touch-manipulation px-2",
+            pathname === '/dashboard' ? "text-hack-coral font-bold" : "text-white/70 hover:text-white"
+          )}
+        >
+          <LayoutDashboard className={cn("h-4 w-4 mb-0.5", pathname === '/dashboard' ? "text-hack-coral" : "text-white/60")} />
+          <span className="text-[9px] uppercase font-bold tracking-tight">Home</span>
+        </Link>
+
+        {/* Slot 2: Vault */}
+        <Link
+          href="/vault"
+          prefetch={true}
+          className={cn(
+            "flex flex-col items-center justify-center py-1 font-mono transition-all rounded-full select-none active:scale-90 touch-manipulation px-2",
+            pathname.startsWith('/vault') ? "text-hack-coral font-bold" : "text-white/70 hover:text-white"
+          )}
+        >
+          <FolderKanban className={cn("h-4 w-4 mb-0.5", pathname.startsWith('/vault') ? "text-hack-coral" : "text-white/60")} />
+          <span className="text-[9px] uppercase font-bold tracking-tight">Vault</span>
+        </Link>
+
+        {/* Slot 3: Center Raised [+] Coral Keycap */}
+        <button
+          type="button"
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('hackflow:open-add-hack'))
+            }
+          }}
+          aria-label="Add Hackathon"
+          className="flex items-center justify-center -mt-5 h-12 w-12 rounded-full bg-hack-coral text-hack-ink border-2 border-[#10201D] shadow-[0_4px_12px_rgba(0,0,0,0.4)] active:scale-90 transition-transform shrink-0"
+        >
+          <Plus className="w-6 h-6 stroke-[3]" />
+        </button>
+
+        {/* Slot 4: Squads */}
+        <Link
+          href="/friends"
+          prefetch={true}
+          className={cn(
+            "flex flex-col items-center justify-center py-1 font-mono transition-all rounded-full select-none active:scale-90 touch-manipulation px-2",
+            pathname.startsWith('/friends') ? "text-hack-coral font-bold" : "text-white/70 hover:text-white"
+          )}
+        >
+          <Users className={cn("h-4 w-4 mb-0.5", pathname.startsWith('/friends') ? "text-hack-coral" : "text-white/60")} />
+          <span className="text-[9px] uppercase font-bold tracking-tight">Squads</span>
+        </Link>
+
+        {/* Slot 5: Wins */}
+        <Link
+          href="/archive"
+          prefetch={true}
+          className={cn(
+            "flex flex-col items-center justify-center py-1 font-mono transition-all rounded-full select-none active:scale-90 touch-manipulation px-2",
+            pathname.startsWith('/archive') ? "text-hack-coral font-bold" : "text-white/70 hover:text-white"
+          )}
+        >
+          <Trophy className={cn("h-4 w-4 mb-0.5", pathname.startsWith('/archive') ? "text-hack-coral" : "text-white/60")} />
+          <span className="text-[9px] uppercase font-bold tracking-tight">Wins</span>
+        </Link>
+      </nav>
     </div>
   )
 }

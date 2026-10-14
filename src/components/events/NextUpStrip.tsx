@@ -56,7 +56,7 @@ export function NextUpStrip({ userName, items }: NextUpStripProps) {
           Nothing due in the next 72 hours. You&apos;re good. Keep building or explore next stages below.
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 pb-2 -mx-4 px-4 sm:grid sm:grid-cols-3 sm:overflow-visible sm:mx-0 sm:px-0">
           {items.map((item, idx) => {
             const severity = getDeadlineSeverity(item.deadline)
             const hoursRounded = Math.max(1, Math.round(item.hoursLeft))
@@ -65,7 +65,7 @@ export function NextUpStrip({ userName, items }: NextUpStripProps) {
             return (
               <div 
                 key={`${item.eventId}-${idx}`}
-                className="border border-hack-muted/60 bg-hack-sand/40 p-4 rounded-xl shadow-hack-sm flex flex-col justify-between hover:shadow-hack-hero hover:-translate-y-0.5 transition-all group"
+                className="min-w-[85vw] sm:min-w-0 snap-center border border-hack-muted/60 bg-hack-sand/40 p-4 rounded-xl shadow-hack-sm flex flex-col justify-between hover:shadow-hack-hero hover:-translate-y-0.5 transition-all group"
               >
                 <div>
                   <div className="flex items-center justify-between gap-2 mb-2">
@@ -97,7 +97,7 @@ export function NextUpStrip({ userName, items }: NextUpStripProps) {
                     prefetch={true}
                     className="inline-flex items-center gap-1 font-mono text-[11px] font-bold uppercase text-hack-ink hover:text-hack-coral-dark transition-colors"
                   >
-                    Open Workspace <ArrowRight className="w-3.5 h-3.5" />
+                    Open <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </div>

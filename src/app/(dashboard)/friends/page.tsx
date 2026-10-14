@@ -32,28 +32,28 @@ export default async function FriendsPage() {
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Top Banner */}
-      <div className="p-6 bg-[#2e4742] border-2 border-[#10201d] shadow-[5px_5px_0_#10201d] text-[#f2f2eb]">
+      <div className="p-5 sm:p-6 bg-hack-forest border border-hack-ink/20 rounded-[6px] shadow-sm text-hack-sand">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="font-mono text-xs font-bold px-2 py-0.5 bg-[#93C9B8] text-[#10201d] uppercase">
-                Teammates
+              <span className="font-mono text-xs font-bold px-2 py-0.5 bg-hack-mint text-hack-ink uppercase rounded-[4px]">
+                Squads
               </span>
-              <span className="font-mono text-xs text-[#8bb2de]">HackFlow Teams</span>
+              <span className="font-mono text-xs text-hack-sand/70">Teams & Network</span>
             </div>
-            <h1 className="font-display font-bold text-2xl tracking-wide">Your Teams & Teammates</h1>
-            <p className="font-mono text-xs text-[#f2f2eb]/70 mt-1">
-              Form squads, invite friends, and share vaults across competitions.
+            <h1 className="font-display font-bold text-2xl tracking-wide">Your Squads & Teammates</h1>
+            <p className="font-mono text-xs text-hack-sand/70 mt-1">
+              Form squads, invite teammates, and share vaults across hackathons.
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-[#10201d]/40 border-2 border-[#10201d] text-center min-w-[80px]">
-              <div className="font-display font-bold text-xl text-[#f5b726]">{squads.length}</div>
-              <div className="font-mono text-[10px] uppercase text-[#f2f2eb]/70">Squads</div>
+            <div className="p-3 bg-hack-ink/40 border border-hack-sand/20 rounded-[4px] text-center min-w-[80px]">
+              <div className="font-display font-bold text-xl text-hack-gold">{squads.length}</div>
+              <div className="font-mono text-[10px] uppercase text-hack-sand/70">Squads</div>
             </div>
-            <div className="p-3 bg-[#10201d]/40 border-2 border-[#10201d] text-center min-w-[80px]">
-              <div className="font-display font-bold text-xl text-[#8bb2de]">{friends.length}</div>
-              <div className="font-mono text-[10px] uppercase text-[#f2f2eb]/70">Friends</div>
+            <div className="p-3 bg-hack-ink/40 border border-hack-sand/20 rounded-[4px] text-center min-w-[80px]">
+              <div className="font-display font-bold text-xl text-hack-sky">{friends.length}</div>
+              <div className="font-mono text-[10px] uppercase text-hack-sand/70">Teammates</div>
             </div>
           </div>
         </div>

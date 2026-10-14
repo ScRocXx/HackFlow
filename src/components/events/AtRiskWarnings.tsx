@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { AlertTriangle, ArrowRight, ShieldAlert } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -16,7 +17,8 @@ export interface AtRiskWarningsProps {
 }
 
 export function AtRiskWarnings({ risks }: AtRiskWarningsProps) {
-  if (!risks || risks.length === 0) return null
+  const [hidden, setHidden] = useState(false)
+  if (hidden || !risks || risks.length === 0) return null
 
   return (
     <div className="border border-hack-muted/60 bg-hack-surface p-4 sm:p-5 rounded-xl shadow-hack-card space-y-3" role="region" aria-label="At risk warnings">
@@ -24,12 +26,16 @@ export function AtRiskWarnings({ risks }: AtRiskWarningsProps) {
         <div className="flex items-center gap-2">
           <ShieldAlert className="w-5 h-5 text-hack-gold-dark shrink-0" />
           <h3 className="font-display text-base sm:text-lg font-bold tracking-tight text-hack-ink">
-            {risks.length} {risks.length === 1 ? 'thing could bite you later' : 'things could bite you later'}
+            Heads up — {risks.length} {risks.length === 1 ? 'deadline needs' : 'deadlines need'} attention
           </h3>
         </div>
-        <span className="font-mono text-[10px] sm:text-[11px] font-semibold text-hack-subtext uppercase">
-          Review & Unblock
-        </span>
+        <button
+          type="button"
+          onClick={() => setHidden(true)}
+          className="font-mono text-[10px] sm:text-[11px] font-semibold text-hack-subtext hover:text-hack-ink uppercase transition-colors"
+        >
+          Hide
+        </button>
       </div>
 
       {risks.length === 1 ? (

@@ -92,84 +92,35 @@ function LoginForm() {
   };
 
   return (
-    <Card className="border border-hack-muted/30 bg-hack-surface shadow-hack-lg rounded-xl overflow-hidden">
-      <CardHeader className="space-y-1.5 text-center border-b border-hack-muted/20 pb-5 pt-6 bg-hack-sand/30">
-        <CardTitle className="font-display text-2xl font-bold tracking-tight text-hack-ink">
-          Welcome back. Let&apos;s see what&apos;s due.
+    <Card className="border-2 border-hack-ink bg-white shadow-[4px_4px_0_#10201D] rounded-2xl overflow-hidden">
+      <CardHeader className="space-y-1.5 text-center border-b-2 border-hack-ink/15 pb-5 pt-6 bg-hack-sand/40">
+        <CardTitle className="font-display text-2xl sm:text-3xl font-extrabold tracking-tight text-hack-ink">
+          Welcome back. Let&apos;s build.
         </CardTitle>
         <CardDescription className="font-mono text-xs text-hack-subtext">
-          Sign in to check your rounds, deadlines, and deliverables
+          Sign in to check your active rounds, deadlines, and squad deliverables.
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4 p-6">
+
+      <CardContent className="space-y-4 p-6 sm:p-7">
         {error && (
-          <div className="border border-hack-coral/40 bg-hack-coral/10 text-hack-coral p-3 rounded-lg text-xs font-mono font-medium flex gap-2 items-start">
+          <div className="border-2 border-hack-coral bg-hack-coral/10 text-hack-ink p-3 rounded-xl text-xs font-mono font-medium flex gap-2 items-start">
             <AlertCircle className="h-4 w-4 text-hack-coral shrink-0 mt-0.5" />
             <span className="flex-1">{error}</span>
           </div>
         )}
-        
-        <form onSubmit={handleEmailLogin} className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="font-mono text-xs font-bold uppercase tracking-wider text-hack-ink">
-              Email Address
-            </label>
-            <Input
-              type="email"
-              placeholder="hacker@hackflow.dev"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={loading || googleLoading}
-              className="rounded-lg border border-hack-muted/40 bg-hack-surface font-mono text-sm focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="font-mono text-xs font-bold uppercase tracking-wider text-hack-ink">
-              Password
-            </label>
-            <Input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={loading || googleLoading}
-              className="rounded-lg border border-hack-muted/40 bg-hack-surface font-mono text-sm focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25"
-            />
-          </div>
-          <Button
-            type="submit"
-            className="w-full rounded-lg bg-hack-coral hover:bg-hack-coral/90 text-white shadow-hack-hero font-semibold font-mono text-xs h-10 transition-colors"
-            disabled={loading || googleLoading}
-          >
-            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Sign In with Email
-          </Button>
-        </form>
 
-        <div className="relative my-4">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-hack-muted/30" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-hack-surface px-3 font-mono font-medium text-hack-subtext text-[11px]">
-              or
-            </span>
-          </div>
-        </div>
-
-        <Button 
-          variant="outline" 
-          type="button" 
-          className="w-full rounded-lg border border-hack-muted/40 hover:bg-hack-sand font-mono text-xs font-semibold text-hack-ink h-10 transition-colors" 
+        {/* 1. Continue with Google at TOP */}
+        <button
+          type="button"
           onClick={handleGoogleLogin}
           disabled={loading || googleLoading}
+          className="btn-keycap bg-white hover:bg-hack-sand/50 text-hack-ink font-mono text-xs sm:text-sm font-bold h-12 w-full flex items-center justify-center gap-3 transition-all select-none"
         >
           {googleLoading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className="h-4 w-4 animate-spin text-hack-coral" />
           ) : (
-            <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
+            <svg className="h-4 w-4" viewBox="0 0 24 24">
               <path
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
                 fill="#4285F4"
@@ -188,10 +139,63 @@ function LoginForm() {
               />
             </svg>
           )}
-          Continue with Google
-        </Button>
+          <span>Continue with Google (1-Click)</span>
+        </button>
+
+        {/* Divider */}
+        <div className="relative my-4">
+          <div className="absolute inset-0 flex items-center">
+            <span className="w-full border-t border-hack-ink/20" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-white px-3 font-mono font-medium text-hack-subtext text-[11px]">
+              or sign in with email
+            </span>
+          </div>
+        </div>
+
+        {/* Email Form */}
+        <form onSubmit={handleEmailLogin} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="font-mono text-xs font-bold uppercase tracking-wider text-hack-ink">
+              Email Address
+            </label>
+            <Input
+              type="email"
+              placeholder="hacker@college.edu"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={loading || googleLoading}
+              className="rounded-xl border-2 border-hack-ink/30 bg-hack-sand/20 font-mono text-xs focus:border-hack-coral focus:ring-0"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="font-mono text-xs font-bold uppercase tracking-wider text-hack-ink">
+              Password
+            </label>
+            <Input
+              type="password"
+              placeholder="••••••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={loading || googleLoading}
+              className="rounded-xl border-2 border-hack-ink/30 bg-hack-sand/20 font-mono text-xs focus:border-hack-coral focus:ring-0"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={loading || googleLoading}
+            className="btn-keycap w-full bg-hack-coral hover:bg-hack-coral/90 text-hack-ink font-mono text-xs font-extrabold h-11 flex items-center justify-center gap-2 transition-colors mt-2"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            <span>Sign In to Workspace &rarr;</span>
+          </button>
+        </form>
       </CardContent>
-      <CardFooter className="flex justify-center border-t border-hack-muted/20 py-4 bg-hack-sand/20">
+
+      <CardFooter className="flex justify-center border-t border-hack-ink/15 py-4 bg-hack-sand/30">
         <p className="font-mono text-xs text-hack-subtext">
           Don&apos;t have an account?{' '}
           <Link href="/signup" className="text-hack-coral font-bold hover:underline">
@@ -203,10 +207,9 @@ function LoginForm() {
   );
 }
 
-
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading...</div>}>
+    <Suspense fallback={<div className="p-8 text-center text-slate-500 font-mono text-xs">Loading...</div>}>
       <LoginForm />
     </Suspense>
   );

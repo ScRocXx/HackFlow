@@ -197,14 +197,14 @@ export function SquadScratchpad({
   return (
     <div className="space-y-6">
       {/* Header Info Banner */}
-      <div className="p-4 border border-hack-muted/30 bg-hack-surface rounded-xl shadow-hack-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+      <div className="p-4 border border-hack-muted/30 bg-hack-surface rounded-[6px] shadow-hack-card flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-hack-sand/70 border border-hack-muted/30 text-hack-ink font-mono text-sm flex items-center justify-center">
+          <div className="w-8 h-8 rounded-[4px] bg-hack-sand/70 border border-hack-muted/30 text-hack-ink font-mono text-sm flex items-center justify-center">
             📌
           </div>
           <div>
             <h3 className="font-display text-base font-bold text-hack-ink leading-none">
-              {squadName} Sprint Scratchpad & Pinboard
+              {squadName} Shared Notes & API Keys
             </h3>
             <p className="font-mono text-[11px] text-hack-subtext mt-1">
               {lastUpdateTime ? `Last updated by ${lastEditorName} on ${lastUpdateTime}` : 'Pin your team call, Discord, staging link, and test accounts.'}
@@ -217,7 +217,7 @@ export function SquadScratchpad({
           <Button
             onClick={handleSave}
             disabled={isSaving}
-            className="font-mono text-xs font-semibold bg-hack-coral hover:bg-hack-coral/90 text-white shadow-hack-hero rounded-lg px-4 py-2 shrink-0 transition-colors"
+            className="btn-tactile font-mono text-xs font-semibold bg-hack-coral text-hack-ink rounded-[4px] px-4 py-2 shrink-0 transition-colors"
           >
             {isSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" /> : <Save className="w-3.5 h-3.5 mr-1.5" />}
             <span>{isSaving ? 'Saving...' : 'Save Scratchpad'}</span>
@@ -367,7 +367,7 @@ export function SquadScratchpad({
                 <div className="flex items-center justify-between flex-wrap gap-1">
                   <label className="font-mono text-xs font-bold uppercase text-hack-ink flex items-center gap-1.5">
                     <Key className="w-3.5 h-3.5 text-hack-gold" />
-                    <span>Squad Keyring & Shared Credentials</span>
+                    <span>Shared .env Keys</span>
                   </label>
                   
                   <div className="flex items-center gap-1.5 flex-wrap">
@@ -375,7 +375,7 @@ export function SquadScratchpad({
                       type="button"
                       size="sm"
                       onClick={() => setShowSecrets(!showSecrets)}
-                      className="h-6 text-[10px] font-mono font-semibold bg-hack-sand hover:bg-hack-sand/80 text-hack-ink border border-hack-muted/40 px-2 rounded-md shadow-sm"
+                      className="btn-tactile h-6 text-[10px] font-mono font-semibold bg-hack-sand text-hack-ink px-2 rounded-[4px]"
                       title={showSecrets ? 'Mask credentials on screen' : 'Reveal credentials on screen'}
                     >
                       {showSecrets ? '🙈 Mask Keys' : '👁️ Reveal Keys'}
@@ -384,7 +384,7 @@ export function SquadScratchpad({
                       type="button"
                       size="sm"
                       onClick={handleCopyEnv}
-                      className="h-6 text-[10px] font-mono font-semibold bg-hack-sand hover:bg-hack-sand/80 text-hack-ink border border-hack-muted/40 px-2 rounded-md shadow-sm"
+                      className="btn-tactile h-6 text-[10px] font-mono font-semibold bg-hack-sand text-hack-ink px-2 rounded-[4px]"
                       title="Copy all variables formatted as .env.local"
                     >
                       {copiedKey === 'env-export' ? <Check className="w-3 h-3 mr-1 text-hack-mint" /> : <Copy className="w-3 h-3 mr-1" />}
@@ -395,7 +395,7 @@ export function SquadScratchpad({
                         type="button"
                         size="sm"
                         onClick={() => handleCopy('creds', formData.test_credentials, 'Credentials')}
-                        className="h-6 text-[10px] font-mono font-semibold bg-hack-sand hover:bg-hack-sand/80 text-hack-ink border border-hack-muted/40 px-2 rounded-md shadow-sm"
+                        className="btn-tactile h-6 text-[10px] font-mono font-semibold bg-hack-sand text-hack-ink px-2 rounded-[4px]"
                       >
                         {copiedKey === 'creds' ? <Check className="w-3 h-3 mr-1 text-hack-mint" /> : <Copy className="w-3 h-3 mr-1" />}
                         Copy Raw
@@ -410,43 +410,55 @@ export function SquadScratchpad({
                   <button
                     type="button"
                     onClick={() => handleAppendKeyringTemplate('GEMINI_API_KEY=AIzaSy...')}
-                    className="px-2 py-0.5 rounded-md border border-hack-muted/30 bg-hack-sand/50 hover:bg-hack-sand font-medium shrink-0 text-hack-ink transition-colors"
+                    className="px-2 py-0.5 rounded-[4px] border border-hack-muted/30 bg-hack-sand/50 hover:bg-hack-sand font-medium shrink-0 text-hack-ink transition-colors"
                   >
                     + Gemini
                   </button>
                   <button
                     type="button"
                     onClick={() => handleAppendKeyringTemplate('GROQ_API_KEY=gsk_...')}
-                    className="px-2 py-0.5 rounded-md border border-hack-muted/30 bg-hack-sand/50 hover:bg-hack-sand font-medium shrink-0 text-hack-ink transition-colors"
+                    className="px-2 py-0.5 rounded-[4px] border border-hack-muted/30 bg-hack-sand/50 hover:bg-hack-sand font-medium shrink-0 text-hack-ink transition-colors"
                   >
                     + Groq
                   </button>
                   <button
                     type="button"
                     onClick={() => handleAppendKeyringTemplate('NEXT_PUBLIC_SUPABASE_ANON_KEY=ey...')}
-                    className="px-2 py-0.5 rounded-md border border-hack-muted/30 bg-hack-sand/50 hover:bg-hack-sand font-medium shrink-0 text-hack-ink transition-colors"
+                    className="px-2 py-0.5 rounded-[4px] border border-hack-muted/30 bg-hack-sand/50 hover:bg-hack-sand font-medium shrink-0 text-hack-ink transition-colors"
                   >
                     + Supabase
                   </button>
                   <button
                     type="button"
                     onClick={() => handleAppendKeyringTemplate('NGROK_TUNNEL_URL=https://...ngrok-free.app')}
-                    className="px-2 py-0.5 rounded-md border border-hack-muted/30 bg-hack-sand/50 hover:bg-hack-sand font-medium shrink-0 text-hack-ink transition-colors"
+                    className="px-2 py-0.5 rounded-[4px] border border-hack-muted/30 bg-hack-sand/50 hover:bg-hack-sand font-medium shrink-0 text-hack-ink transition-colors"
                   >
                     + Ngrok
                   </button>
                 </div>
 
-                <textarea
-                  value={formData.test_credentials}
-                  onChange={(e) => setFormData({ ...formData, test_credentials: e.target.value })}
-                  rows={4}
-                  placeholder={`GEMINI_API_KEY=AIzaSy...\nGROQ_API_KEY=gsk_...\nJudge Login: judge@demo.com / pass123`}
-                  className={cn(
-                    "w-full p-2.5 font-mono text-xs border border-hack-muted/40 rounded-lg bg-hack-surface text-hack-ink focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25 focus:outline-none resize-none leading-relaxed transition-all",
-                    !showSecrets && formData.test_credentials && "blur-[4px] select-none focus:blur-none"
+                <div className="relative rounded-[6px] overflow-hidden border-2 border-[#10201D] shadow-inner">
+                  <textarea
+                    value={formData.test_credentials}
+                    onChange={(e) => setFormData({ ...formData, test_credentials: e.target.value })}
+                    rows={4}
+                    placeholder={`GEMINI_API_KEY=AIzaSy...\nGROQ_API_KEY=gsk_...\nJudge Login: judge@demo.com / pass123`}
+                    className={cn(
+                      "w-full p-3 font-mono text-xs bg-[#10201D] text-[#93C9B8] placeholder:text-white/30 focus:outline-none resize-none leading-relaxed transition-all",
+                      !showSecrets && formData.test_credentials && "blur-[6px] select-none pointer-events-none"
+                    )}
+                  />
+                  {!showSecrets && formData.test_credentials && (
+                    <div 
+                      onClick={() => setShowSecrets(true)}
+                      className="absolute inset-0 backdrop-blur-md bg-black/40 flex items-center justify-center cursor-pointer rounded-[4px] border border-dashed border-white/20 hover:bg-black/50 transition-all select-none"
+                    >
+                      <span className="font-mono text-xs font-bold px-3 py-1.5 rounded-full bg-hack-coral text-hack-ink border-2 border-hack-ink shadow-md flex items-center gap-1.5 hover:scale-105 transition-transform">
+                        🔒 Keys masked for stream safety • Click to peek
+                      </span>
+                    </div>
                   )}
-                />
+                </div>
               </div>
             </CardContent>
           </Card>

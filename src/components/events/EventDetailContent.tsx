@@ -66,6 +66,7 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
 
   const [isCompleting, setIsCompleting] = useState(false)
   const [mobileWorkspaceTab, setMobileWorkspaceTab] = useState<'sprint' | 'pitch' | 'team'>('sprint')
+  const [briefTab, setBriefTab] = useState<'build' | 'stack' | 'rules'>('build')
   
   // Edit & Delete dialog states
   const [editDialogOpen, setEditDialogOpen] = useState(false)
@@ -292,167 +293,172 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
       />
 
       {/* Mobile Workspace Segmented Controller (lg:hidden) */}
-      <div className="flex lg:hidden border border-hack-muted/60 bg-hack-surface p-1 rounded-xl shadow-hack-sm gap-1 overflow-x-auto no-scrollbar">
+      <div className="sticky top-14 sm:top-16 z-30 flex lg:hidden border border-hack-muted/60 bg-hack-surface/95 backdrop-blur-md p-1 rounded-[6px] shadow-sm gap-1 overflow-x-auto no-scrollbar">
         <button
           type="button"
           onClick={() => setMobileWorkspaceTab('sprint')}
           className={cn(
-            "flex-1 py-2 px-3 text-center font-mono text-xs font-bold uppercase tracking-wider rounded-lg transition-all whitespace-nowrap select-none",
+            "flex-1 py-2 px-3 text-center font-mono text-xs font-bold uppercase tracking-wider rounded-[4px] transition-all whitespace-nowrap select-none",
             mobileWorkspaceTab === 'sprint'
-              ? "bg-hack-coral text-hack-ink shadow-hack-hero font-extrabold"
+              ? "bg-hack-coral text-hack-ink shadow-sm font-extrabold"
               : "text-hack-subtext hover:bg-hack-sand"
           )}
         >
-          ⚡ Tasks & Stage
+          {(() => {
+            const delivs = (currentDisplayStage as any)?.deliverables || (currentDisplayStage as any)?.stage_deliverables || []
+            const done = delivs.filter((d: any) => d.is_done || d.is_completed || d.completed).length
+            return delivs.length > 0 ? `⚡ Tasks (${done}/${delivs.length})` : '⚡ Tasks'
+          })()}
         </button>
         <button
           type="button"
           onClick={() => setMobileWorkspaceTab('pitch')}
           className={cn(
-            "flex-1 py-2 px-3 text-center font-mono text-xs font-bold uppercase tracking-wider rounded-lg transition-all whitespace-nowrap select-none",
+            "flex-1 py-2 px-3 text-center font-mono text-xs font-bold uppercase tracking-wider rounded-[4px] transition-all whitespace-nowrap select-none",
             mobileWorkspaceTab === 'pitch'
-              ? "bg-hack-blue text-hack-ink shadow-hack-sm font-extrabold"
+              ? "bg-hack-gold text-hack-ink shadow-sm font-extrabold"
               : "text-hack-subtext hover:bg-hack-sand"
           )}
         >
-          💡 Ideas & Canvas
+          🛡️ Submit Check
         </button>
         <button
           type="button"
           onClick={() => setMobileWorkspaceTab('team')}
           className={cn(
-            "flex-1 py-2 px-3 text-center font-mono text-xs font-bold uppercase tracking-wider rounded-lg transition-all whitespace-nowrap select-none",
+            "flex-1 py-2 px-3 text-center font-mono text-xs font-bold uppercase tracking-wider rounded-[4px] transition-all whitespace-nowrap select-none",
             mobileWorkspaceTab === 'team'
-              ? "bg-hack-gold text-hack-ink shadow-hack-sm font-extrabold"
+              ? "bg-hack-blue text-hack-ink shadow-sm font-extrabold"
               : "text-hack-subtext hover:bg-hack-sand"
           )}
         >
-          👥 Team & Shelf
+          👥 Team & Links
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6 items-start">
         {/* Left Column (Dominant Workspace) */}
         <div className="space-y-6 min-w-0">
-          {/* Hackathon Brief Banner */}
+          {/* The Brief: Compact 3-Tab Index Card */}
           {event.mission_brief && (
             <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:block")}>
-              <Card className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
-                <div className="bg-hack-surface p-4 border-b border-hack-muted/30 text-hack-ink flex items-center justify-between gap-3 flex-wrap">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-xl">🎯</span>
-                    <div>
-                      <h3 className="font-display text-lg font-bold tracking-tight text-hack-ink">Hackathon Brief</h3>
-                      <p className="font-mono text-[11px] text-hack-subtext">Key constraints & target deliverable</p>
-                    </div>
+              <div className="border-2 border-hack-ink bg-white rounded-[8px] shadow-hack-card overflow-hidden">
+                {/* Tab Header Strip */}
+                <div className="bg-[#10201D] text-[#F7F7F2] px-3 py-2 flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5" role="tablist" aria-label="Brief tabs">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={briefTab === 'build'}
+                      onClick={() => setBriefTab('build')}
+                      className={cn(
+                        "px-3 py-1 rounded-full font-mono text-xs font-bold transition-all select-none",
+                        briefTab === 'build' ? "bg-hack-coral text-hack-ink shadow-sm" : "text-white/70 hover:text-white hover:bg-white/10"
+                      )}
+                    >
+                      🎯 What to Build
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={briefTab === 'stack'}
+                      onClick={() => setBriefTab('stack')}
+                      className={cn(
+                        "px-3 py-1 rounded-full font-mono text-xs font-bold transition-all select-none",
+                        briefTab === 'stack' ? "bg-hack-coral text-hack-ink shadow-sm" : "text-white/70 hover:text-white hover:bg-white/10"
+                      )}
+                    >
+                      ⚡ Tech Stack
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={briefTab === 'rules'}
+                      onClick={() => setBriefTab('rules')}
+                      className={cn(
+                        "px-3 py-1 rounded-full font-mono text-xs font-bold transition-all select-none",
+                        briefTab === 'rules' ? "bg-hack-coral text-hack-ink shadow-sm" : "text-white/70 hover:text-white hover:bg-white/10"
+                      )}
+                    >
+                      📋 Judging & Rules
+                    </button>
                   </div>
+
                   <span
                     className={cn(
-                      "font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border",
+                      "font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-[4px] border",
                       event.mission_brief.hackathon_tier === 'tech_mandate'
-                        ? 'bg-hack-gold/20 border-hack-gold text-hack-gold-dark'
-                        : event.mission_brief.hackathon_tier === 'domain_focused'
-                        ? 'bg-hack-blue/20 border-hack-blue text-hack-blue-dark'
-                        : 'bg-hack-mint/20 border-hack-mint text-hack-mint-dark'
+                        ? 'bg-hack-gold/25 border-hack-gold text-hack-gold'
+                        : 'bg-white/15 border-white/20 text-white'
                     )}
                   >
-                    {event.mission_brief.hackathon_tier === 'tech_mandate'
-                      ? '🔧 Tech Mandated'
-                      : event.mission_brief.hackathon_tier === 'domain_focused'
-                      ? '🎯 Domain Focused'
-                      : '🟢 Open Build'}
+                    {event.mission_brief.hackathon_tier === 'tech_mandate' ? '⚡ Restricted Stack' : '🟢 Open Build'}
                   </span>
                 </div>
 
-                <CardContent className="p-4 sm:p-5 space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
-                        What to Build (Target Deliverable)
-                      </span>
-                      <p className="font-sans text-sm text-hack-ink font-semibold bg-hack-sand/50 p-3 rounded-lg border border-hack-muted/40 leading-relaxed">
+                {/* Tab Body */}
+                <div className="p-4 bg-hack-sand/20 text-hack-ink min-h-[90px]">
+                  {briefTab === 'build' && (
+                    <div className="space-y-2 animate-cascade-in">
+                      <p className="font-sans text-sm text-hack-ink leading-relaxed font-medium">
                         {event.mission_brief.what_to_build}
                       </p>
-                    </div>
-                    <div className="space-y-1">
-                      <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
-                        Why It Exists (Sponsor Motive)
-                      </span>
-                      <p className="font-sans text-sm text-hack-ink bg-hack-sand/50 p-3 rounded-lg border border-hack-muted/40 leading-relaxed">
-                        {event.mission_brief.why_it_exists}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Tech Stack Rules */}
-                  {event.mission_brief.tech_stack_mandate && (
-                    <div className="space-y-1.5 pt-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
-                          Tech Stack Rules
-                        </span>
-                        {event.mission_brief.tech_stack_mandate.is_stack_restricted && (
-                          <span className="font-mono text-[10px] font-bold px-2 py-0.5 bg-hack-red/10 text-hack-red border border-hack-red/30 rounded-full">
-                            ⚠️ Stack Restricted Challenge
-                          </span>
-                        )}
-                      </div>
-
-                      {event.mission_brief.tech_stack_mandate.is_stack_restricted ? (
-                        <div className="space-y-2 p-3 bg-hack-sand/40 border border-hack-muted/40 rounded-lg">
-                          <p className="font-sans text-sm text-hack-ink leading-relaxed">
-                            {event.mission_brief.tech_stack_mandate.allowed_stack_summary}
-                          </p>
-                          <div className="flex flex-wrap gap-1.5 items-center">
-                            {(event.mission_brief.tech_stack_mandate.mandatory_tools || []).map((tool: string, i: number) => (
-                              <span
-                                key={i}
-                                className="font-mono text-xs font-bold px-2.5 py-1 rounded-md border border-hack-red/40 bg-hack-red/15 text-hack-red flex items-center gap-1"
-                              >
-                                <span>⚡</span> {tool}
-                              </span>
-                            ))}
-                            {(event.mission_brief.tech_stack_mandate.bonus_sponsor_tools || []).map((tool: string, i: number) => (
-                              <span
-                                key={`bonus-${i}`}
-                                className="font-mono text-xs font-bold px-2.5 py-1 rounded-md border border-hack-gold/40 bg-hack-gold/20 text-hack-gold-dark flex items-center gap-1"
-                              >
-                                <span>⭐</span> {tool} (Bonus Points)
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="p-3 bg-hack-sand/40 border border-hack-muted/40 rounded-lg">
-                          <p className="font-mono text-xs text-hack-mint-dark font-semibold flex items-center gap-1.5">
-                            <span>✨</span>
-                            {event.mission_brief.tech_stack_mandate.allowed_stack_summary || 'Any tech stack permitted (Free Choice)'}
-                          </p>
+                      {event.mission_brief.submission_deliverables && event.mission_brief.submission_deliverables.length > 0 && (
+                        <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-hack-ink/10">
+                          <span className="font-mono text-[10px] font-bold uppercase text-hack-subtext">Must Ship:</span>
+                          {event.mission_brief.submission_deliverables.map((deliv: string, i: number) => (
+                            <span
+                              key={i}
+                              className="font-mono text-[11px] font-semibold px-2 py-0.5 rounded-[4px] border border-hack-ink/20 bg-white text-hack-ink shadow-xs"
+                            >
+                              ✓ {deliv}
+                            </span>
+                          ))}
                         </div>
                       )}
                     </div>
                   )}
 
-                  {/* Submission Deliverables */}
-                  {event.mission_brief.submission_deliverables && event.mission_brief.submission_deliverables.length > 0 && (
-                    <div className="space-y-1.5 pt-1">
-                      <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
-                        Required Submission Deliverables
-                      </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {event.mission_brief.submission_deliverables.map((deliv: string, i: number) => (
+                  {briefTab === 'stack' && (
+                    <div className="space-y-2.5 animate-cascade-in">
+                      <p className="font-sans text-sm text-hack-ink leading-relaxed">
+                        {event.mission_brief.tech_stack_mandate?.allowed_stack_summary || 'No restrictive stack mandate. Build with your stack of choice.'}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5 items-center">
+                        {(event.mission_brief.tech_stack_mandate?.mandatory_tools || []).map((tool: string, i: number) => (
                           <span
                             key={i}
-                            className="font-mono text-xs font-semibold px-2.5 py-1 rounded-md border border-hack-muted bg-hack-surface text-hack-ink flex items-center gap-1 shadow-hack-sm"
+                            className="font-mono text-xs font-bold px-2.5 py-1 rounded-[4px] border border-hack-red/40 bg-hack-red/15 text-hack-red flex items-center gap-1"
                           >
-                            <span className="text-hack-mint-dark">✓</span> {deliv}
+                            <span>⚡ Mandatory:</span> {tool}
+                          </span>
+                        ))}
+                        {(event.mission_brief.tech_stack_mandate?.bonus_sponsor_tools || []).map((tool: string, i: number) => (
+                          <span
+                            key={`bonus-${i}`}
+                            className="font-mono text-xs font-bold px-2.5 py-1 rounded-[4px] border border-hack-gold/40 bg-hack-gold/20 text-hack-gold-dark flex items-center gap-1"
+                          >
+                            <span>⭐ Bonus:</span> {tool}
                           </span>
                         ))}
                       </div>
                     </div>
                   )}
-                </CardContent>
-              </Card>
+
+                  {briefTab === 'rules' && (
+                    <div className="space-y-2 animate-cascade-in">
+                      <div className="space-y-1">
+                        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext block">
+                          What Judges Actually Care About:
+                        </span>
+                        <p className="font-sans text-sm text-hack-ink leading-relaxed">
+                          {event.mission_brief.why_it_exists || 'Functionality, execution polish, and real user value.'}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -485,9 +491,9 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
             />
           )}
 
-          {/* Submission Readiness Pre-Flight Diagnostic (Visible in mobile sprint tab directly under checklist) */}
+          {/* Submission Readiness Pre-Flight Diagnostic (Visible in mobile pitch/submit check tab) */}
           {['registered', 'building', 'submitted', 'under_review'].includes(currentEvent.status) && (
-            <div className={cn(mobileWorkspaceTab !== 'sprint' && "hidden lg:hidden", "block lg:hidden")}>
+            <div className={cn(mobileWorkspaceTab !== 'pitch' && "hidden lg:hidden", "block lg:hidden")}>
               <SubmissionReadiness event={currentEvent} />
             </div>
           )}
@@ -654,20 +660,20 @@ export function EventDetailContent({ event, initialStages: propInitialStages }: 
             </Card>
           </div>
 
-          {/* Resources & Shelf (Moved to Right Rail below Team) */}
+          {/* Links & Files (Moved to Right Rail below Team) */}
           <div className={cn(mobileWorkspaceTab !== 'team' && "hidden lg:block")}>
-            <Card className="border border-hack-muted/60 bg-hack-surface rounded-xl shadow-hack-card overflow-hidden">
+            <Card className="border border-hack-muted/60 bg-hack-surface rounded-[6px] shadow-hack-card overflow-hidden">
               <div className="bg-hack-surface p-4 sm:p-5 border-b border-hack-muted/30 text-hack-ink">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
                   <div className="flex items-center gap-2">
                     <FileText className="h-5 w-5 text-hack-gold-dark" />
-                    <h3 className="font-display text-xl font-bold tracking-tight text-hack-ink">Resources & Shelf</h3>
+                    <h3 className="font-display text-xl font-bold tracking-tight text-hack-ink">Links & Files</h3>
                     <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-full border border-hack-muted bg-hack-sand text-hack-ink">
                       {resources.length}
                     </span>
                   </div>
                   <p className="font-mono text-xs text-hack-subtext">
-                    Problem statements, rulebooks & links
+                    Repo, Figma, deck, and rulebooks
                   </p>
                 </div>
               </div>

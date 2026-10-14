@@ -140,10 +140,10 @@ export function CountdownTimer({
     return (
       <div 
         role="status"
-        aria-label="Deadline passed"
-        className={cn("inline-flex items-center text-xs font-mono font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md border border-hack-muted/60 bg-hack-sand text-hack-subtext select-none", className)}
+        aria-label="Ended"
+        className={cn("inline-flex items-center text-xs font-mono font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md border border-hack-muted/60 bg-hack-sand/60 text-hack-subtext select-none", className)}
       >
-        Deadline Passed
+        Ended
       </div>
     )
   }
@@ -177,7 +177,7 @@ export function CountdownTimer({
     <div className="flex flex-col gap-1">
       {showMilestoneLabel && (
         <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-hack-subtext">
-          {milestone === 'kickoff' ? '🚀 Sprint Kickoff in:' : '⚡ Code Freeze in:'}
+          {milestone === 'kickoff' ? 'Starts in:' : 'Due in:'}
         </span>
       )}
       <div 

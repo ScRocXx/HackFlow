@@ -37,9 +37,9 @@ export function URLParseIntake({
   return (
     <div className="space-y-4 py-2">
       {/* Primary Action Card: URL Input */}
-      <div className="rounded-xl border border-hack-ink/20 bg-hack-panel p-5 shadow-sm space-y-3">
+      <div className="rounded-[6px] border border-hack-ink/20 bg-hack-panel p-5 shadow-sm space-y-3">
         <label className="font-sans text-sm font-bold text-hack-ink block">
-          Paste the competition link. We'll extract the rest.
+          Paste the hackathon link. We'll pull the rounds, deadlines, and rules for you.
         </label>
 
         <div className="flex flex-col sm:flex-row gap-2.5">
@@ -50,7 +50,7 @@ export function URLParseIntake({
               onChange={(e) => onUrlChange(e.target.value)} 
               onKeyDown={(e) => e.key === 'Enter' && onParseUrl()}
               disabled={extracting}
-              className="h-11 rounded-lg font-mono text-xs border border-hack-ink/25 bg-hack-sand/40 focus:border-hack-coral focus:ring-1 focus:ring-hack-coral pr-8"
+              className="h-11 rounded-[4px] font-mono text-xs border border-hack-ink/25 bg-hack-sand/40 focus:border-hack-coral focus:ring-1 focus:ring-hack-coral pr-8"
             />
             {isUrlValid && !extracting && (
               <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-hack-mint-dark font-mono text-[10px] font-bold">
@@ -61,9 +61,9 @@ export function URLParseIntake({
           <Button 
             onClick={onParseUrl} 
             disabled={extracting || !url.trim()} 
-            className="h-11 px-5 rounded-lg font-sans text-xs font-bold bg-hack-coral text-hack-ink hover:bg-hack-coral/90 shadow-hack-hero shrink-0 active:translate-y-0.5 transition-all"
+            className="btn-tactile h-11 px-5 rounded-[4px] font-sans text-xs font-bold bg-hack-coral text-hack-ink shrink-0"
           >
-            {extracting ? 'Reading page...' : 'Extract Hackathon'}
+            {extracting ? 'Reading page...' : 'Pull Details →'}
           </Button>
         </div>
 

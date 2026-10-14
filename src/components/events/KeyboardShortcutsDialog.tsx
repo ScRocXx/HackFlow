@@ -67,7 +67,7 @@ export function KeyboardShortcutsDialog() {
         onClick={() => setIsOpen(true)}
         title="Keyboard shortcuts (?)"
         aria-label="View keyboard shortcuts"
-        className="fixed bottom-4 right-4 z-40 hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-hack-muted/60 bg-hack-surface/90 backdrop-blur-sm text-hack-subtext hover:text-hack-ink hover:border-hack-muted shadow-hack-sm text-[11px] font-mono transition-all"
+        className="fixed bottom-4 right-4 z-40 hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-[4px] border border-hack-muted/60 bg-hack-surface/90 backdrop-blur-sm text-hack-subtext hover:text-hack-ink hover:border-hack-muted shadow-hack-sm text-[11px] font-mono transition-all"
       >
         <Keyboard className="w-3.5 h-3.5" />
         <span className="font-bold">?</span>
@@ -75,7 +75,7 @@ export function KeyboardShortcutsDialog() {
       </button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-md border border-hack-muted/60 bg-hack-surface text-hack-ink p-6 rounded-xl shadow-hack-dialog font-mono">
+        <DialogContent className="sm:max-w-md border border-hack-muted/60 bg-hack-surface text-hack-ink p-6 rounded-[6px] shadow-hack-dialog font-mono">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 font-display text-lg font-bold text-hack-ink">
               <Keyboard className="w-5 h-5 text-hack-coral-dark" />
@@ -87,12 +87,12 @@ export function KeyboardShortcutsDialog() {
           </DialogHeader>
 
           <div className="space-y-3 pt-3">
-            <div className="flex items-center justify-between p-2.5 rounded-lg border border-hack-muted/40 bg-hack-sand/50">
+            <div className="flex items-center justify-between p-2.5 rounded-[4px] border border-hack-muted/40 bg-hack-sand/50">
               <div className="flex items-center gap-2">
-                <kbd className="px-2 py-1 rounded bg-hack-surface border border-hack-muted/80 text-xs font-bold text-hack-ink shadow-hack-sm">
+                <kbd className="px-2 py-1 rounded-[4px] bg-hack-surface border border-hack-muted/80 text-xs font-bold text-hack-ink shadow-sm">
                   N
                 </kbd>
-                <span className="font-sans text-xs text-hack-ink font-medium">Add Deliverable</span>
+                <span className="font-sans text-xs text-hack-ink font-medium">Add Task</span>
               </div>
               <span className="text-[11px] text-hack-subtext">Focuses task intake</span>
             </div>

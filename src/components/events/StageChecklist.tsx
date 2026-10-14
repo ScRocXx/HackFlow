@@ -186,20 +186,20 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
     <div className="flex flex-col h-full max-h-[520px]">
       <div className="flex items-center justify-between px-4 pt-3 pb-1 flex-wrap gap-2">
         <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-subtext">
-          Stage Deliverables ({items.filter(i => Boolean(i.is_done || i.status === 'completed')).length}/{items.length})
+          Tasks ({items.filter(i => Boolean(i.is_done || i.status === 'completed')).length}/{items.length})
         </span>
         <SyncStatusPill />
       </div>
       <div className="flex-1 overflow-y-auto p-4 space-y-2">
         {items.length > 0 && items.every(item => Boolean(item.is_done || item.status === 'completed')) && (
-          <div className="p-3 mb-2 rounded-lg bg-hack-mint/15 border border-hack-mint/30 font-mono text-xs font-semibold text-hack-forest flex items-center gap-2">
+          <div className="p-3 mb-2 rounded-[6px] bg-hack-mint/15 border border-hack-mint/30 font-mono text-xs font-semibold text-hack-forest flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-hack-mint shrink-0" />
             <span>Nice. Round is done.</span>
           </div>
         )}
         {items.length === 0 ? (
           <div className="text-center font-mono text-hack-subtext py-8 text-xs font-medium">
-            No deliverables for this round yet. Add what needs to get done.
+            No tasks for this round yet. Add what needs to get done.
           </div>
         ) : (
           items.map(item => {
@@ -213,7 +213,7 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
               <div 
                 key={item.id} 
                 className={cn(
-                  "flex items-center gap-3 p-3 rounded-lg border transition-all group font-mono text-xs min-h-[46px]",
+                  "flex items-center gap-3 p-3 rounded-[6px] border transition-all group font-mono text-xs min-h-[46px]",
                   isDone 
                     ? "bg-hack-sand/50 border-hack-muted/40 text-hack-subtext" 
                     : "bg-hack-surface border-hack-muted/60 text-hack-ink shadow-hack-sm hover:border-hack-muted"
@@ -223,9 +223,9 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
                   disabled={isLoading}
                   onClick={() => handleToggle(item.id, isDone)}
                   className={cn(
-                    "shrink-0 w-5 h-5 rounded border flex items-center justify-center transition-all touch-manipulation select-none",
+                    "shrink-0 w-5 h-5 rounded-[4px] border flex items-center justify-center transition-all touch-manipulation select-none",
                     isDone 
-                      ? "bg-hack-mint border-hack-mint-dark/40 text-hack-ink" 
+                      ? "checkbox-pop bg-hack-mint border-hack-mint-dark/40 text-hack-ink" 
                       : "bg-white border-hack-muted hover:border-hack-coral"
                   )}
                   title={isDone ? "Mark incomplete" : "Mark complete"}
@@ -253,7 +253,7 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
                     onClick={() => handleClaim(item.id)}
                     title="Claimed by you. Click to release."
                     aria-label={`Claimed by you: "${item.title}". Click to release.`}
-                    className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md bg-hack-coral/15 text-hack-coral-dark border border-hack-coral/40 shrink-0 hover:bg-hack-coral/25 active:scale-95 transition-all"
+                    className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-[4px] bg-hack-coral/15 text-hack-coral-dark border border-hack-coral/40 shrink-0 hover:bg-hack-coral/25 active:scale-95 transition-all"
                   >
                     You
                   </button>
@@ -261,7 +261,7 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
                   <span
                     title="Claimed by teammate"
                     aria-label={`Claimed by teammate: "${item.title}"`}
-                    className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-md bg-hack-sky/20 text-hack-blue-dark border border-hack-sky/40 shrink-0"
+                    className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-[4px] bg-hack-sky/20 text-hack-blue-dark border border-hack-sky/40 shrink-0"
                   >
                     Teammate
                   </span>
@@ -272,7 +272,7 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
                     onClick={() => handleClaim(item.id)}
                     title="Claim this task for yourself"
                     aria-label={`Claim task: "${item.title}"`}
-                    className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-md border border-dashed border-hack-muted/80 hover:border-hack-coral text-hack-subtext hover:text-hack-ink hover:bg-hack-sand shrink-0 transition-colors flex items-center gap-1 active:scale-95"
+                    className="font-mono text-[10px] font-semibold px-2 py-0.5 rounded-[4px] border border-dashed border-hack-muted/80 hover:border-hack-coral text-hack-subtext hover:text-hack-ink hover:bg-hack-sand shrink-0 transition-colors flex items-center gap-1 active:scale-95"
                   >
                     <span className="text-hack-coral font-bold">+</span>
                     <span>Claim</span>
@@ -281,7 +281,7 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
 
                 {/* Independent Completion Status Badge */}
                 <span className={cn(
-                  "font-mono text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-md border shrink-0",
+                  "font-mono text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-[4px] border shrink-0",
                   isDone 
                     ? "bg-hack-mint/20 border-hack-mint/40 text-hack-mint-dark" 
                     : "bg-hack-gold/20 border-hack-gold/40 text-hack-gold-dark"
@@ -307,17 +307,17 @@ export function StageChecklist({ stageId, eventId, deliverables: initialDelivera
         <form onSubmit={handleAdd} className="flex gap-2">
           <Input 
             id="add-deliverable-input"
-            placeholder="Add new deliverable... (press 'N')" 
+            placeholder="Add a task... (press N)" 
             value={newTask}
             onChange={(e) => setNewTask(e.target.value)}
-            className="flex-1 font-mono text-xs rounded-lg border border-hack-muted bg-white shadow-hack-sm focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25"
+            className="flex-1 font-mono text-xs rounded-[4px] border border-hack-muted bg-white shadow-hack-sm focus:border-hack-coral focus:ring-1 focus:ring-hack-coral/25"
           />
           <Button 
             type="submit" 
             size="icon" 
             disabled={!newTask.trim()}
-            className="rounded-lg border border-hack-coral bg-hack-coral hover:brightness-105 text-hack-ink shadow-hack-sm shrink-0"
-            aria-label="Add deliverable"
+            className="btn-tactile rounded-[4px] bg-hack-coral text-hack-ink hover:brightness-105 shrink-0"
+            aria-label="Add task"
           >
             <Plus className="w-4 h-4 stroke-[2.5]" />
           </Button>

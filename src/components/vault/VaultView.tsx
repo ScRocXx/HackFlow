@@ -114,7 +114,7 @@ export function VaultView({
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Vault Header Banner */}
-      <div className="rounded-2xl border border-hack-ink/20 bg-hack-ink p-6 text-hack-sand shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4">
+      <div className="rounded-[6px] border border-hack-ink/20 bg-hack-ink p-5 sm:p-6 text-hack-sand shadow-sm flex flex-col md:flex-row justify-between md:items-center gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1.5">
             <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-hack-sand/60">
@@ -125,20 +125,20 @@ export function VaultView({
             {currentSquad?.name || 'Squad'} Vault
           </h1>
           <p className="font-mono text-xs text-hack-sand/70 mt-1 max-w-xl">
-            1-click team registration clipboard, sprint scratchpad & keyring, shared slide decks, and starter repos.
+            Fill your team's registration info once. Copy it into Unstop or Devfolio in one click.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
           {/* Squad Selector Dropdown */}
-          <div className="flex items-center gap-2 bg-hack-sand/10 px-2.5 py-1.5 rounded-lg border border-white/10">
+          <div className="flex items-center gap-2 bg-hack-sand/10 px-2.5 py-1.5 rounded-[4px] border border-white/10">
             <Users className="h-4 w-4 text-hack-gold" />
             <span className="font-mono text-xs font-semibold text-hack-sand uppercase hidden sm:inline">Squad:</span>
             <select
               value={selectedSquadId || squads[0]?.id || ''}
               onChange={(e) => handleSquadChange(e.target.value)}
               disabled={loadingData}
-              className="bg-hack-surface text-hack-ink font-mono text-xs font-semibold py-1 px-2.5 rounded-md border border-hack-ink/20 focus:outline-none cursor-pointer"
+              className="bg-hack-surface text-hack-ink font-mono text-xs font-semibold py-1 px-2.5 rounded-[4px] border border-hack-ink/20 focus:outline-none cursor-pointer"
             >
               {squads.map((sq) => (
                 <option key={sq.id} value={sq.id}>
@@ -150,7 +150,7 @@ export function VaultView({
 
           <Button
             onClick={() => setIsAssetModalOpen(true)}
-            className="rounded-lg bg-hack-coral hover:bg-hack-coral/90 text-hack-ink font-sans text-xs font-bold shadow-hack-hero"
+            className="btn-tactile rounded-[4px] bg-hack-coral text-hack-ink font-sans text-xs font-bold"
           >
             <Plus className="h-4 w-4 mr-1.5" />
             + Add Shared Asset
@@ -163,51 +163,51 @@ export function VaultView({
         <button
           onClick={() => setActiveTab('profiles')}
           className={cn(
-            "font-mono text-xs font-semibold uppercase tracking-wider px-3 sm:px-4 py-2 rounded-lg border transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
+            "font-mono text-xs font-semibold uppercase tracking-wider px-3 sm:px-4 py-2 rounded-[4px] border transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
             activeTab === 'profiles'
               ? "bg-hack-ink text-hack-sand border-hack-ink shadow-sm font-bold"
               : "bg-hack-surface text-hack-subtext border-hack-ink/15 hover:bg-hack-sand/60 hover:text-hack-ink"
           )}
         >
-          Quick-Fill Team Profiles ({profiles.length})
+          Team Profiles ({profiles.length})
         </button>
 
         <button
           onClick={() => setActiveTab('scratchpad')}
           className={cn(
-            "font-mono text-xs font-semibold uppercase tracking-wider px-3 sm:px-4 py-2 rounded-lg border transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
+            "font-mono text-xs font-semibold uppercase tracking-wider px-3 sm:px-4 py-2 rounded-[4px] border transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
             activeTab === 'scratchpad'
               ? "bg-hack-ink text-hack-sand border-hack-ink shadow-sm font-bold"
               : "bg-hack-surface text-hack-subtext border-hack-ink/15 hover:bg-hack-sand/60 hover:text-hack-ink"
           )}
         >
           <Pin className="w-3.5 h-3.5" />
-          <span>Sprint Scratchpad & Keyring</span>
+          <span>Shared Keys & Notes</span>
           <span className="w-2 h-2 rounded-full bg-hack-mint-dark inline-block ml-0.5" />
         </button>
 
         <button
           onClick={() => setActiveTab('decks')}
           className={cn(
-            "font-mono text-xs font-semibold uppercase tracking-wider px-3 sm:px-4 py-2 rounded-lg border transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
+            "font-mono text-xs font-semibold uppercase tracking-wider px-3 sm:px-4 py-2 rounded-[4px] border transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
             activeTab === 'decks'
               ? "bg-hack-ink text-hack-sand border-hack-ink shadow-sm font-bold"
               : "bg-hack-surface text-hack-subtext border-hack-ink/15 hover:bg-hack-sand/60 hover:text-hack-ink"
           )}
         >
-          Pitch & Deck Kit ({deckAssets.length})
+          Slide Decks ({deckAssets.length})
         </button>
 
         <button
           onClick={() => setActiveTab('boilerplates')}
           className={cn(
-            "font-mono text-xs font-semibold uppercase tracking-wider px-3 sm:px-4 py-2 rounded-lg border transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
+            "font-mono text-xs font-semibold uppercase tracking-wider px-3 sm:px-4 py-2 rounded-[4px] border transition-all whitespace-nowrap shrink-0 active:scale-95 touch-manipulation",
             activeTab === 'boilerplates'
               ? "bg-hack-ink text-hack-sand border-hack-ink shadow-sm font-bold"
               : "bg-hack-surface text-hack-subtext border-hack-ink/15 hover:bg-hack-sand/60 hover:text-hack-ink"
           )}
         >
-          Boilerplate Hub ({boilerplateAssets.length})
+          Starter Repos ({boilerplateAssets.length})
         </button>
       </div>
 
